@@ -416,8 +416,42 @@ cat apps/worker/src/handlers/doc-ocr.ts
 
 ---
 
-## T12: packages/ai schemas + OpenAI adapter
-**Status:** Pending
+## T12: packages/ai schemas + OpenAI adapter ✅
+
+**Status:** Complete
+
+### What's Done
+- OpenAI LLM client implementing LlmClient interface:
+  - `complete(prompt)` method with JSON mode
+  - `getModelInfo()` for tracking/audit
+- Factory functions:
+  - `createOpenAiClient()` - gpt-4o-mini for extraction (cost-efficient)
+  - `createOpenAiChatClient()` - gpt-4o for chat (better quality)
+- Extraction schemas already in @moneio/domain:
+  - invoiceExtractionSchema
+  - receiptExtractionSchema
+  - statementExtractionSchema
+- Extractors already in @moneio/ai:
+  - InvoiceExtractor
+  - ReceiptExtractor
+  - StatementExtractor
+- Fixed worker type errors for Prisma compatibility
+
+### How to Verify
+```bash
+# View OpenAI client
+cat packages/ai/src/clients/openai.ts
+
+# View extraction schemas
+cat packages/domain/src/schemas/extraction.ts
+
+# View extractors
+cat packages/ai/src/extraction/invoice-extractor.ts
+```
+
+### Known Gaps
+- Requires OPENAI_API_KEY env var
+- No streaming support yet (T22)
 
 ---
 
