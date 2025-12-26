@@ -85,8 +85,41 @@ pnpm db:generate
 
 ---
 
-## T03: MVP schema + indexes + seed
-**Status:** Pending
+## T03: MVP schema + indexes + seed ✅
+
+**Status:** Complete
+
+### What's Done
+- Full MVP schema implemented in T02 with all tables:
+  - users, workspaces, workspace_members
+  - documents, document_blobs, ocr_artifacts, extractions
+  - merchants, invoices, invoice_line_items
+  - bank_accounts, bank_transactions
+  - categories, transaction_categorizations, rules
+  - matches, ai_suggestions, audit_log, fx_rates
+- Indexes added:
+  - (workspace_id, created_at) on documents, audit_log
+  - (workspace_id, status) on documents
+  - (workspace_id, posted_at) on bank_transactions
+  - unique(workspace_id, tx_hash) on bank_transactions
+  - (workspace_id, suggestion_type, status) on ai_suggestions
+  - (entity_type, entity_id) on audit_log
+- Seed script created with:
+  - 28 default categories (Income, COGS, OPEX, Tax, Equity, Transfer)
+  - Demo workspace with EUR as base currency
+  - Demo user for development testing
+
+### How to Verify
+```bash
+# View seed script
+cat packages/db/prisma/seed.ts
+
+# After connecting to a database, run seed
+pnpm db:seed
+```
+
+### Known Gaps
+- None - ready for database connection
 
 ---
 
