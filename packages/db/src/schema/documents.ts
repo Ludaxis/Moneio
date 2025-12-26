@@ -1,6 +1,7 @@
 // Documents schema
 import {
   bigint,
+  index,
   integer,
   numeric,
   pgEnum,
@@ -22,28 +23,38 @@ export const documentStatusEnum = pgEnum('document_status', [
   'failed',
 ]);
 export const documentSourceEnum = pgEnum('document_source', ['upload', 'email', 'mobile']);
-export const storageProviderEnum = pgEnum('storage_provider', ['local', 's3', 'gcs', 'azure']);
+export const storageProviderEnum = pgEnum('storage_provider', ['local', 's3', 'gcs', 'azure', 'supabase']);
 export const extractionKindEnum = pgEnum('extraction_kind', ['invoice', 'statement', 'receipt']);
 export const extractionCreatorEnum = pgEnum('extraction_creator', ['ai', 'user']);
 
 // Documents table
-export const documents = pgTable('documents', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  workspaceId: uuid('workspace_id')
-    .notNull()
-    .references(() => workspaces.id, { onDelete: 'cascade' }),
-  type: documentTypeEnum('type').notNull().default('other'),
-  status: documentStatusEnum('status').notNull().default('uploaded'),
-  fileName: varchar('file_name', { length: 512 }).notNull(),
-  mimeType: varchar('mime_type', { length: 255 }).notNull(),
-  pageCount: integer('page_count').notNull().default(1),
-  source: documentSourceEnum('source').notNull().default('upload'),
-  createdByUserId: uuid('created_by_user_id')
-    .notNull()
-    .references(() => users.id),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }),
-});
+export const documents = pgTable(
+  'documents',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    type: documentTypeEnum('type').notNull().default('other'),
+    status: documentStatusEnum('status').notNull().default('uploaded'),
+    fileName: varchar('file_name', { length: 512 }).notNull(),
+    mimeType: varchar('mime_type', { length: 255 }).notNull(),
+    pageCount: integer('page_count').notNull().default(1),
+    source: documentSourceEnum('source').notNull().default('upload'),
+    createdByUserId: uuid('created_by_user_id')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
+  },
+  (table) => ({
+    workspaceCreatedAtIdx: index('doc_workspace_created_at_idx').on(
+      table.workspaceId,
+      table.createdAt
+    ),
+    workspaceStatusIdx: index('doc_workspace_status_idx').on(table.workspaceId, table.status),
+  })
+);
 
 // Document blobs table
 export const documentBlobs = pgTable('document_blobs', {

@@ -1,15 +1,14 @@
+const createNextIntlPlugin = require('next-intl/plugin');
+
+const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@moneio/core-ledger', '@moneio/domain'],
+  transpilePackages: ['@moneio/ui', '@moneio/i18n', '@moneio/core-ledger', '@moneio/domain'],
   experimental: {
     typedRoutes: true,
   },
-  i18n: {
-    locales: ['en', 'et', 'fa', 'ar'],
-    defaultLocale: 'en',
-    localeDetection: true,
-  },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

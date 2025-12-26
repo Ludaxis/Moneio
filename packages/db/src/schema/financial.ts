@@ -3,12 +3,14 @@ import {
   bigint,
   boolean,
   date,
+  index,
   integer,
   numeric,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -106,27 +108,43 @@ export const bankAccounts = pgTable('bank_accounts', {
 });
 
 // Bank transactions table
-export const bankTransactions = pgTable('bank_transactions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  workspaceId: uuid('workspace_id')
-    .notNull()
-    .references(() => workspaces.id, { onDelete: 'cascade' }),
-  bankAccountId: uuid('bank_account_id')
-    .notNull()
-    .references(() => bankAccounts.id, { onDelete: 'cascade' }),
-  postedAt: timestamp('posted_at', { withTimezone: true }).notNull(),
-  descriptionRaw: text('description_raw').notNull(),
-  amount: bigint('amount', { mode: 'number' }).notNull(),
-  currency: varchar('currency', { length: 3 }).notNull(),
-  counterparty: varchar('counterparty', { length: 255 }),
-  reference: varchar('reference', { length: 255 }),
-  documentId: uuid('document_id').references(() => documents.id, { onDelete: 'set null' }),
-  categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
-  isReconciled: boolean('is_reconciled').notNull().default(false),
-  metadata: text('metadata'), // JSON
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }),
-});
+export const bankTransactions = pgTable(
+  'bank_transactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    bankAccountId: uuid('bank_account_id')
+      .notNull()
+      .references(() => bankAccounts.id, { onDelete: 'cascade' }),
+    txHash: varchar('tx_hash', { length: 64 }), // SHA256 hash for idempotent imports
+    postedAt: timestamp('posted_at', { withTimezone: true }).notNull(),
+    descriptionRaw: text('description_raw').notNull(),
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    currency: varchar('currency', { length: 3 }).notNull(),
+    counterparty: varchar('counterparty', { length: 255 }),
+    reference: varchar('reference', { length: 255 }),
+    documentId: uuid('document_id').references(() => documents.id, { onDelete: 'set null' }),
+    categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
+    isReconciled: boolean('is_reconciled').notNull().default(false),
+    metadata: text('metadata'), // JSON
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }),
+  },
+  (table) => ({
+    // Unique constraint for idempotent bank imports
+    workspaceTxHashIdx: uniqueIndex('bank_tx_workspace_tx_hash_idx').on(
+      table.workspaceId,
+      table.txHash
+    ),
+    // Performance indexes
+    workspacePostedAtIdx: index('bank_tx_workspace_posted_at_idx').on(
+      table.workspaceId,
+      table.postedAt
+    ),
+  })
+);
 
 // FX rates table
 export const fxRates = pgTable('fx_rates', {

@@ -14,12 +14,15 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@google-cloud/vision": "^4.0.0",
     "@moneio/ai": "workspace:*",
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",
     "@moneio/domain": "workspace:*",
+    "@supabase/supabase-js": "^2.39.0",
     "bullmq": "^5.0.0",
     "ioredis": "^5.3.0",
+    "openai": "^4.20.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
