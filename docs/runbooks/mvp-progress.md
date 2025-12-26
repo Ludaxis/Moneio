@@ -161,8 +161,37 @@ ls apps/web/messages/
 
 ---
 
-## T05: Supabase Auth integration + user row
-**Status:** Pending
+## T05: Supabase Auth integration + user row ✅
+
+**Status:** Complete
+
+### What's Done
+- Supabase SSR client setup (server, browser, middleware)
+- Magic link authentication on login page
+- Auth callback handler with user bootstrap
+- User bootstrap: creates `users` row on first login (id = auth uid)
+- Protected route middleware (redirects to login if not authenticated)
+- Session refresh in middleware
+- Sign out server action
+
+### How to Verify
+```bash
+# View Supabase client setup
+cat apps/web/src/lib/supabase/server.ts
+
+# View login page
+cat apps/web/src/app/[locale]/(auth)/login/page.tsx
+
+# View auth callback
+cat apps/web/src/app/auth/callback/route.ts
+
+# View user bootstrap
+cat apps/web/src/lib/auth/user-bootstrap.ts
+```
+
+### Known Gaps
+- Need NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY env vars
+- User dropdown with sign out not yet in topbar (T06)
 
 ---
 
