@@ -263,8 +263,41 @@ cat apps/web/src/app/api/documents/upload-url/route.ts
 
 ---
 
-## T08: Documents list + detail UI
-**Status:** Pending
+## T08: Documents list + detail UI ✅
+
+**Status:** Complete
+
+### What's Done
+- Documents list page with table view
+- Status filter dropdown (all/uploaded/processing/ready/failed)
+- Pagination with next/previous controls
+- Document detail page with:
+  - PDF/image viewer with zoom and rotate controls
+  - Status banner with auto-refresh for processing documents
+  - Document info panel (filename, type, size, pages, date)
+  - Extraction data panel (placeholder for T15)
+- Workspace context provider for shared workspace state
+- API endpoint for single document fetch with signed view URL
+- Full i18n support for all 4 locales (en, et, fa, ar)
+
+### How to Verify
+```bash
+# View documents list page
+cat apps/web/src/app/[locale]/(app)/documents/page.tsx
+
+# View document detail page
+cat apps/web/src/app/[locale]/(app)/documents/[id]/page.tsx
+
+# View document viewer component
+cat apps/web/src/components/documents/document-viewer.tsx
+
+# View API endpoint
+cat apps/web/src/app/api/documents/[id]/route.ts
+```
+
+### Known Gaps
+- Extraction review UI will be implemented in T15
+- Real document processing will be implemented in T09-T14
 
 ---
 
