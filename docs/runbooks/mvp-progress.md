@@ -195,8 +195,38 @@ cat apps/web/src/lib/auth/user-bootstrap.ts
 
 ---
 
-## T06: Workspace wizard + RBAC + switcher
-**Status:** Pending
+## T06: Workspace wizard + RBAC + switcher ✅
+
+**Status:** Complete
+
+### What's Done
+- Workspace service with create/get/update functions
+- RBAC system with owner/admin/member roles
+- Role-based permissions (24 permissions across 8 categories)
+- Workspace create wizard (name, base currency selection)
+- Workspace switcher dropdown in topbar
+- API routes for workspace CRUD
+- User menu with sign out functionality
+- Categories seeded on workspace creation
+
+### How to Verify
+```bash
+# View workspace service
+cat apps/web/src/lib/workspace/service.ts
+
+# View RBAC system
+cat apps/web/src/lib/workspace/rbac.ts
+
+# View workspace switcher
+cat apps/web/src/components/workspace/workspace-switcher.tsx
+
+# View workspace wizard
+cat apps/web/src/app/[locale]/(app)/workspace/new/page.tsx
+```
+
+### Known Gaps
+- Member invitation flow (future enhancement)
+- Workspace settings page (future enhancement)
 
 ---
 

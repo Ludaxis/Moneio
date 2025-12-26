@@ -1,23 +1,29 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Bell, Search, User, ChevronDown } from 'lucide-react';
+import { Bell, Search, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
-import { cn } from '@moneio/ui';
+import { WorkspaceSwitcher } from '@/components/workspace';
+import { createBrowserClient } from '@/lib/supabase';
 
-interface TopbarProps {
-  workspaceName?: string;
-}
-
-export function Topbar({ workspaceName = 'My Workspace' }: TopbarProps) {
+export function Topbar() {
   const t = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const pathname = usePathname();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // Extract locale from pathname
   const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
   const locale = localeMatch?.[1] ?? 'en';
+
+  const handleSignOut = async () => {
+    const supabase = createBrowserClient();
+    await supabase.auth.signOut();
+    window.location.href = `/${locale}/login`;
+  };
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background px-4">
@@ -34,12 +40,9 @@ export function Topbar({ workspaceName = 'My Workspace' }: TopbarProps) {
       </div>
 
       {/* Right side actions */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-2">
         {/* Workspace switcher */}
-        <button className="flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
-          <span>{workspaceName}</span>
-          <ChevronDown className="h-4 w-4" />
-        </button>
+        <WorkspaceSwitcher />
 
         {/* Notifications */}
         <button
@@ -51,13 +54,41 @@ export function Topbar({ workspaceName = 'My Workspace' }: TopbarProps) {
         </button>
 
         {/* User menu */}
-        <Link
-          href={`/${locale}/settings/profile`}
-          className="flex items-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label="User profile"
-        >
-          <User className="h-5 w-5" />
-        </Link>
+        <div className="relative">
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="flex items-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="User menu"
+          >
+            <User className="h-5 w-5" />
+          </button>
+
+          {userMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setUserMenuOpen(false)}
+              />
+              <div className="absolute end-0 z-50 mt-2 w-48 rounded-lg border border-border bg-popover p-1 shadow-lg">
+                <Link
+                  href={`/${locale}/settings/profile`}
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-accent"
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-accent"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {tAuth('signOut')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
