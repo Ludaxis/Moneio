@@ -1,0 +1,43 @@
+{
+  "name": "@moneio/domain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Domain layer - entities, services, and business logic",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./documents": {
+      "types": "./dist/documents/index.d.ts",
+      "import": "./dist/documents/index.js"
+    },
+    "./financial": {
+      "types": "./dist/financial/index.d.ts",
+      "import": "./dist/financial/index.js"
+    },
+    "./categorization": {
+      "types": "./dist/categorization/index.d.ts",
+      "import": "./dist/categorization/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@moneio/core-ledger": "workspace:*",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}

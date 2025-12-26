@@ -1,0 +1,44 @@
+{
+  "name": "@moneio/ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI layer - extraction, categorization, and chat adapters",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./extraction": {
+      "types": "./dist/extraction/index.d.ts",
+      "import": "./dist/extraction/index.js"
+    },
+    "./categorization": {
+      "types": "./dist/categorization/index.d.ts",
+      "import": "./dist/categorization/index.js"
+    },
+    "./chat": {
+      "types": "./dist/chat/index.d.ts",
+      "import": "./dist/chat/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@moneio/core-ledger": "workspace:*",
+    "@moneio/domain": "workspace:*",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
