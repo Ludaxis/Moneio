@@ -344,8 +344,41 @@ cat apps/web/src/lib/queue/client.ts
 
 ---
 
-## T10: DOC_NORMALIZE implementation
-**Status:** Pending
+## T10: DOC_NORMALIZE implementation ✅
+
+**Status:** Complete
+
+### What's Done
+- Supabase storage client for worker (download/upload files)
+- Document processor utility:
+  - PDF page counting using pdf-lib
+  - Image dimension parsing (PNG, JPEG, GIF)
+  - Multi-page PDF extraction to individual pages
+  - Image normalization (pass-through for MVP)
+- Full DOC_NORMALIZE handler implementation:
+  - Downloads original file from Supabase storage
+  - Gets document info (page count, dimensions)
+  - For multi-page PDFs: extracts each page, uploads separately
+  - Creates blob records for each page
+  - Enqueues DOC_OCR jobs for each page
+  - Updates document status and page count
+  - Error handling with document failure marking
+
+### How to Verify
+```bash
+# View document processor
+cat apps/worker/src/lib/document-processor.ts
+
+# View storage client
+cat apps/worker/src/lib/storage.ts
+
+# View updated handler
+cat apps/worker/src/handlers/doc-normalize.ts
+```
+
+### Known Gaps
+- Image normalization passes through (no resize/conversion yet)
+- For production: add sharp for image processing
 
 ---
 

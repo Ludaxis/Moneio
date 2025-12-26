@@ -27,6 +27,7 @@
     "bullmq": "^5.7.0",
     "ioredis": "^5.4.0",
     "openai": "^4.47.0",
+    "pdf-lib": "^1.17.1",
     "zod": "^3.22.0"
   },
   "devDependencies": {
