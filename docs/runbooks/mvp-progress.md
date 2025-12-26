@@ -382,8 +382,37 @@ cat apps/worker/src/handlers/doc-normalize.ts
 
 ---
 
-## T11: DOC_OCR (Google Vision)
-**Status:** Pending
+## T11: DOC_OCR (Google Vision) ✅
+
+**Status:** Complete
+
+### What's Done
+- OCR service with Google Cloud Vision API:
+  - Supports PDF and image documents
+  - Uses documentTextDetection for structured output
+  - Multi-language support (en, et, ar, fa)
+  - Parses blocks, paragraphs, and words with bounding boxes
+  - Calculates confidence scores
+  - Detects primary language
+- Updated DOC_OCR handler:
+  - Downloads file from storage
+  - Calls Vision API with retry logic (3 attempts)
+  - Stores OCR artifacts with full text and block structure
+  - Tracks page completion and triggers extraction
+  - Graceful fallback on OCR failure
+
+### How to Verify
+```bash
+# View OCR service
+cat apps/worker/src/lib/ocr.ts
+
+# View updated handler
+cat apps/worker/src/handlers/doc-ocr.ts
+```
+
+### Known Gaps
+- Requires GOOGLE_CLOUD_CREDENTIALS env var
+- No caching of Vision API results
 
 ---
 

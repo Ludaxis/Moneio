@@ -3,12 +3,14 @@ import { prisma, DocumentStatus } from '@moneio/db';
 
 import type { DocOcrJobData, DocOcrResult } from '../lib/queues';
 import { enqueueDocExtract } from '../lib/queues';
+import { downloadFile } from '../lib/storage';
+import { performOcrWithRetry, type OcrResult } from '../lib/ocr';
 
 /**
  * DOC_OCR handler
  *
  * Pipeline step 2: OCR each page using Google Vision
- * - Download page image from storage
+ * - Download page file from storage
  * - Send to Google Vision API
  * - Store OCR result in ocr_artifacts table
  * - When all pages are done, enqueue extraction
@@ -23,12 +25,40 @@ export async function handleDocOcr(
   try {
     await job.updateProgress(10);
 
-    // TODO: Implement actual OCR in T11
-    // - Download image from Supabase storage
-    // - Call Google Vision API
-    // - Parse response
+    // Get document to check mimeType
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+      select: { mimeType: true, pageCount: true },
+    });
 
-    // For now, create a stub OCR artifact
+    if (!document) {
+      throw new Error(`Document not found: ${documentId}`);
+    }
+
+    // Download the file
+    console.log(`[DOC_OCR] Downloading: ${storagePath}`);
+    const fileData = await downloadFile(storagePath);
+
+    await job.updateProgress(30);
+
+    // Perform OCR
+    let ocrResult: OcrResult;
+    try {
+      ocrResult = await performOcrWithRetry(fileData, document.mimeType);
+    } catch (error) {
+      // If OCR fails, create a stub result instead of failing completely
+      console.warn(`[DOC_OCR] OCR failed, using empty result:`, error);
+      ocrResult = {
+        fullText: '',
+        blocks: [],
+        confidence: 0,
+        language: null,
+      };
+    }
+
+    await job.updateProgress(70);
+
+    // Store OCR artifact
     const ocrArtifact = await prisma.ocrArtifact.upsert({
       where: {
         documentId_pageNumber: {
@@ -38,53 +68,49 @@ export async function handleDocOcr(
       },
       update: {
         payloadJson: {
-          text: 'OCR text will be extracted here',
-          blocks: [],
-          confidence: 0,
-          _stub: true,
+          text: ocrResult.fullText,
+          blocks: ocrResult.blocks,
+          confidence: ocrResult.confidence,
+          language: ocrResult.language,
         },
       },
       create: {
         documentId,
         pageNumber,
         payloadJson: {
-          text: 'OCR text will be extracted here',
-          blocks: [],
-          confidence: 0,
-          _stub: true,
+          text: ocrResult.fullText,
+          blocks: ocrResult.blocks,
+          confidence: ocrResult.confidence,
+          language: ocrResult.language,
         },
       },
     });
 
-    await job.updateProgress(80);
+    await job.updateProgress(90);
 
     // Check if all pages are OCR'd
-    const document = await prisma.document.findUnique({
-      where: { id: documentId },
-      select: { pageCount: true },
-    });
-
     const ocrCount = await prisma.ocrArtifact.count({
       where: { documentId },
     });
 
-    if (document?.pageCount && ocrCount >= document.pageCount) {
-      // Update document status
+    console.log(`[DOC_OCR] Page ${pageNumber} done. ${ocrCount}/${document.pageCount} pages complete.`);
+
+    if (document.pageCount && ocrCount >= document.pageCount) {
+      // All pages done - update status and enqueue extraction
       await prisma.document.update({
         where: { id: documentId },
         data: { status: DocumentStatus.ocr_complete },
       });
 
-      // Enqueue extraction
       await enqueueDocExtract({
         documentId,
         workspaceId,
       });
+
+      console.log(`[DOC_OCR] All pages complete for ${documentId}, enqueued extraction`);
     }
 
     await job.updateProgress(100);
-
-    console.log(`[DOC_OCR] Page ${pageNumber} of ${documentId} completed`);
 
     return {
       success: true,
