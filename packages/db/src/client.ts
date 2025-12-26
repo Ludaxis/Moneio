@@ -1,24 +1,22 @@
-// Database client configuration
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { PrismaClient } from '@prisma/client';
 
-import * as schema from './schema/index.js';
-
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is required');
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
 }
 
-// Create postgres client
-const client = postgres(connectionString, {
-  max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
-});
+/**
+ * Prisma client singleton
+ * In development, reuses the same instance across hot reloads
+ */
+export const prisma =
+  global.prisma ||
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
 
-// Create drizzle instance with schema
-export const db = drizzle(client, { schema });
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = prisma;
+}
 
-// Export types
-export type Database = typeof db;
+export type { PrismaClient };

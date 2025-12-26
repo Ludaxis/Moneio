@@ -46,8 +46,42 @@ cat apps/worker/.env.example
 
 ---
 
-## T02: Prisma baseline (packages/db)
-**Status:** Pending
+## T02: Prisma baseline (packages/db) ✅
+
+**Status:** Complete
+
+### What's Done
+- Replaced Drizzle with Prisma ORM
+- Created `prisma/schema.prisma` with full MVP schema:
+  - Core: users, workspaces, workspace_members
+  - Documents: documents, document_blobs, ocr_artifacts, extractions
+  - Financial: merchants, invoices, invoice_line_items, bank_accounts, bank_transactions
+  - Categorization: categories, transaction_categorizations, rules
+  - Matching: matches
+  - AI: ai_suggestions
+  - Audit/FX: audit_log, fx_rates
+- Created Prisma client singleton with logging config
+- Created health check helper for database connectivity
+- All tables have proper indexes for workspace_id scoping
+
+### How to Verify
+```bash
+# View Prisma schema
+cat packages/db/prisma/schema.prisma
+
+# View client singleton
+cat packages/db/src/client.ts
+
+# View health check helper
+cat packages/db/src/health.ts
+
+# After installing deps, generate Prisma client
+pnpm db:generate
+```
+
+### Known Gaps
+- Need to run `pnpm install` then `pnpm db:generate` to create Prisma client
+- Seed script will be added in T03
 
 ---
 
