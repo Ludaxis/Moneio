@@ -230,8 +230,36 @@ cat apps/web/src/app/[locale]/(app)/workspace/new/page.tsx
 
 ---
 
-## T07: Storage signed upload endpoints + document create
-**Status:** Pending
+## T07: Storage signed upload endpoints + document create ✅
+
+**Status:** Complete
+
+### What's Done
+- Storage service with signed upload/read URLs
+- Signed upload URL API endpoint
+- Document creation with blob record
+- Drag/drop file uploader component (mobile-friendly)
+- Progress tracking during upload
+- RBAC permission checks
+- Queue stub for DOC_NORMALIZE (to be implemented in T09)
+- Document service with CRUD operations
+
+### How to Verify
+```bash
+# View storage service
+cat apps/web/src/lib/storage/service.ts
+
+# View document uploader component
+cat apps/web/src/components/documents/document-uploader.tsx
+
+# View API routes
+cat apps/web/src/app/api/documents/route.ts
+cat apps/web/src/app/api/documents/upload-url/route.ts
+```
+
+### Known Gaps
+- Queue integration in T09
+- Worker processing in T10-T14
 
 ---
 
