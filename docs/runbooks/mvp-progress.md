@@ -455,13 +455,63 @@ cat packages/ai/src/extraction/invoice-extractor.ts
 
 ---
 
-## T13: DOC_EXTRACT worker job
-**Status:** Pending
+## T13: DOC_EXTRACT worker job ✅
+
+**Status:** Complete
+
+### What's Done
+- Full DOC_EXTRACT handler implementation:
+  - Builds OcrPayload from OCR artifacts stored in database
+  - Document type detection using pattern matching (invoice, receipt, statement)
+  - Uses appropriate extractor based on detected type
+  - Sends OCR text to OpenAI for structured extraction
+  - Validates extraction with Zod schemas
+  - Stores extraction with confidence score and evidence metadata
+  - Enqueues DOC_POSTPROCESS for next pipeline step
+  - Updates document type in database
+
+### How to Verify
+```bash
+# View extraction handler
+cat apps/worker/src/handlers/doc-extract.ts
+
+# View document type detection
+grep -A 50 "detectDocumentType" apps/worker/src/handlers/doc-extract.ts
+```
+
+### Known Gaps
+- Requires OPENAI_API_KEY env var
+- Evidence extraction could be improved with better source text matching
 
 ---
 
-## T14: DOC_POSTPROCESS worker job
-**Status:** Pending
+## T14: DOC_POSTPROCESS worker job ✅
+
+**Status:** Complete
+
+### What's Done
+- Full DOC_POSTPROCESS handler implementation:
+  - Parses extraction payload based on document type (invoice, receipt, statement)
+  - Merchant matching: normalizes vendor name, looks up existing or creates new
+  - Country extraction from VAT number prefix
+  - Invoice/receipt → invoice record creation with line items
+  - Supports multiple date formats (ISO, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY)
+  - All invoices created as proposals (status: 'pending', approved: false)
+  - Marks document as ready for review
+  - Error handling with document failure marking
+
+### How to Verify
+```bash
+# View postprocess handler
+cat apps/worker/src/handlers/doc-postprocess.ts
+
+# View merchant matching
+grep -A 30 "findOrCreateMerchant" apps/worker/src/handlers/doc-postprocess.ts
+```
+
+### Known Gaps
+- Statement extraction doesn't create records (deferred to T17 CSV import)
+- Address parsing for country extraction could be improved
 
 ---
 
