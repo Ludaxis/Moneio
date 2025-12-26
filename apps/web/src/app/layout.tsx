@@ -1,22 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Moneio - AI Accounting Assistant',
   description: 'AI-powered accounting assistant for small businesses',
 };
 
+// Root layout - just provides the basic HTML structure
+// Locale-specific layout handles fonts and direction
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-    </html>
-  );
+  return children;
 }

@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "مونیو",
+    "loading": "در حال بارگذاری...",
+    "save": "ذخیره",
+    "cancel": "لغو",
+    "delete": "حذف",
+    "edit": "ویرایش",
+    "create": "ایجاد",
+    "search": "جستجو...",
+    "filter": "فیلتر",
+    "export": "خروجی",
+    "import": "ورودی",
+    "approve": "تایید",
+    "reject": "رد",
+    "submit": "ارسال",
+    "back": "بازگشت",
+    "next": "بعدی",
+    "close": "بستن",
+    "yes": "بله",
+    "no": "خیر",
+    "or": "یا",
+    "upload": "آپلود",
+    "download": "دانلود",
+    "viewAll": "مشاهده همه",
+    "noResults": "نتیجه‌ای یافت نشد"
+  },
+  "auth": {
+    "signIn": "ورود",
+    "signOut": "خروج",
+    "signUp": "ثبت نام",
+    "email": "ایمیل",
+    "password": "رمز عبور",
+    "forgotPassword": "رمز عبور را فراموش کردید؟",
+    "magicLink": "ارسال لینک جادویی",
+    "checkEmail": "ایمیل خود را برای لینک جادویی بررسی کنید"
+  },
+  "navigation": {
+    "dashboard": "داشبورد",
+    "documents": "اسناد",
+    "invoices": "فاکتورها",
+    "transactions": "تراکنش‌ها",
+    "reports": "گزارش‌ها",
+    "settings": "تنظیمات",
+    "chat": "دستیار هوشمند"
+  },
+  "workspace": {
+    "create": "ایجاد فضای کاری",
+    "switch": "تغییر فضای کاری",
+    "settings": "تنظیمات فضای کاری",
+    "members": "اعضا",
+    "name": "نام فضای کاری",
+    "currency": "ارز پایه",
+    "invite": "دعوت عضو"
+  },
+  "documents": {
+    "title": "اسناد",
+    "upload": "آپلود سند",
+    "processing": "در حال پردازش",
+    "ready": "آماده",
+    "failed": "ناموفق",
+    "extractedData": "داده‌های استخراج شده",
+    "confidence": "اطمینان",
+    "approve": "تایید استخراج"
+  },
+  "invoices": {
+    "title": "فاکتورها",
+    "number": "شماره فاکتور",
+    "vendor": "فروشنده",
+    "date": "تاریخ",
+    "dueDate": "موعد پرداخت",
+    "amount": "مبلغ",
+    "vat": "مالیات ارزش افزوده",
+    "total": "جمع کل",
+    "status": "وضعیت",
+    "pending": "در انتظار",
+    "approved": "تایید شده",
+    "paid": "پرداخت شده"
+  },
+  "transactions": {
+    "title": "تراکنش‌ها",
+    "description": "توضیحات",
+    "date": "تاریخ",
+    "amount": "مبلغ",
+    "category": "دسته‌بندی",
+    "categorize": "دسته‌بندی کن",
+    "bulkApprove": "تایید انتخاب شده‌ها",
+    "matched": "تطبیق داده شده",
+    "unmatched": "تطبیق نیافته"
+  },
+  "reports": {
+    "title": "گزارش‌ها",
+    "cashflow": "جریان نقدی",
+    "vat": "گزارش مالیات",
+    "income": "درآمد",
+    "expenses": "هزینه‌ها",
+    "profit": "سود خالص",
+    "period": "دوره",
+    "thisMonth": "این ماه",
+    "lastMonth": "ماه گذشته",
+    "thisYear": "امسال"
+  },
+  "chat": {
+    "title": "دستیار هوشمند",
+    "placeholder": "درباره مالیت خود بپرسید...",
+    "examples": "سوالات نمونه:",
+    "example1": "بزرگترین هزینه‌های ماه گذشته چه بود؟",
+    "example2": "فاکتورهای پرداخت نشده را نشان بده",
+    "example3": "بدهی مالیاتی من را محاسبه کن"
+  }
+}

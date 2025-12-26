@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Moneio",
+    "loading": "Laadimine...",
+    "save": "Salvesta",
+    "cancel": "Tühista",
+    "delete": "Kustuta",
+    "edit": "Muuda",
+    "create": "Loo",
+    "search": "Otsi...",
+    "filter": "Filter",
+    "export": "Ekspordi",
+    "import": "Impordi",
+    "approve": "Kinnita",
+    "reject": "Keeldu",
+    "submit": "Esita",
+    "back": "Tagasi",
+    "next": "Edasi",
+    "close": "Sulge",
+    "yes": "Jah",
+    "no": "Ei",
+    "or": "või",
+    "upload": "Laadi üles",
+    "download": "Laadi alla",
+    "viewAll": "Vaata kõiki",
+    "noResults": "Tulemusi ei leitud"
+  },
+  "auth": {
+    "signIn": "Logi sisse",
+    "signOut": "Logi välja",
+    "signUp": "Registreeru",
+    "email": "E-post",
+    "password": "Parool",
+    "forgotPassword": "Unustasid parooli?",
+    "magicLink": "Saada maagiline link",
+    "checkEmail": "Kontrolli oma e-posti maagilise lingi saamiseks"
+  },
+  "navigation": {
+    "dashboard": "Töölaud",
+    "documents": "Dokumendid",
+    "invoices": "Arved",
+    "transactions": "Tehingud",
+    "reports": "Aruanded",
+    "settings": "Seaded",
+    "chat": "AI Assistent"
+  },
+  "workspace": {
+    "create": "Loo tööruum",
+    "switch": "Vaheta tööruumi",
+    "settings": "Tööruumi seaded",
+    "members": "Liikmed",
+    "name": "Tööruumi nimi",
+    "currency": "Baasvaluuta",
+    "invite": "Kutsu liige"
+  },
+  "documents": {
+    "title": "Dokumendid",
+    "upload": "Laadi dokument üles",
+    "processing": "Töötlemine",
+    "ready": "Valmis",
+    "failed": "Ebaõnnestus",
+    "extractedData": "Eraldatud andmed",
+    "confidence": "Usaldusväärsus",
+    "approve": "Kinnita eraldamine"
+  },
+  "invoices": {
+    "title": "Arved",
+    "number": "Arve number",
+    "vendor": "Müüja",
+    "date": "Kuupäev",
+    "dueDate": "Tähtaeg",
+    "amount": "Summa",
+    "vat": "KM",
+    "total": "Kokku",
+    "status": "Staatus",
+    "pending": "Ootel",
+    "approved": "Kinnitatud",
+    "paid": "Makstud"
+  },
+  "transactions": {
+    "title": "Tehingud",
+    "description": "Kirjeldus",
+    "date": "Kuupäev",
+    "amount": "Summa",
+    "category": "Kategooria",
+    "categorize": "Kategoriseeri",
+    "bulkApprove": "Kinnita valitud",
+    "matched": "Seostatud",
+    "unmatched": "Seostamata"
+  },
+  "reports": {
+    "title": "Aruanded",
+    "cashflow": "Rahavoog",
+    "vat": "KM aruanne",
+    "income": "Tulud",
+    "expenses": "Kulud",
+    "profit": "Puhaskasum",
+    "period": "Periood",
+    "thisMonth": "See kuu",
+    "lastMonth": "Eelmine kuu",
+    "thisYear": "See aasta"
+  },
+  "chat": {
+    "title": "AI Assistent",
+    "placeholder": "Küsi oma rahanduse kohta...",
+    "examples": "Proovi küsida:",
+    "example1": "Millised olid minu suurimad kulud eelmisel kuul?",
+    "example2": "Näita tasumata arveid",
+    "example3": "Arvuta minu KM kohustus"
+  }
+}

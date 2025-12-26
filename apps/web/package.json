@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Web application - Next.js frontend",
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -24,6 +25,7 @@
     "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.43.0",
     "gsap": "^3.12.5",
+    "lucide-react": "^0.378.0",
     "next": "^14.2.0",
     "next-intl": "^3.14.0",
     "react": "^18.2.0",

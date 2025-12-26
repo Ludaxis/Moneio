@@ -123,8 +123,41 @@ pnpm db:seed
 
 ---
 
-## T04: Web bootstrap (Next.js + next-intl + RTL)
-**Status:** Pending
+## T04: Web bootstrap (Next.js + next-intl + RTL) ✅
+
+**Status:** Complete
+
+### What's Done
+- Next.js 14 App Router with next-intl
+- Locale-based routing: `/{locale}/...` (en, et, fa, ar)
+- RTL support for fa/ar via `<html dir="rtl">`
+- Fonts: Inter (Latin), Vazirmatn (Persian), Noto Sans Arabic
+- Tailwind CSS with design tokens (shadcn/ui compatible)
+- Base layout with collapsible sidebar skeleton
+- Topbar with search, workspace switcher, notifications
+- Dashboard page skeleton with stats cards
+- Translation files for all 4 locales
+- `tabular-nums` and `financial-number` utilities for numbers
+- Reduced motion support
+
+### How to Verify
+```bash
+# View locale layout
+cat apps/web/src/app/[locale]/layout.tsx
+
+# View sidebar component
+cat apps/web/src/components/layout/sidebar.tsx
+
+# View tailwind config
+cat apps/web/tailwind.config.ts
+
+# View message files
+ls apps/web/messages/
+```
+
+### Known Gaps
+- Need to install dependencies with `pnpm install`
+- Auth not yet integrated (T05)
 
 ---
 

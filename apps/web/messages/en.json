@@ -1,0 +1,111 @@
+{
+  "common": {
+    "appName": "Moneio",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search...",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "approve": "Approve",
+    "reject": "Reject",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "upload": "Upload",
+    "download": "Download",
+    "viewAll": "View All",
+    "noResults": "No results found"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "magicLink": "Send Magic Link",
+    "checkEmail": "Check your email for the magic link"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "documents": "Documents",
+    "invoices": "Invoices",
+    "transactions": "Transactions",
+    "reports": "Reports",
+    "settings": "Settings",
+    "chat": "AI Assistant"
+  },
+  "workspace": {
+    "create": "Create Workspace",
+    "switch": "Switch Workspace",
+    "settings": "Workspace Settings",
+    "members": "Members",
+    "name": "Workspace Name",
+    "currency": "Base Currency",
+    "invite": "Invite Member"
+  },
+  "documents": {
+    "title": "Documents",
+    "upload": "Upload Document",
+    "processing": "Processing",
+    "ready": "Ready",
+    "failed": "Failed",
+    "extractedData": "Extracted Data",
+    "confidence": "Confidence",
+    "approve": "Approve Extraction"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "number": "Invoice Number",
+    "vendor": "Vendor",
+    "date": "Date",
+    "dueDate": "Due Date",
+    "amount": "Amount",
+    "vat": "VAT",
+    "total": "Total",
+    "status": "Status",
+    "pending": "Pending",
+    "approved": "Approved",
+    "paid": "Paid"
+  },
+  "transactions": {
+    "title": "Transactions",
+    "description": "Description",
+    "date": "Date",
+    "amount": "Amount",
+    "category": "Category",
+    "categorize": "Categorize",
+    "bulkApprove": "Approve Selected",
+    "matched": "Matched",
+    "unmatched": "Unmatched"
+  },
+  "reports": {
+    "title": "Reports",
+    "cashflow": "Cash Flow",
+    "vat": "VAT Report",
+    "income": "Income",
+    "expenses": "Expenses",
+    "profit": "Net Profit",
+    "period": "Period",
+    "thisMonth": "This Month",
+    "lastMonth": "Last Month",
+    "thisYear": "This Year"
+  },
+  "chat": {
+    "title": "AI Assistant",
+    "placeholder": "Ask about your finances...",
+    "examples": "Try asking:",
+    "example1": "What were my top expenses last month?",
+    "example2": "Show me unpaid invoices",
+    "example3": "Calculate my VAT liability"
+  }
+}
