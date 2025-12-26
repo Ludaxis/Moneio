@@ -1,5 +1,13 @@
+import {
+  createOpenAiClient,
+  InvoiceExtractor,
+  ReceiptExtractor,
+  StatementExtractor,
+} from '@moneio/ai';
+import type { OcrPayload, OcrPage, OcrBlock } from '@moneio/core-ledger';
 import { prisma, DocumentStatus } from '@moneio/db';
 import { Job } from 'bullmq';
+
 
 import type { DocExtractJobData, DocExtractResult } from '../lib/queues';
 import { enqueueDocPostprocess } from '../lib/queues';
@@ -9,6 +17,7 @@ import { enqueueDocPostprocess } from '../lib/queues';
  *
  * Pipeline step 3: Extract structured data using LLM
  * - Gather all OCR artifacts for the document
+ * - Detect document type based on content
  * - Send to OpenAI for structured extraction
  * - Validate output with Zod schema
  * - Store extraction in extractions table
@@ -40,13 +49,90 @@ export async function handleDocExtract(
       throw new Error('No OCR artifacts found');
     }
 
+    await job.updateProgress(20);
+
+    // Get workspace context
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        categories: {
+          where: { isSystem: true },
+          select: { name: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      throw new Error('Workspace not found');
+    }
+
+    // Build OcrPayload from artifacts
+    const ocrPayload = buildOcrPayload(ocrArtifacts);
+
     await job.updateProgress(30);
 
-    // TODO: Implement actual extraction in T13
-    // - Combine OCR text from all pages
-    // - Call OpenAI with structured output schema
-    // - Validate with Zod
-    // - Handle repair if validation fails
+    // Detect document type
+    const docType = detectDocumentType(ocrPayload);
+    console.log(`[DOC_EXTRACT] Detected document type: ${docType}`);
+
+    await job.updateProgress(40);
+
+    // Create OpenAI client
+    const llmClient = createOpenAiClient();
+
+    // Build workspace context
+    const context = {
+      workspaceId,
+      locale: workspace.locale,
+      baseCurrency: workspace.baseCurrency,
+      categoryNames: workspace.categories.map((c: { name: string }) => c.name),
+    };
+
+    // Extract based on document type
+    let extraction;
+    let extractionPayload: Record<string, unknown>;
+
+    if (docType === 'invoice') {
+      const extractor = new InvoiceExtractor(llmClient);
+      extraction = await extractor.extractInvoice(ocrPayload, context);
+      extractionPayload = {
+        ...extraction.data,
+        _confidence: extraction.confidence,
+        _modelInfo: extraction.modelInfo,
+        _evidence: extraction.evidence,
+      };
+    } else if (docType === 'receipt') {
+      const extractor = new ReceiptExtractor(llmClient);
+      extraction = await extractor.extractReceipt(ocrPayload, context);
+      extractionPayload = {
+        ...extraction.data,
+        _confidence: extraction.confidence,
+        _modelInfo: extraction.modelInfo,
+        _evidence: extraction.evidence,
+      };
+    } else if (docType === 'statement') {
+      const extractor = new StatementExtractor(llmClient);
+      extraction = await extractor.extractStatement(ocrPayload, context);
+      extractionPayload = {
+        ...extraction.data,
+        _confidence: extraction.confidence,
+        _modelInfo: extraction.modelInfo,
+        _evidence: extraction.evidence,
+      };
+    } else {
+      // Default to invoice for unknown types
+      const extractor = new InvoiceExtractor(llmClient);
+      extraction = await extractor.extractInvoice(ocrPayload, context);
+      extractionPayload = {
+        ...extraction.data,
+        kind: 'other',
+        _confidence: extraction.confidence,
+        _modelInfo: extraction.modelInfo,
+        _evidence: extraction.evidence,
+      };
+    }
+
+    await job.updateProgress(70);
 
     // Get current version number
     const latestExtraction = await prisma.extraction.findFirst({
@@ -56,45 +142,44 @@ export async function handleDocExtract(
 
     const nextVersion = (latestExtraction?.version || 0) + 1;
 
-    // Create stub extraction
-    const extraction = await prisma.extraction.create({
+    // Store extraction
+    const savedExtraction = await prisma.extraction.create({
       data: {
         documentId,
         version: nextVersion,
-        payloadJson: {
-          type: 'invoice',
-          vendorName: 'Pending extraction',
-          invoiceNumber: '',
-          invoiceDate: null,
-          dueDate: null,
-          currency: 'EUR',
-          subtotal: 0,
-          vatAmount: 0,
-          total: 0,
-          lineItems: [],
-          _stub: true,
-        },
+        payloadJson: JSON.parse(JSON.stringify(extractionPayload)),
         approved: false,
       },
     });
 
-    await job.updateProgress(80);
+    // Update document type
+    await prisma.document.update({
+      where: { id: documentId },
+      data: {
+        docType: docType as 'invoice' | 'receipt' | 'bank_statement' | 'other',
+      },
+    });
+
+    await job.updateProgress(85);
 
     // Enqueue postprocessing
     await enqueueDocPostprocess({
       documentId,
       workspaceId,
-      extractionId: extraction.id,
+      extractionId: savedExtraction.id,
     });
 
     await job.updateProgress(100);
 
-    console.log(`[DOC_EXTRACT] Document ${documentId} extraction v${nextVersion} created`);
+    console.log(
+      `[DOC_EXTRACT] Document ${documentId} extraction v${nextVersion} created ` +
+        `(${docType}, confidence: ${extraction.confidence}%)`
+    );
 
     return {
       success: true,
       documentId,
-      extractionId: extraction.id,
+      extractionId: savedExtraction.id,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -114,4 +199,120 @@ export async function handleDocExtract(
       error: errorMessage,
     };
   }
+}
+
+/**
+ * Build OcrPayload from Prisma OcrArtifact records
+ */
+function buildOcrPayload(
+  artifacts: Array<{
+    pageNumber: number;
+    payloadJson: unknown;
+  }>
+): OcrPayload {
+  const pages: OcrPage[] = artifacts.map((artifact) => {
+    const payload = artifact.payloadJson as {
+      text?: string;
+      blocks?: Array<{
+        text: string;
+        confidence?: number;
+        boundingBox?: { vertices: Array<{ x: number; y: number }> };
+        paragraphs?: Array<{
+          text: string;
+          confidence?: number;
+          words?: Array<{
+            text: string;
+            confidence?: number;
+            boundingBox?: { vertices: Array<{ x: number; y: number }> };
+          }>;
+        }>;
+      }>;
+      confidence?: number;
+      language?: string;
+    };
+
+    const blocks: OcrBlock[] = (payload.blocks || []).map((block) => ({
+      text: block.text,
+      confidence: block.confidence || 0,
+      type: 'text' as const,
+      boundingBox: {
+        x: block.boundingBox?.vertices[0]?.x || 0,
+        y: block.boundingBox?.vertices[0]?.y || 0,
+        width:
+          (block.boundingBox?.vertices[1]?.x || 0) -
+          (block.boundingBox?.vertices[0]?.x || 0),
+        height:
+          (block.boundingBox?.vertices[2]?.y || 0) -
+          (block.boundingBox?.vertices[0]?.y || 0),
+      },
+    }));
+
+    return {
+      pageNumber: artifact.pageNumber,
+      width: 0, // Not stored in OCR artifacts
+      height: 0,
+      text: payload.text || '',
+      blocks,
+    };
+  });
+
+  return { pages };
+}
+
+/**
+ * Detect document type based on OCR content
+ */
+function detectDocumentType(payload: OcrPayload): string {
+  const fullText = payload.pages.map((p) => p.text).join(' ').toLowerCase();
+
+  // Invoice indicators
+  const invoicePatterns = [
+    /invoice/i,
+    /bill\s+to/i,
+    /due\s+date/i,
+    /invoice\s+number/i,
+    /payment\s+terms/i,
+    /amount\s+due/i,
+    /vat|value\s+added\s+tax/i,
+  ];
+
+  // Receipt indicators
+  const receiptPatterns = [
+    /receipt/i,
+    /cash|credit\s+card/i,
+    /change\s+due/i,
+    /thank\s+you\s+for\s+your\s+purchase/i,
+    /subtotal/i,
+    /total\s*:/i,
+  ];
+
+  // Bank statement indicators
+  const statementPatterns = [
+    /statement/i,
+    /account\s+number/i,
+    /opening\s+balance/i,
+    /closing\s+balance/i,
+    /transaction\s+history/i,
+    /iban/i,
+    /bic|swift/i,
+  ];
+
+  // Count matches for each type
+  const invoiceScore = invoicePatterns.filter((p) => p.test(fullText)).length;
+  const receiptScore = receiptPatterns.filter((p) => p.test(fullText)).length;
+  const statementScore = statementPatterns.filter((p) => p.test(fullText)).length;
+
+  // Determine type based on highest score
+  if (invoiceScore >= receiptScore && invoiceScore >= statementScore && invoiceScore > 0) {
+    return 'invoice';
+  }
+  if (receiptScore > invoiceScore && receiptScore >= statementScore && receiptScore > 0) {
+    return 'receipt';
+  }
+  if (statementScore > invoiceScore && statementScore > receiptScore && statementScore > 0) {
+    return 'bank_statement';
+  }
+
+  // Default to invoice if no clear match
+  return 'invoice';
 }
