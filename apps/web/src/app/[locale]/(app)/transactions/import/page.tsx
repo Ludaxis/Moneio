@@ -1,0 +1,573 @@
+'use client';
+
+import { cn } from '@moneio/ui';
+import {
+  Upload,
+  FileText,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  AlertCircle,
+  Loader2,
+  Table2,
+  Settings2,
+  CheckCircle2,
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useState, useCallback, useRef } from 'react';
+
+type ImportStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'complete';
+
+interface ParsedRow {
+  [key: string]: string;
+}
+
+interface ColumnMapping {
+  date: string;
+  description: string;
+  amount: string;
+  balance?: string;
+  reference?: string;
+}
+
+interface PreviewTransaction {
+  date: string;
+  description: string;
+  amount: number;
+  balance?: number;
+  reference?: string;
+}
+
+const REQUIRED_COLUMNS = ['date', 'description', 'amount'] as const;
+const OPTIONAL_COLUMNS = ['balance', 'reference'] as const;
+
+const STEP_CONFIG = {
+  upload: { icon: Upload, title: 'Upload CSV' },
+  mapping: { icon: Settings2, title: 'Map Columns' },
+  preview: { icon: Table2, title: 'Preview' },
+  importing: { icon: Loader2, title: 'Importing' },
+  complete: { icon: CheckCircle2, title: 'Complete' },
+};
+
+export default function CsvImportPage() {
+  const tCommon = useTranslations('common');
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const workspaceId = searchParams.get('workspace');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
+  const locale = localeMatch?.[1] ?? 'en';
+
+  const [step, setStep] = useState<ImportStep>('upload');
+  const [file, setFile] = useState<File | null>(null);
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [mapping, setMapping] = useState<Partial<ColumnMapping>>({});
+  const [preview, setPreview] = useState<PreviewTransaction[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [_importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number } | null>(null);
+
+  const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
+    const lines = text.split(/\r?\n/).filter((line) => line.trim());
+    if (lines.length < 2) {
+      throw new Error('CSV must have at least a header row and one data row');
+    }
+
+    // Detect delimiter
+    const firstLine = lines[0];
+    const delimiter = firstLine.includes('\t') ? '\t' : firstLine.includes(';') ? ';' : ',';
+
+    const parseLine = (line: string): string[] => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === delimiter && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim());
+      return result;
+    };
+
+    const csvHeaders = parseLine(lines[0]);
+    const csvRows = lines.slice(1).map((line) => {
+      const values = parseLine(line);
+      const row: ParsedRow = {};
+      csvHeaders.forEach((header, i) => {
+        row[header] = values[i] || '';
+      });
+      return row;
+    });
+
+    return { headers: csvHeaders, rows: csvRows };
+  };
+
+  const autoDetectMapping = (csvHeaders: string[]): Partial<ColumnMapping> => {
+    const normalized = csvHeaders.map((h) => h.toLowerCase().trim());
+    const detected: Partial<ColumnMapping> = {};
+
+    // Date patterns
+    const datePatterns = ['date', 'datum', 'kuupäev', 'تاريخ', 'posted', 'value date', 'transaction date'];
+    const dateIdx = normalized.findIndex((h) => datePatterns.some((p) => h.includes(p)));
+    if (dateIdx >= 0) detected.date = csvHeaders[dateIdx];
+
+    // Description patterns
+    const descPatterns = ['description', 'memo', 'kirjeldus', 'توضیحات', 'details', 'narrative', 'text'];
+    const descIdx = normalized.findIndex((h) => descPatterns.some((p) => h.includes(p)));
+    if (descIdx >= 0) detected.description = csvHeaders[descIdx];
+
+    // Amount patterns
+    const amountPatterns = ['amount', 'summa', 'مبلغ', 'value', 'debit', 'credit', 'sum'];
+    const amountIdx = normalized.findIndex((h) => amountPatterns.some((p) => h.includes(p)));
+    if (amountIdx >= 0) detected.amount = csvHeaders[amountIdx];
+
+    // Balance patterns
+    const balancePatterns = ['balance', 'saldo', 'موجودی', 'running balance'];
+    const balanceIdx = normalized.findIndex((h) => balancePatterns.some((p) => h.includes(p)));
+    if (balanceIdx >= 0) detected.balance = csvHeaders[balanceIdx];
+
+    // Reference patterns
+    const refPatterns = ['reference', 'ref', 'viide', 'مرجع', 'transaction id'];
+    const refIdx = normalized.findIndex((h) => refPatterns.some((p) => h.includes(p)));
+    if (refIdx >= 0) detected.reference = csvHeaders[refIdx];
+
+    return detected;
+  };
+
+  const handleFileSelect = useCallback(async (selectedFile: File) => {
+    setError(null);
+    setFile(selectedFile);
+
+    try {
+      const text = await selectedFile.text();
+      const { headers: csvHeaders, rows: csvRows } = parseCSV(text);
+
+      setHeaders(csvHeaders);
+      setRows(csvRows);
+
+      // Auto-detect mapping
+      const detected = autoDetectMapping(csvHeaders);
+      setMapping(detected);
+
+      setStep('mapping');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to parse CSV');
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile && (droppedFile.type === 'text/csv' || droppedFile.name.endsWith('.csv'))) {
+        handleFileSelect(droppedFile);
+      } else {
+        setError('Please drop a CSV file');
+      }
+    },
+    [handleFileSelect]
+  );
+
+  const handleMappingChange = (field: keyof ColumnMapping, value: string) => {
+    setMapping((prev) => ({
+      ...prev,
+      [field]: value || undefined,
+    }));
+  };
+
+  const parseAmount = (value: string): number => {
+    // Handle different number formats
+    let cleaned = value.replace(/[^\d.,-]/g, '');
+    // Handle European format (1.234,56)
+    if (cleaned.includes(',') && cleaned.includes('.') && cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+    } else if (cleaned.includes(',') && !cleaned.includes('.')) {
+      // Handle comma as decimal separator
+      cleaned = cleaned.replace(',', '.');
+    }
+    return parseFloat(cleaned) || 0;
+  };
+
+  const parseDate = (value: string): string => {
+    // Try to parse various date formats and return YYYY-MM-DD
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+
+    // Try DD/MM/YYYY or DD.MM.YYYY
+    const match = value.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+    if (match) {
+      const [, day, month, year] = match;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    return value; // Return as-is if can't parse
+  };
+
+  const generatePreview = () => {
+    if (!mapping.date || !mapping.description || !mapping.amount) {
+      setError('Please map all required columns');
+      return;
+    }
+
+    const previewData: PreviewTransaction[] = rows.slice(0, 10).map((row) => ({
+      date: parseDate(row[mapping.date!]),
+      description: row[mapping.description!],
+      amount: parseAmount(row[mapping.amount!]),
+      balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
+      reference: mapping.reference ? row[mapping.reference] : undefined,
+    }));
+
+    setPreview(previewData);
+    setStep('preview');
+  };
+
+  const handleImport = async () => {
+    if (!workspaceId) return;
+
+    setImporting(true);
+    setStep('importing');
+
+    try {
+      const transactions = rows.map((row) => ({
+        date: parseDate(row[mapping.date!]),
+        description: row[mapping.description!],
+        amount: parseAmount(row[mapping.amount!]),
+        balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
+        reference: mapping.reference ? row[mapping.reference] : undefined,
+      }));
+
+      const response = await fetch('/api/transactions/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId,
+          transactions,
+          fileName: file?.name,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Import failed');
+      }
+
+      const result = await response.json();
+      setImportResult(result);
+      setStep('complete');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Import failed');
+      setStep('preview');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const isMappingValid = mapping.date && mapping.description && mapping.amount;
+
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center gap-2 mb-8">
+      {(['upload', 'mapping', 'preview', 'complete'] as const).map((s, i) => {
+        const config = STEP_CONFIG[s];
+        const Icon = config.icon;
+        const isActive = step === s || (step === 'importing' && s === 'complete');
+        const isComplete =
+          (s === 'upload' && step !== 'upload') ||
+          (s === 'mapping' && ['preview', 'importing', 'complete'].includes(step)) ||
+          (s === 'preview' && ['importing', 'complete'].includes(step));
+
+        return (
+          <div key={s} className="flex items-center">
+            <div
+              className={cn(
+                'flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors',
+                isActive
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : isComplete
+                    ? 'border-success bg-success text-success-foreground'
+                    : 'border-border bg-background text-muted-foreground'
+              )}
+            >
+              {isComplete ? <Check className="h-5 w-5" /> : <Icon className={cn('h-5 w-5', step === 'importing' && s === 'complete' && 'animate-spin')} />}
+            </div>
+            {i < 3 && <div className={cn('h-0.5 w-8 transition-colors', isComplete ? 'bg-success' : 'bg-border')} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderUploadStep = () => (
+    <div
+      onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
+      onClick={() => fileInputRef.current?.click()}
+      className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 transition-colors hover:border-primary/50 hover:bg-accent/50"
+    >
+      <Upload className="h-12 w-12 text-muted-foreground" />
+      <p className="mt-4 text-lg font-medium text-foreground">Drop CSV file here</p>
+      <p className="mt-2 text-sm text-muted-foreground">or click to browse</p>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+        className="hidden"
+      />
+    </div>
+  );
+
+  const renderMappingStep = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <FileText className="h-5 w-5 text-muted-foreground" />
+        <span className="font-medium">{file?.name}</span>
+        <span className="text-sm text-muted-foreground">({rows.length} rows)</span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS].map((field) => (
+          <div key={field} className="space-y-2">
+            <label className="flex items-center gap-1 text-sm font-medium">
+              {field.charAt(0).toUpperCase() + field.slice(1)}
+              {REQUIRED_COLUMNS.includes(field as typeof REQUIRED_COLUMNS[number]) && (
+                <span className="text-destructive">*</span>
+              )}
+            </label>
+            <select
+              value={mapping[field as keyof ColumnMapping] || ''}
+              onChange={(e) => handleMappingChange(field as keyof ColumnMapping, e.target.value)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            >
+              <option value="">Select column...</option>
+              {headers.map((header) => (
+                <option key={header} value={header}>
+                  {header}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      {/* Sample data preview */}
+      {rows.length > 0 && (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="bg-muted px-4 py-2 text-sm font-medium">Sample Data (first 3 rows)</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-muted/50">
+                <tr>
+                  {headers.map((header) => (
+                    <th key={header} className="px-4 py-2 text-left font-medium">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.slice(0, 3).map((row, i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    {headers.map((header) => (
+                      <td key={header} className="px-4 py-2 truncate max-w-[200px]">
+                        {row[header]}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-between">
+        <button
+          onClick={() => {
+            setStep('upload');
+            setFile(null);
+            setHeaders([]);
+            setRows([]);
+            setMapping({});
+          }}
+          className="flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm hover:bg-accent"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {tCommon('back')}
+        </button>
+        <button
+          onClick={generatePreview}
+          disabled={!isMappingValid}
+          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {tCommon('next')}
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderPreviewStep = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Importing {rows.length} transactions from {file?.name}
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-border overflow-hidden">
+        <div className="bg-muted px-4 py-2 text-sm font-medium">Preview (first 10 rows)</div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-border bg-muted/50">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium">Date</th>
+                <th className="px-4 py-2 text-left font-medium">Description</th>
+                <th className="px-4 py-2 text-right font-medium">Amount</th>
+                {mapping.balance && <th className="px-4 py-2 text-right font-medium">Balance</th>}
+                {mapping.reference && <th className="px-4 py-2 text-left font-medium">Reference</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {preview.map((tx, i) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  <td className="px-4 py-2">{tx.date}</td>
+                  <td className="px-4 py-2 truncate max-w-[300px]">{tx.description}</td>
+                  <td
+                    className={cn(
+                      'px-4 py-2 text-right font-tabular-nums',
+                      tx.amount >= 0 ? 'text-success' : 'text-destructive'
+                    )}
+                  >
+                    {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  {mapping.balance && (
+                    <td className="px-4 py-2 text-right font-tabular-nums">
+                      {tx.balance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  )}
+                  {mapping.reference && <td className="px-4 py-2">{tx.reference}</td>}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex justify-between">
+        <button
+          onClick={() => setStep('mapping')}
+          className="flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm hover:bg-accent"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {tCommon('back')}
+        </button>
+        <button
+          onClick={handleImport}
+          className="flex items-center gap-2 rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90"
+        >
+          <Check className="h-4 w-4" />
+          {tCommon('import')} {rows.length} transactions
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderImportingStep = () => (
+    <div className="flex flex-col items-center justify-center py-12">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <p className="mt-4 text-lg font-medium">Importing transactions...</p>
+      <p className="mt-2 text-sm text-muted-foreground">Please wait while we process your file</p>
+    </div>
+  );
+
+  const renderCompleteStep = () => (
+    <div className="flex flex-col items-center justify-center py-12">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+        <CheckCircle2 className="h-10 w-10 text-success" />
+      </div>
+      <p className="mt-4 text-lg font-medium">Import Complete!</p>
+      {importResult && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          {importResult.imported} transactions imported
+          {importResult.skipped > 0 && `, ${importResult.skipped} duplicates skipped`}
+        </p>
+      )}
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={() => {
+            setStep('upload');
+            setFile(null);
+            setHeaders([]);
+            setRows([]);
+            setMapping({});
+            setPreview([]);
+            setImportResult(null);
+          }}
+          className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent"
+        >
+          Import Another
+        </button>
+        <Link
+          href={`/${locale}/transactions${workspaceId ? `?workspace=${workspaceId}` : ''}`}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          View Transactions
+        </Link>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href={`/${locale}/transactions${workspaceId ? `?workspace=${workspaceId}` : ''}`}
+          className="rounded-lg p-2 hover:bg-accent"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Import Bank Transactions</h1>
+          <p className="text-sm text-muted-foreground">Upload a CSV file from your bank</p>
+        </div>
+      </div>
+
+      {/* Step indicator */}
+      {renderStepIndicator()}
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-3 rounded-lg bg-destructive/10 p-4 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          <p>{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-sm underline">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="rounded-lg border border-border bg-card p-6">
+        {step === 'upload' && renderUploadStep()}
+        {step === 'mapping' && renderMappingStep()}
+        {step === 'preview' && renderPreviewStep()}
+        {step === 'importing' && renderImportingStep()}
+        {step === 'complete' && renderCompleteStep()}
+      </div>
+    </div>
+  );
+}

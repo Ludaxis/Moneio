@@ -557,8 +557,48 @@ cat apps/web/src/app/api/audit-log/route.ts
 
 ---
 
-## T16: CSV import wizard UI
-**Status:** Pending
+## T16: CSV import wizard UI ✅
+
+**Status:** Complete
+
+### What's Done
+- Multi-step CSV import wizard:
+  - Step 1: Upload - Drag & drop or file picker for CSV
+  - Step 2: Mapping - Auto-detect + manual column mapping
+  - Step 3: Preview - Show parsed data before import
+  - Step 4: Complete - Success confirmation
+- CSV parsing with:
+  - Delimiter detection (comma, semicolon, tab)
+  - Quote handling for complex fields
+  - Multi-locale number format support (1,234.56 and 1.234,56)
+  - Date format detection and normalization
+- Transactions list page with:
+  - Paginated table view
+  - Category display
+  - Match indicator
+  - Currency formatting
+- API endpoints:
+  - GET `/api/transactions` - List transactions with pagination
+  - POST `/api/transactions/import` - Bulk import from CSV
+- Deduplication using SHA-256 hash of (date, description, amount, reference)
+- Audit logging for imports
+
+### How to Verify
+```bash
+# View import wizard
+cat apps/web/src/app/[locale]/(app)/transactions/import/page.tsx
+
+# View transactions list
+cat apps/web/src/app/[locale]/(app)/transactions/page.tsx
+
+# View API endpoints
+cat apps/web/src/app/api/transactions/route.ts
+cat apps/web/src/app/api/transactions/import/route.ts
+```
+
+### Known Gaps
+- Bank account selection (auto-creates default)
+- CSV template download
 
 ---
 
