@@ -3,12 +3,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { createDocument, getWorkspaceDocuments } from '@/lib/documents';
 import { hasPermission } from '@/lib/workspace';
-
-// Stub for queue - will be implemented in T09
-async function enqueueDocNormalize(documentId: string) {
-  console.log(`[QUEUE STUB] DOC_NORMALIZE queued for document: ${documentId}`);
-  // TODO: Implement with BullMQ in T09
-}
+import { enqueueDocNormalize } from '@/lib/queue';
 
 export async function GET(request: Request) {
   try {
@@ -76,7 +71,10 @@ export async function POST(request: Request) {
     });
 
     // Enqueue for processing
-    await enqueueDocNormalize(document.id);
+    await enqueueDocNormalize({
+      documentId: document.id,
+      workspaceId,
+    });
 
     return NextResponse.json(document, { status: 201 });
   } catch (error) {

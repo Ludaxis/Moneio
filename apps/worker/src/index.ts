@@ -1,204 +1,199 @@
-// Worker entry point
-import { Worker, Queue, Job } from 'bullmq';
-import IORedis from 'ioredis';
+/**
+ * Moneio Worker Service
+ *
+ * Background job processor for document ingestion pipeline,
+ * AI categorization, and FX rate fetching.
+ */
 
-// Redis connection
-const connection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-});
+import { Worker } from 'bullmq';
 
-// Queue names
-export const QUEUES = {
-  DOCUMENT_PROCESS: 'document:process',
-  DOCUMENT_OCR: 'document:ocr',
-  DOCUMENT_EXTRACT: 'document:extract',
-  CATEGORIZATION: 'categorization',
-  INDEXING: 'indexing',
-  FX_RATES: 'fx:rates',
-} as const;
+import { getRedisConnection, closeRedisConnection } from './lib/redis';
+import { QUEUE_NAMES, getQueues, closeQueues, enqueueFxFetch } from './lib/queues';
+import {
+  handleDocNormalize,
+  handleDocOcr,
+  handleDocExtract,
+  handleDocPostprocess,
+  handleCategorization,
+  handleFxFetch,
+} from './handlers';
 
-// Job types
-interface DocumentProcessJob {
-  documentId: string;
-  workspaceId: string;
-  storageKey: string;
-  mimeType: string;
-}
+// ============================================================
+// Configuration
+// ============================================================
 
-interface CategorizationJob {
-  transactionIds: string[];
-  workspaceId: string;
-}
-
-interface FxRatesJob {
-  baseCurrency: string;
-}
-
-// Create queues
-export const documentQueue = new Queue<DocumentProcessJob>(QUEUES.DOCUMENT_PROCESS, {
-  connection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 2000,
-    },
-    removeOnComplete: 100,
-    removeOnFail: 1000,
+const config = {
+  concurrency: {
+    docNormalize: parseInt(process.env.DOC_NORMALIZE_CONCURRENCY || '5'),
+    docOcr: parseInt(process.env.DOC_OCR_CONCURRENCY || '10'),
+    docExtract: parseInt(process.env.DOC_EXTRACT_CONCURRENCY || '3'),
+    docPostprocess: parseInt(process.env.DOC_POSTPROCESS_CONCURRENCY || '5'),
+    categorization: parseInt(process.env.CATEGORIZATION_CONCURRENCY || '3'),
+    fxFetch: parseInt(process.env.FX_FETCH_CONCURRENCY || '1'),
   },
-});
+};
 
-export const categorizationQueue = new Queue<CategorizationJob>(QUEUES.CATEGORIZATION, {
-  connection,
-  defaultJobOptions: {
-    attempts: 2,
-    backoff: { type: 'fixed', delay: 1000 },
-  },
-});
+// ============================================================
+// Worker Creation
+// ============================================================
 
-export const fxQueue = new Queue<FxRatesJob>(QUEUES.FX_RATES, {
-  connection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: 'exponential', delay: 5000 },
-  },
-});
+const connection = getRedisConnection();
 
-// Document processing worker
-const documentWorker = new Worker<DocumentProcessJob>(
-  QUEUES.DOCUMENT_PROCESS,
-  async (job: Job<DocumentProcessJob>) => {
-    console.log(`Processing document ${job.data.documentId}`);
+const workers: Worker[] = [];
 
-    try {
-      // TODO: Implement ingestion pipeline
-      // const pipeline = new IngestionPipeline(...);
-      // await pipeline.process(
-      //   job.data.documentId,
-      //   job.data.workspaceId,
-      //   job.data.mimeType,
-      //   job.data.storageKey
-      // );
-
-      await job.updateProgress(100);
-      return { success: true, documentId: job.data.documentId };
-    } catch (error) {
-      console.error(`Document processing failed: ${error}`);
-      throw error;
-    }
-  },
+// DOC_NORMALIZE Worker
+const docNormalizeWorker = new Worker(
+  QUEUE_NAMES.DOC_NORMALIZE,
+  handleDocNormalize,
   {
     connection,
-    concurrency: 5,
+    concurrency: config.concurrency.docNormalize,
   }
 );
+workers.push(docNormalizeWorker);
 
-// Categorization worker
-const categorizationWorker = new Worker<CategorizationJob>(
-  QUEUES.CATEGORIZATION,
-  async (job: Job<CategorizationJob>) => {
-    console.log(`Categorizing ${job.data.transactionIds.length} transactions`);
-
-    try {
-      // TODO: Implement AI categorization
-      // const categorizer = new TransactionCategorizer(llmClient);
-      // await categorizer.categorizeTransactions(transactions, categories, context);
-
-      return {
-        success: true,
-        categorized: job.data.transactionIds.length,
-      };
-    } catch (error) {
-      console.error(`Categorization failed: ${error}`);
-      throw error;
-    }
-  },
+// DOC_OCR Worker
+const docOcrWorker = new Worker(
+  QUEUE_NAMES.DOC_OCR,
+  handleDocOcr,
   {
     connection,
-    concurrency: 3,
+    concurrency: config.concurrency.docOcr,
   }
 );
+workers.push(docOcrWorker);
 
-// FX rates worker
-const fxWorker = new Worker<FxRatesJob>(
-  QUEUES.FX_RATES,
-  async (job: Job<FxRatesJob>) => {
-    console.log(`Fetching FX rates for ${job.data.baseCurrency}`);
-
-    try {
-      // TODO: Implement FX rate fetching
-      // const rates = await fxService.fetchRates(job.data.baseCurrency);
-      // await fxRepository.saveRates(rates);
-
-      return { success: true, baseCurrency: job.data.baseCurrency };
-    } catch (error) {
-      console.error(`FX rate fetch failed: ${error}`);
-      throw error;
-    }
-  },
+// DOC_EXTRACT Worker
+const docExtractWorker = new Worker(
+  QUEUE_NAMES.DOC_EXTRACT,
+  handleDocExtract,
   {
     connection,
-    concurrency: 1,
+    concurrency: config.concurrency.docExtract,
   }
 );
+workers.push(docExtractWorker);
 
-// Event handlers
-documentWorker.on('completed', (job) => {
-  console.log(`Document job ${job.id} completed`);
-});
+// DOC_POSTPROCESS Worker
+const docPostprocessWorker = new Worker(
+  QUEUE_NAMES.DOC_POSTPROCESS,
+  handleDocPostprocess,
+  {
+    connection,
+    concurrency: config.concurrency.docPostprocess,
+  }
+);
+workers.push(docPostprocessWorker);
 
-documentWorker.on('failed', (job, err) => {
-  console.error(`Document job ${job?.id} failed:`, err);
-});
+// CATEGORIZATION Worker
+const categorizationWorker = new Worker(
+  QUEUE_NAMES.CATEGORIZATION,
+  handleCategorization,
+  {
+    connection,
+    concurrency: config.concurrency.categorization,
+  }
+);
+workers.push(categorizationWorker);
 
-categorizationWorker.on('completed', (job) => {
-  console.log(`Categorization job ${job.id} completed`);
-});
+// FX_FETCH Worker
+const fxFetchWorker = new Worker(
+  QUEUE_NAMES.FX_FETCH,
+  handleFxFetch,
+  {
+    connection,
+    concurrency: config.concurrency.fxFetch,
+  }
+);
+workers.push(fxFetchWorker);
 
-fxWorker.on('completed', (job) => {
-  console.log(`FX job ${job.id} completed`);
-});
+// ============================================================
+// Event Handlers
+// ============================================================
 
-// Graceful shutdown
-const shutdown = async () => {
-  console.log('Shutting down workers...');
-  await documentWorker.close();
-  await categorizationWorker.close();
-  await fxWorker.close();
-  await connection.quit();
+for (const worker of workers) {
+  worker.on('completed', (job) => {
+    console.log(`[${worker.name}] Job ${job.id} completed`);
+  });
+
+  worker.on('failed', (job, err) => {
+    console.error(`[${worker.name}] Job ${job?.id} failed:`, err.message);
+  });
+
+  worker.on('error', (err) => {
+    console.error(`[${worker.name}] Worker error:`, err.message);
+  });
+}
+
+// ============================================================
+// Scheduled Jobs
+// ============================================================
+
+async function scheduleRecurringJobs() {
+  const { fxFetch } = getQueues();
+
+  // Schedule hourly FX updates for common currencies
+  const currencies = ['EUR', 'USD', 'GBP'];
+
+  for (const currency of currencies) {
+    await fxFetch.add(
+      `fx:${currency}:hourly`,
+      { baseCurrency: currency },
+      {
+        repeat: {
+          every: 60 * 60 * 1000, // 1 hour
+        },
+        jobId: `fx:${currency}:hourly`,
+      }
+    );
+  }
+
+  console.log('[SCHEDULER] Recurring jobs scheduled');
+}
+
+// ============================================================
+// Graceful Shutdown
+// ============================================================
+
+async function shutdown(signal: string) {
+  console.log(`\nReceived ${signal}, shutting down...`);
+
+  // Close workers
+  await Promise.all(workers.map((w) => w.close()));
+  console.log('Workers closed');
+
+  // Close queues
+  await closeQueues();
+  console.log('Queues closed');
+
+  // Close Redis
+  await closeRedisConnection();
+  console.log('Redis disconnected');
+
   process.exit(0);
-};
+}
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
-console.log('Workers started');
-console.log(`- Document worker (concurrency: 5)`);
-console.log(`- Categorization worker (concurrency: 3)`);
-console.log(`- FX rates worker (concurrency: 1)`);
+// ============================================================
+// Startup
+// ============================================================
 
-// Schedule recurring FX rate updates
-const scheduleFxUpdates = async () => {
-  // Schedule hourly FX updates
-  await fxQueue.add(
-    'update-eur',
-    { baseCurrency: 'EUR' },
-    {
-      repeat: {
-        every: 60 * 60 * 1000, // 1 hour
-      },
-    }
-  );
+console.log('');
+console.log('═══════════════════════════════════════════');
+console.log('       Moneio Worker Service Started       ');
+console.log('═══════════════════════════════════════════');
+console.log('');
+console.log('Workers:');
+console.log(`  • DOC_NORMALIZE  (concurrency: ${config.concurrency.docNormalize})`);
+console.log(`  • DOC_OCR        (concurrency: ${config.concurrency.docOcr})`);
+console.log(`  • DOC_EXTRACT    (concurrency: ${config.concurrency.docExtract})`);
+console.log(`  • DOC_POSTPROCESS (concurrency: ${config.concurrency.docPostprocess})`);
+console.log(`  • CATEGORIZATION (concurrency: ${config.concurrency.categorization})`);
+console.log(`  • FX_FETCH       (concurrency: ${config.concurrency.fxFetch})`);
+console.log('');
+console.log('Press Ctrl+C to stop');
+console.log('');
 
-  await fxQueue.add(
-    'update-usd',
-    { baseCurrency: 'USD' },
-    {
-      repeat: {
-        every: 60 * 60 * 1000,
-      },
-    }
-  );
-};
-
-scheduleFxUpdates().catch(console.error);
+scheduleRecurringJobs().catch(console.error);

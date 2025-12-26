@@ -301,8 +301,46 @@ cat apps/web/src/app/api/documents/[id]/route.ts
 
 ---
 
-## T09: Worker bootstrap + queues (BullMQ + Upstash)
-**Status:** Pending
+## T09: Worker bootstrap + queues (BullMQ + Upstash) ✅
+
+**Status:** Complete
+
+### What's Done
+- Worker service with BullMQ + ioredis
+- 6 queue workers configured:
+  - DOC_NORMALIZE (document normalization)
+  - DOC_OCR (Google Vision OCR - stub)
+  - DOC_EXTRACT (LLM extraction - stub)
+  - DOC_POSTPROCESS (post-processing - stub)
+  - CATEGORIZATION (AI categorization - stub)
+  - FX_FETCH (FX rate fetching - stub)
+- Redis connection factory with Upstash TLS support
+- Queue job types and result types
+- Handler stubs for each queue (ready for implementation)
+- Web app queue client for enqueueing jobs
+- Documents API updated to enqueue DOC_NORMALIZE
+- Graceful shutdown handling
+- Scheduled recurring FX jobs
+- Environment variable examples updated
+
+### How to Verify
+```bash
+# View worker entry point
+cat apps/worker/src/index.ts
+
+# View queue definitions
+cat apps/worker/src/lib/queues.ts
+
+# View handler stubs
+ls apps/worker/src/handlers/
+
+# View web queue client
+cat apps/web/src/lib/queue/client.ts
+```
+
+### Known Gaps
+- All handlers are stubs - will be implemented in T10-T14, T18, T20
+- Need REDIS_URL configured to actually enqueue jobs
 
 ---
 

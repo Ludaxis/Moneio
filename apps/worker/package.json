@@ -25,6 +25,7 @@
     "@supabase/supabase-js": "^2.43.0",
     "@upstash/redis": "^1.31.0",
     "bullmq": "^5.7.0",
+    "ioredis": "^5.4.0",
     "openai": "^4.47.0",
     "zod": "^3.22.0"
   },
