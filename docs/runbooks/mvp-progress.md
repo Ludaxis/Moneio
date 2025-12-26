@@ -602,8 +602,38 @@ cat apps/web/src/app/api/transactions/import/route.ts
 
 ---
 
-## T17: CSV parse/normalize backend
-**Status:** Pending
+## T17: CSV parse/normalize backend ✅
+
+**Status:** Complete
+
+### What's Done
+- Zero-dependency CSV parsing utilities in @moneio/core-ledger:
+  - `parseCsv()` - Main CSV parser with options
+  - `detectDelimiter()` - Auto-detect comma, semicolon, tab, pipe
+  - `parseCsvLine()` - Handle quoted fields and escaped quotes
+  - `autoDetectMapping()` - Multilingual column name detection
+  - `parseAmount()` - Handle various number formats (1,234.56 vs 1.234,56)
+  - `parseCsvDate()` - Parse DD/MM/YYYY, YYYY-MM-DD, etc.
+  - `parseTransactions()` - Full row parsing with error/warning tracking
+  - `generateTransactionHash()` - Deduplication hash generation
+- Multilingual support for column detection:
+  - English, Estonian, Persian, Arabic, French, Spanish, German
+- Comprehensive error handling:
+  - Returns errors for invalid dates
+  - Returns warnings for empty descriptions or unparseable amounts
+
+### How to Verify
+```bash
+# View CSV utilities
+cat packages/core-ledger/src/utils/csv.ts
+
+# Check exports
+cat packages/core-ledger/src/index.ts
+```
+
+### Known Gaps
+- No streaming support for very large files
+- Column detection could be improved with ML
 
 ---
 
