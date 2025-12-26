@@ -62,7 +62,6 @@ export class FinancialChatAdapter implements ChatAdapter {
         role: 'assistant',
         content: answer,
         citations,
-        timestamp: new Date().toISOString(),
       },
       followUpQuestions: followUps,
     };

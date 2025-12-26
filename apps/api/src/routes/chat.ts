@@ -15,6 +15,9 @@ export const chatRoutes = new Hono();
 chatRoutes.post('/', zValidator('json', chatSchema), async (c) => {
   const { workspaceId, conversationId, message } = c.req.valid('json');
 
+  void workspaceId;
+  void message;
+
   // TODO: Process message through chat adapter
   // const response = await chatAdapter.answer(
   //   message,

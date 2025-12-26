@@ -9,12 +9,14 @@
     "build": "tsc && esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --external:postgres",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
     "clean": "rm -rf dist",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@hono/node-server": "^1.8.0",
+    "@hono/zod-validator": "^0.2.1",
     "@moneio/ai": "workspace:*",
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",
