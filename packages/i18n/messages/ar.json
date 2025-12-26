@@ -1,0 +1,47 @@
+{
+  "common": {
+    "appName": "مونيو",
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "import": "استيراد",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "submit": "إرسال",
+    "back": "رجوع",
+    "next": "التالي",
+    "close": "إغلاق"
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "signOut": "تسجيل الخروج",
+    "signUp": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "magicLink": "إرسال رابط سحري"
+  },
+  "navigation": {
+    "dashboard": "لوحة التحكم",
+    "documents": "المستندات",
+    "invoices": "الفواتير",
+    "transactions": "المعاملات",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "chat": "المساعد الذكي"
+  },
+  "workspace": {
+    "create": "إنشاء مساحة عمل",
+    "switch": "تبديل مساحة العمل",
+    "settings": "إعدادات مساحة العمل",
+    "members": "الأعضاء",
+    "name": "اسم مساحة العمل",
+    "currency": "العملة الأساسية"
+  }
+}

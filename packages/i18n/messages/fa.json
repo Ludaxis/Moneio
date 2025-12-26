@@ -1,0 +1,47 @@
+{
+  "common": {
+    "appName": "مونیو",
+    "loading": "در حال بارگذاری...",
+    "save": "ذخیره",
+    "cancel": "لغو",
+    "delete": "حذف",
+    "edit": "ویرایش",
+    "create": "ایجاد",
+    "search": "جستجو",
+    "filter": "فیلتر",
+    "export": "خروجی",
+    "import": "ورودی",
+    "approve": "تایید",
+    "reject": "رد",
+    "submit": "ارسال",
+    "back": "بازگشت",
+    "next": "بعدی",
+    "close": "بستن"
+  },
+  "auth": {
+    "signIn": "ورود",
+    "signOut": "خروج",
+    "signUp": "ثبت نام",
+    "email": "ایمیل",
+    "password": "رمز عبور",
+    "forgotPassword": "رمز عبور را فراموش کردید؟",
+    "magicLink": "ارسال لینک جادویی"
+  },
+  "navigation": {
+    "dashboard": "داشبورد",
+    "documents": "اسناد",
+    "invoices": "فاکتورها",
+    "transactions": "تراکنش‌ها",
+    "reports": "گزارش‌ها",
+    "settings": "تنظیمات",
+    "chat": "دستیار هوشمند"
+  },
+  "workspace": {
+    "create": "ایجاد فضای کاری",
+    "switch": "تغییر فضای کاری",
+    "settings": "تنظیمات فضای کاری",
+    "members": "اعضا",
+    "name": "نام فضای کاری",
+    "currency": "ارز پایه"
+  }
+}

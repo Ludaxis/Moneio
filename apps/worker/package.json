@@ -6,10 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --external:postgres --external:sharp",
+    "build": "tsc && esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --external:@prisma/client --external:sharp",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist node_modules",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -18,15 +20,19 @@
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",
     "@moneio/domain": "workspace:*",
-    "bullmq": "^5.0.0",
-    "ioredis": "^5.3.0",
+    "@moneio/utils": "workspace:*",
+    "@google-cloud/vision": "^4.2.0",
+    "@supabase/supabase-js": "^2.43.0",
+    "@upstash/redis": "^1.31.0",
+    "bullmq": "^5.7.0",
+    "openai": "^4.47.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "esbuild": "^0.19.0",
-    "tsx": "^4.7.0",
+    "esbuild": "^0.21.0",
+    "tsx": "^4.10.0",
     "typescript": "^5.3.0",
-    "vitest": "^1.0.0"
+    "vitest": "^1.6.0"
   }
 }

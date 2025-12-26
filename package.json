@@ -5,21 +5,36 @@
   "description": "AI-First Accounting Assistant",
   "scripts": {
     "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@moneio/web",
+    "dev:worker": "turbo run dev --filter=@moneio/worker",
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css}\"",
     "db:generate": "pnpm --filter @moneio/db db:generate",
     "db:migrate": "pnpm --filter @moneio/db db:migrate",
     "db:push": "pnpm --filter @moneio/db db:push",
+    "db:seed": "pnpm --filter @moneio/db db:seed",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^3.1.0",
     "turbo": "^2.0.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^1.6.0"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {

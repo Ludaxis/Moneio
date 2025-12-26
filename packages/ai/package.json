@@ -2,43 +2,35 @@
   "name": "@moneio/ai",
   "version": "0.1.0",
   "private": true,
-  "description": "AI layer - extraction, categorization, and chat adapters",
+  "description": "AI layer - extraction, categorization, and chat adapters (can import domain types/schemas, not DB)",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./extraction": {
-      "types": "./dist/extraction/index.d.ts",
-      "import": "./dist/extraction/index.js"
-    },
-    "./categorization": {
-      "types": "./dist/categorization/index.d.ts",
-      "import": "./dist/categorization/index.js"
-    },
-    "./chat": {
-      "types": "./dist/chat/index.d.ts",
-      "import": "./dist/chat/index.js"
-    }
+    ".": "./src/index.ts",
+    "./extraction": "./src/extraction/index.ts",
+    "./categorization": "./src/categorization/index.ts",
+    "./chat": "./src/chat/index.ts",
+    "./schemas": "./src/schemas/index.ts"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist node_modules",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@moneio/core-ledger": "workspace:*",
     "@moneio/domain": "workspace:*",
+    "openai": "^4.47.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
-    "vitest": "^1.0.0"
+    "vitest": "^1.6.0"
   }
 }

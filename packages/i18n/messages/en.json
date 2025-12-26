@@ -1,0 +1,47 @@
+{
+  "common": {
+    "appName": "Moneio",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "approve": "Approve",
+    "reject": "Reject",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "magicLink": "Send Magic Link"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "documents": "Documents",
+    "invoices": "Invoices",
+    "transactions": "Transactions",
+    "reports": "Reports",
+    "settings": "Settings",
+    "chat": "AI Assistant"
+  },
+  "workspace": {
+    "create": "Create Workspace",
+    "switch": "Switch Workspace",
+    "settings": "Workspace Settings",
+    "members": "Members",
+    "name": "Workspace Name",
+    "currency": "Base Currency"
+  }
+}
