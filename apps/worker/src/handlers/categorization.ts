@@ -1,5 +1,5 @@
-import { Job } from 'bullmq';
 import { prisma } from '@moneio/db';
+import { Job } from 'bullmq';
 
 import type { CategorizationJobData, CategorizationResult } from '../lib/queues';
 

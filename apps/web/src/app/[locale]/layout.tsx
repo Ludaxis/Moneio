@@ -1,7 +1,7 @@
 import { Inter, Noto_Sans_Arabic, Vazirmatn } from 'next/font/google';
+import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { notFound } from 'next/navigation';
 
 import { locales, getDirection, type Locale } from '@/lib/i18n';
 

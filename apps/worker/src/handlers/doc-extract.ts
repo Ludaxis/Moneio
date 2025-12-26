@@ -1,5 +1,5 @@
-import { Job } from 'bullmq';
 import { prisma, DocumentStatus } from '@moneio/db';
+import { Job } from 'bullmq';
 
 import type { DocExtractJobData, DocExtractResult } from '../lib/queues';
 import { enqueueDocPostprocess } from '../lib/queues';

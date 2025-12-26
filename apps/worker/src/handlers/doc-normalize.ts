@@ -1,10 +1,10 @@
-import { Job } from 'bullmq';
 import { prisma, DocumentStatus } from '@moneio/db';
+import { Job } from 'bullmq';
 
+import { getDocumentInfo, extractPdfPages, normalizeImage } from '../lib/document-processor';
 import type { DocNormalizeJobData, DocNormalizeResult } from '../lib/queues';
 import { enqueueDocOcr } from '../lib/queues';
 import { downloadFile, uploadFile } from '../lib/storage';
-import { getDocumentInfo, extractPdfPages, normalizeImage } from '../lib/document-processor';
 
 /**
  * DOC_NORMALIZE handler

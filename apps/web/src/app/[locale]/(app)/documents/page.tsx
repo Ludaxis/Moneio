@@ -1,9 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
-import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { cn } from '@moneio/ui';
 import {
   FileText,
   Upload,
@@ -15,10 +12,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useState, useEffect, useCallback } from 'react';
 
-import { cn } from '@moneio/ui';
-import { useWorkspace } from '@/lib/workspace';
 import { DocumentUploader } from '@/components/documents';
+import { useWorkspace } from '@/lib/workspace';
 
 type DocumentStatus = 'uploaded' | 'processing' | 'ocr_complete' | 'extracting' | 'ready' | 'failed';
 

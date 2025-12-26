@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
-import { useTranslations } from 'next-intl';
-import { Upload, FileText, X, AlertCircle, CheckCircle2 } from 'lucide-react';
-
 import { cn } from '@moneio/ui';
+import { Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useState, useCallback, useRef } from 'react';
 
 interface DocumentUploaderProps {
   workspaceId: string;
@@ -36,7 +35,6 @@ export function DocumentUploader({
   onUploadError,
 }: DocumentUploaderProps) {
   const t = useTranslations('documents');
-  const tCommon = useTranslations('common');
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

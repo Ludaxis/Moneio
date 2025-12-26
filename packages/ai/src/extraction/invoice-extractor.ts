@@ -4,6 +4,7 @@ import type { InvoiceExtraction } from '@moneio/domain';
 import { invoiceExtractionSchema } from '@moneio/domain';
 
 import type { AiProposal, ModelInfo, WorkspaceContext } from '../types.js';
+
 import type { InvoiceExtractorAdapter } from './extractor.js';
 
 export interface LlmClient {

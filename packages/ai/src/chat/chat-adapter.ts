@@ -1,8 +1,9 @@
 // Chat adapter for financial Q&A
 import type { ChatCitation, ChatMessage, ChatResponse } from '@moneio/domain';
 
-import type { WorkspaceContext } from '../types.js';
 import type { LlmClient } from '../extraction/invoice-extractor.js';
+import type { WorkspaceContext } from '../types.js';
+
 import type { RagService, RetrievedDocument } from './rag-service.js';
 
 export interface ChatAdapter {
@@ -62,7 +63,6 @@ export class FinancialChatAdapter implements ChatAdapter {
         role: 'assistant',
         content: answer,
         citations,
-        timestamp: new Date().toISOString(),
       },
       followUpQuestions: followUps,
     };

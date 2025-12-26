@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { ChevronDown, Plus, Check } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, Plus, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface Workspace {
   id: string;

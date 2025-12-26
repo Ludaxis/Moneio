@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { ZoomIn, ZoomOut, RotateCw, Maximize2, FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { ZoomIn, ZoomOut, RotateCw, Maximize2, FileText, Image as ImageIcon } from 'lucide-react';
-
-import { cn } from '@moneio/ui';
+import { useState } from 'react';
 
 interface DocumentViewerProps {
   url: string;

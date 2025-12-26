@@ -4,6 +4,7 @@ import type { StatementExtraction } from '@moneio/domain';
 import { statementExtractionSchema } from '@moneio/domain';
 
 import type { AiProposal, WorkspaceContext } from '../types.js';
+
 import type { StatementExtractorAdapter } from './extractor.js';
 import type { LlmClient } from './invoice-extractor.js';
 

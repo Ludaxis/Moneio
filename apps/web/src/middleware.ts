@@ -1,6 +1,6 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 import { locales, defaultLocale } from './lib/i18n';
 
@@ -23,7 +23,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Create Supabase client for session refresh
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },

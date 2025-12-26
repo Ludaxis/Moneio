@@ -1,10 +1,10 @@
-import { Job } from 'bullmq';
 import { prisma, DocumentStatus } from '@moneio/db';
+import { Job } from 'bullmq';
 
+import { performOcrWithRetry, type OcrResult } from '../lib/ocr';
 import type { DocOcrJobData, DocOcrResult } from '../lib/queues';
 import { enqueueDocExtract } from '../lib/queues';
 import { downloadFile } from '../lib/storage';
-import { performOcrWithRetry, type OcrResult } from '../lib/ocr';
 
 /**
  * DOC_OCR handler

@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 interface Workspace {
   id: string;

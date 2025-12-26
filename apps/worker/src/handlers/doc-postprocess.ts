@@ -1,5 +1,5 @@
-import { Job } from 'bullmq';
 import { prisma, DocumentStatus } from '@moneio/db';
+import { Job } from 'bullmq';
 
 import type { DocPostprocessJobData, DocPostprocessResult } from '../lib/queues';
 
@@ -15,7 +15,7 @@ import type { DocPostprocessJobData, DocPostprocessResult } from '../lib/queues'
 export async function handleDocPostprocess(
   job: Job<DocPostprocessJobData>
 ): Promise<DocPostprocessResult> {
-  const { documentId, workspaceId, extractionId } = job.data;
+  const { documentId, workspaceId: _workspaceId, extractionId } = job.data;
 
   console.log(`[DOC_POSTPROCESS] Processing document ${documentId}`);
 

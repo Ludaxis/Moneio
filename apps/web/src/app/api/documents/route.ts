@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase';
 import { createDocument, getWorkspaceDocuments } from '@/lib/documents';
-import { hasPermission } from '@/lib/workspace';
 import { enqueueDocNormalize } from '@/lib/queue';
+import { createServerClient } from '@/lib/supabase';
+import { hasPermission } from '@/lib/workspace';
 
 export async function GET(request: Request) {
   try {

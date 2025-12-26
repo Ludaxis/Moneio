@@ -1,7 +1,6 @@
-import { prisma } from '@moneio/db';
-import { seedWorkspaceCategories } from '@moneio/db/prisma/seed';
+import { prisma, seedWorkspaceCategories } from '@moneio/db';
 
-export type WorkspaceRole = 'owner' | 'admin' | 'member';
+import type { WorkspaceRole } from './rbac';
 
 interface CreateWorkspaceInput {
   name: string;
@@ -61,7 +60,7 @@ export async function getUserWorkspaces(userId: string) {
     },
   });
 
-  return memberships.map((m) => ({
+  return memberships.map((m: typeof memberships[number]) => ({
     ...m.workspace,
     role: m.role as WorkspaceRole,
   }));

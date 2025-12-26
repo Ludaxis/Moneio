@@ -7,8 +7,6 @@
 
 import { Worker } from 'bullmq';
 
-import { getRedisConnection, closeRedisConnection } from './lib/redis';
-import { QUEUE_NAMES, getQueues, closeQueues, enqueueFxFetch } from './lib/queues';
 import {
   handleDocNormalize,
   handleDocOcr,
@@ -17,6 +15,8 @@ import {
   handleCategorization,
   handleFxFetch,
 } from './handlers';
+import { QUEUE_NAMES, getQueues, closeQueues } from './lib/queues';
+import { getRedisConnection, closeRedisConnection } from './lib/redis';
 
 // ============================================================
 // Configuration

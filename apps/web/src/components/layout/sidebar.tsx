@@ -1,8 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { cn } from '@moneio/ui';
 import {
   LayoutDashboard,
   FileText,
@@ -14,9 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-
-import { cn } from '@moneio/ui';
 
 interface NavItem {
   href: string;

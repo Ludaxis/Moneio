@@ -2,6 +2,7 @@
 export { prisma } from './client';
 export type { PrismaClient } from './client';
 export * from './health';
+export { seedWorkspaceCategories, defaultCategories } from './categories.js';
 
 // Re-export Prisma types for convenience
 export type {
@@ -24,6 +25,10 @@ export type {
   AiSuggestion,
   AuditLog,
   FxRate,
+} from '@prisma/client';
+
+// Export enums as values (not just types)
+export {
   DocumentStatus,
   DocumentType,
   SuggestionType,

@@ -1,23 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
-import { usePathname, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { cn } from '@moneio/ui';
 import {
   ArrowLeft,
-  FileText,
   Clock,
   CheckCircle2,
   AlertCircle,
   Loader2,
   Download,
   RefreshCw,
-  FileImage,
   File,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useState, useEffect } from 'react';
 
-import { cn } from '@moneio/ui';
 import { DocumentViewer } from '@/components/documents';
 
 type DocumentStatus = 'uploaded' | 'processing' | 'ocr_complete' | 'extracting' | 'ready' | 'failed';
@@ -106,7 +104,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
 
   // Auto-refresh for processing documents
   useEffect(() => {
-    if (!document) return;
+    if (!document) return undefined;
 
     const processingStatuses: DocumentStatus[] = ['uploaded', 'processing', 'ocr_complete', 'extracting'];
     if (processingStatuses.includes(document.status)) {
@@ -115,6 +113,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       }, 5000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [document?.status]);
 
   const formatFileSize = (bytes: number) => {

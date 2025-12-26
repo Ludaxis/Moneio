@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase';
 import { getDocument, getDocumentViewUrl } from '@/lib/documents';
+import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
 export async function GET(

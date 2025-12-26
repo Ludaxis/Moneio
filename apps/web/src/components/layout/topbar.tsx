@@ -1,9 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { Bell, Search, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { WorkspaceSwitcher } from '@/components/workspace';

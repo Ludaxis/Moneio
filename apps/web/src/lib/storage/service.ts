@@ -20,7 +20,7 @@ export interface SignedUploadResult {
 export async function createSignedUploadUrl(
   workspaceId: string,
   fileName: string,
-  mimeType: string
+  _mimeType: string
 ): Promise<SignedUploadResult> {
   const timestamp = Date.now();
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');

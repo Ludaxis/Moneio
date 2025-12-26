@@ -1,5 +1,5 @@
-import { Job } from 'bullmq';
 import { prisma } from '@moneio/db';
+import { Job } from 'bullmq';
 
 import type { FxFetchJobData, FxFetchResult } from '../lib/queues';
 
