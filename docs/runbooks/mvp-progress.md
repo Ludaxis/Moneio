@@ -515,8 +515,45 @@ grep -A 30 "findOrCreateMerchant" apps/worker/src/handlers/doc-postprocess.ts
 
 ---
 
-## T15: Extraction review UI + audit log
-**Status:** Pending
+## T15: Extraction review UI + audit log ✅
+
+**Status:** Complete
+
+### What's Done
+- ExtractionReviewPanel component:
+  - Displays extracted data in structured form (invoice/receipt/statement)
+  - Shows confidence scores with visual indicators
+  - Edit mode for correcting extracted values
+  - Approve button to mark extraction as approved
+  - Field-level editing with input validation
+- API endpoints:
+  - PATCH `/api/documents/[id]/extraction` - Update extraction payload
+  - POST `/api/documents/[id]/extraction/approve` - Approve extraction
+  - GET `/api/audit-log` - Fetch audit log entries
+- Audit logging:
+  - Tracks extraction updates with old/new values
+  - Tracks extraction approvals
+  - Records user ID, timestamp, and metadata
+- Document detail page integration:
+  - Replaced JSON view with structured review panel
+  - Auto-refresh after updates
+
+### How to Verify
+```bash
+# View extraction review panel component
+cat apps/web/src/components/documents/extraction-review-panel.tsx
+
+# View extraction API endpoints
+cat apps/web/src/app/api/documents/[id]/extraction/route.ts
+cat apps/web/src/app/api/documents/[id]/extraction/approve/route.ts
+
+# View audit log API
+cat apps/web/src/app/api/audit-log/route.ts
+```
+
+### Known Gaps
+- Line item editing not yet implemented (edit entire payload only)
+- Audit log UI component (can view via API)
 
 ---
 

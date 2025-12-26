@@ -16,7 +16,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 
-import { DocumentViewer } from '@/components/documents';
+import { DocumentViewer, ExtractionReviewPanel } from '@/components/documents';
 
 type DocumentStatus = 'uploaded' | 'processing' | 'ocr_complete' | 'extracting' | 'ready' | 'failed';
 
@@ -280,31 +280,19 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
             </div>
           </div>
 
-          {/* Extraction Panel (placeholder) */}
+          {/* Extraction Panel */}
           <div className="rounded-lg border border-border bg-card">
             <div className="border-b border-border p-4">
               <h2 className="font-semibold text-foreground">{t('extractedData')}</h2>
             </div>
             <div className="p-4">
-              {latestExtraction ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Version {latestExtraction.version}
-                    </span>
-                    {latestExtraction.approved ? (
-                      <span className="flex items-center gap-1 text-sm text-success">
-                        <CheckCircle2 className="h-4 w-4" />
-                        {t('approved')}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">{t('pendingApproval')}</span>
-                    )}
-                  </div>
-                  <pre className="max-h-64 overflow-auto rounded-lg bg-muted p-4 text-xs">
-                    {JSON.stringify(latestExtraction.payloadJson, null, 2)}
-                  </pre>
-                </div>
+              {latestExtraction && workspaceId ? (
+                <ExtractionReviewPanel
+                  extraction={latestExtraction}
+                  workspaceId={workspaceId}
+                  documentId={document.id}
+                  onUpdate={() => fetchDocument(true)}
+                />
               ) : document.status === 'ready' ? (
                 <p className="text-sm text-muted-foreground">{t('noExtractions')}</p>
               ) : (
