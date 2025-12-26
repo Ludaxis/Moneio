@@ -1,4 +1,5 @@
 // AI package exports
+export * from './clients/index.js';
 export * from './extraction/index.js';
 export * from './categorization/index.js';
 export * from './chat/index.js';

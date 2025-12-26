@@ -72,10 +72,19 @@ export async function deleteFromStorage(path: string): Promise<void> {
   }
 }
 
+export interface FileMetadata {
+  name: string;
+  id: string;
+  updated_at: string;
+  created_at: string;
+  last_accessed_at: string;
+  metadata?: Record<string, unknown>;
+}
+
 /**
  * Get file metadata from storage
  */
-export async function getFileMetadata(path: string) {
+export async function getFileMetadata(path: string): Promise<FileMetadata | null> {
   const { data, error } = await supabaseAdmin.storage
     .from(DOCUMENTS_BUCKET)
     .list(path.split('/').slice(0, -1).join('/'), {
@@ -86,5 +95,15 @@ export async function getFileMetadata(path: string) {
     throw new Error(`Failed to get metadata: ${error.message}`);
   }
 
-  return data?.[0] || null;
+  const file = data?.[0];
+  if (!file) return null;
+
+  return {
+    name: file.name,
+    id: file.id,
+    updated_at: file.updated_at,
+    created_at: file.created_at,
+    last_accessed_at: file.last_accessed_at,
+    metadata: file.metadata as Record<string, unknown> | undefined,
+  };
 }

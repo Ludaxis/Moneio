@@ -69,7 +69,7 @@ export async function handleDocOcr(
       update: {
         payloadJson: {
           text: ocrResult.fullText,
-          blocks: ocrResult.blocks,
+          blocks: JSON.parse(JSON.stringify(ocrResult.blocks)),
           confidence: ocrResult.confidence,
           language: ocrResult.language,
         },
@@ -79,7 +79,7 @@ export async function handleDocOcr(
         pageNumber,
         payloadJson: {
           text: ocrResult.fullText,
-          blocks: ocrResult.blocks,
+          blocks: JSON.parse(JSON.stringify(ocrResult.blocks)),
           confidence: ocrResult.confidence,
           language: ocrResult.language,
         },

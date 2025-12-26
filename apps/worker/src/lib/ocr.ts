@@ -83,25 +83,16 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
     // For images, use textDetection
     const isPdf = mimeType === 'application/pdf';
 
-    let response: [protos.google.cloud.vision.v1.IAnnotateImageResponse];
+    // For PDF and images, use documentTextDetection
+    const [response] = await client.documentTextDetection({
+      image: { content: imageData.toString('base64') },
+      imageContext: {
+        languageHints: ['en', 'et', 'ar', 'fa'],
+      },
+    });
 
-    if (isPdf) {
-      // For PDF, we need to use async batch annotation
-      // For simplicity, convert to regular detection (assumes single-page PDF from normalization)
-      [response] = await client.documentTextDetection({
-        image: { content: imageData.toString('base64') },
-        imageContext: {
-          languageHints: ['en', 'et', 'ar', 'fa'],
-        },
-      });
-    } else {
-      [response] = await client.documentTextDetection({
-        image: { content: imageData.toString('base64') },
-        imageContext: {
-          languageHints: ['en', 'et', 'ar', 'fa'],
-        },
-      });
-    }
+    // Unused variable suppression for isPdf
+    void isPdf;
 
     const annotation = response.fullTextAnnotation;
 
@@ -130,14 +121,14 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
           let paragraphText = '';
 
           for (const word of paragraph.words || []) {
-            const wordText = word.symbols?.map((s) => s.text).join('') || '';
+            const wordText = word.symbols?.map((s: protos.google.cloud.vision.v1.ISymbol) => s.text).join('') || '';
             const wordConfidence = word.confidence || 0;
 
             paragraphWords.push({
               text: wordText,
               confidence: wordConfidence,
               boundingBox: {
-                vertices: (word.boundingBox?.vertices || []).map((v) => ({
+                vertices: (word.boundingBox?.vertices || []).map((v: protos.google.cloud.vision.v1.IVertex) => ({
                   x: v.x || 0,
                   y: v.y || 0,
                 })),
@@ -162,7 +153,7 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
           text: blockText.trim(),
           confidence: block.confidence || 0,
           boundingBox: {
-            vertices: (block.boundingBox?.vertices || []).map((v) => ({
+            vertices: (block.boundingBox?.vertices || []).map((v: protos.google.cloud.vision.v1.IVertex) => ({
               x: v.x || 0,
               y: v.y || 0,
             })),
@@ -174,8 +165,9 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
 
     // Detect primary language
     const detectedLanguages = annotation.pages?.[0]?.property?.detectedLanguages || [];
+    type DetectedLanguage = protos.google.cloud.vision.v1.TextAnnotation.IDetectedLanguage;
     const primaryLanguage = detectedLanguages.length > 0
-      ? detectedLanguages.sort((a, b) => (b.confidence || 0) - (a.confidence || 0))[0].languageCode || null
+      ? detectedLanguages.sort((a: DetectedLanguage, b: DetectedLanguage) => (b.confidence || 0) - (a.confidence || 0))[0].languageCode || null
       : null;
 
     const averageConfidence = confidenceCount > 0 ? totalConfidence / confidenceCount : 0;

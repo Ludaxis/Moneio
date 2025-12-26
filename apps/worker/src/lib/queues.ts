@@ -1,4 +1,5 @@
-import { Queue, QueueOptions } from 'bullmq';
+import { Queue } from 'bullmq';
+import type { QueueOptions } from 'bullmq';
 
 import { getRedisConnection } from './redis';
 

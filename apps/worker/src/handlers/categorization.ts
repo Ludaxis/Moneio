@@ -68,11 +68,11 @@ export async function handleCategorization(
           data: {
             workspaceId,
             suggestionType: 'categorization',
-            entityType: 'bank_transaction',
-            entityId: tx.id,
+            targetId: tx.id,
             payloadJson: {
               categoryId: suggestedCategory.id,
               categoryName: suggestedCategory.name,
+              targetType: 'bank_transaction',
               reason: 'Heuristic match (AI categorization pending)',
             },
             confidence: 0.5,

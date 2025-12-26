@@ -52,11 +52,11 @@ export async function handleFxFetch(
 
       await prisma.fxRate.upsert({
         where: {
-          workspaceId_baseCurrency_quoteCurrency_date: {
+          workspaceId_baseCurrency_quoteCurrency_effectiveDate: {
             workspaceId: workspaceId || 'global',
             baseCurrency,
             quoteCurrency: currency,
-            date: today,
+            effectiveDate: today,
           },
         },
         update: {
@@ -67,7 +67,7 @@ export async function handleFxFetch(
           baseCurrency,
           quoteCurrency: currency,
           rate,
-          date: today,
+          effectiveDate: today,
         },
       });
 
