@@ -7,7 +7,7 @@ const TOAST_REMOVE_DELAY = 1000000;
 
 type ToastActionElement = React.ReactElement<{ altText: string }>;
 
-export interface Toast {
+export interface ToastData {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -18,7 +18,7 @@ export interface Toast {
 }
 
 interface State {
-  toasts: Toast[];
+  toasts: ToastData[];
 }
 
 const actionTypes = {
@@ -40,26 +40,26 @@ type ActionType = typeof actionTypes;
 type Action =
   | {
       type: ActionType['ADD_TOAST'];
-      toast: Toast;
+      toast: ToastData;
     }
   | {
       type: ActionType['UPDATE_TOAST'];
-      toast: Partial<Toast>;
+      toast: Partial<ToastData>;
     }
   | {
       type: ActionType['DISMISS_TOAST'];
-      toastId?: Toast['id'];
+      toastId?: ToastData['id'];
     }
   | {
       type: ActionType['REMOVE_TOAST'];
-      toastId?: Toast['id'];
+      toastId?: ToastData['id'];
     };
 
 interface ToastOptions {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
-  variant?: Toast['variant'];
+  variant?: ToastData['variant'];
   duration?: number;
 }
 
