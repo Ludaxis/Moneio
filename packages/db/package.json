@@ -11,6 +11,7 @@
     "./client": "./src/client.ts"
   },
   "scripts": {
+    "postinstall": "prisma generate",
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
