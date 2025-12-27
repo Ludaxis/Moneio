@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:@prisma/client --external:sharp",
+    "build": "prisma generate --schema=../../packages/db/prisma/schema.prisma && tsc && esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:@prisma/client --external:sharp",
     "start": "node dist/index.cjs",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist node_modules",
@@ -21,6 +21,7 @@
     "@moneio/db": "workspace:*",
     "@moneio/domain": "workspace:*",
     "@moneio/utils": "workspace:*",
+    "@prisma/client": "^5.22.0",
     "@google-cloud/vision": "^4.2.0",
     "@supabase/supabase-js": "^2.43.0",
     "@upstash/redis": "^1.31.0",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@types/node": "^20.10.0",
     "esbuild": "^0.21.0",
+    "prisma": "^5.22.0",
     "tsx": "^4.10.0",
     "typescript": "^5.3.0",
     "vitest": "^1.6.0"
