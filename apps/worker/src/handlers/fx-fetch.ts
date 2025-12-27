@@ -11,9 +11,7 @@ import type { FxFetchJobData, FxFetchResult } from '../lib/queues';
  * - Store in fx_rates table
  * - Used for multi-currency support
  */
-export async function handleFxFetch(
-  job: Job<FxFetchJobData>
-): Promise<FxFetchResult> {
+export async function handleFxFetch(job: Job<FxFetchJobData>): Promise<FxFetchResult> {
   const { baseCurrency, workspaceId } = job.data;
 
   console.log(`[FX_FETCH] Fetching rates for ${baseCurrency}`);

@@ -44,10 +44,7 @@ export async function createSignedUploadUrl(
 /**
  * Generate a signed read URL for a document
  */
-export async function createSignedReadUrl(
-  path: string,
-  expiresIn: number = 3600
-): Promise<string> {
+export async function createSignedReadUrl(path: string, expiresIn: number = 3600): Promise<string> {
   const { data, error } = await supabaseAdmin.storage
     .from(DOCUMENTS_BUCKET)
     .createSignedUrl(path, expiresIn);
@@ -63,9 +60,7 @@ export async function createSignedReadUrl(
  * Delete a document from storage
  */
 export async function deleteFromStorage(path: string): Promise<void> {
-  const { error } = await supabaseAdmin.storage
-    .from(DOCUMENTS_BUCKET)
-    .remove([path]);
+  const { error } = await supabaseAdmin.storage.from(DOCUMENTS_BUCKET).remove([path]);
 
   if (error) {
     throw new Error(`Failed to delete file: ${error.message}`);

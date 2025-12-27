@@ -21,11 +21,7 @@ export interface ReportingRepository {
     endDate: string
   ): Promise<InvoiceSummary[]>;
   getLatestFxRates(baseCurrency: CurrencyCode): Promise<FxRate[]>;
-  getVatByPeriod(
-    workspaceId: UUID,
-    startDate: string,
-    endDate: string
-  ): Promise<VatEntry[]>;
+  getVatByPeriod(workspaceId: UUID, startDate: string, endDate: string): Promise<VatEntry[]>;
 }
 
 export interface TransactionSummary {
@@ -144,7 +140,10 @@ export class ReportingService {
 
     let income = createMoney(0, baseCurrency);
     let expenses = createMoney(0, baseCurrency);
-    const categoryTotals = new Map<string, { amount: number; count: number; name: string; type: string }>();
+    const categoryTotals = new Map<
+      string,
+      { amount: number; count: number; name: string; type: string }
+    >();
     const monthlyTotals = new Map<string, { income: number; expenses: number }>();
 
     for (const tx of transactions) {
@@ -160,7 +159,12 @@ export class ReportingService {
       // Category breakdown
       if (tx.categoryId && tx.categoryName) {
         const key = tx.categoryId;
-        const existing = categoryTotals.get(key) || { amount: 0, count: 0, name: tx.categoryName, type: tx.categoryType || 'expense' };
+        const existing = categoryTotals.get(key) || {
+          amount: 0,
+          count: 0,
+          name: tx.categoryName,
+          type: tx.categoryType || 'expense',
+        };
         existing.amount += Math.abs(amount.amount);
         existing.count++;
         categoryTotals.set(key, existing);
@@ -275,12 +279,7 @@ export class ReportingService {
     endDate: string,
     baseCurrency: CurrencyCode
   ): Promise<DashboardMetrics> {
-    const cashflow = await this.getCashflowReport(
-      workspaceId,
-      startDate,
-      endDate,
-      baseCurrency
-    );
+    const cashflow = await this.getCashflowReport(workspaceId, startDate, endDate, baseCurrency);
 
     // Calculate burn rate (average monthly expenses)
     const months = cashflow.byMonth.length || 1;

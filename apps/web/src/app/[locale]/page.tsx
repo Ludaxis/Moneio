@@ -32,25 +32,19 @@ export default function HomePage() {
         </div>
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
           <div className="rounded-lg border border-border p-6">
-            <h3 className="text-lg font-semibold text-foreground">
-              Invoice Extraction
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground">Invoice Extraction</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Upload invoices and receipts. AI extracts all the data automatically.
             </p>
           </div>
           <div className="rounded-lg border border-border p-6">
-            <h3 className="text-lg font-semibold text-foreground">
-              Smart Categorization
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground">Smart Categorization</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Transactions are categorized automatically. Learn from your corrections.
             </p>
           </div>
           <div className="rounded-lg border border-border p-6">
-            <h3 className="text-lg font-semibold text-foreground">
-              Financial Insights
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground">Financial Insights</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Ask questions about your finances in plain language. Get instant answers.
             </p>

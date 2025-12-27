@@ -25,10 +25,12 @@ export function FilterBar({
   className,
 }: FilterBarProps) {
   return (
-    <div className={cn(
-      'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between',
+        className
+      )}
+    >
       <div className="flex flex-1 items-center gap-4">
         {onSearchChange && (
           <div className="relative max-w-sm flex-1">
@@ -51,17 +53,9 @@ export function FilterBar({
             )}
           </div>
         )}
-        {filters && (
-          <div className="flex items-center gap-2">
-            {filters}
-          </div>
-        )}
+        {filters && <div className="flex items-center gap-2">{filters}</div>}
       </div>
-      {actions && (
-        <div className="flex items-center gap-2">
-          {actions}
-        </div>
-      )}
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );
 }

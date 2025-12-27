@@ -29,10 +29,14 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-neutral-200 bg-white text-neutral-950 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50',
-        success: 'border-success-200 bg-success-50 text-success-900 dark:border-success-700 dark:bg-success-900 dark:text-success-50',
-        warning: 'border-warning-200 bg-warning-50 text-warning-900 dark:border-warning-700 dark:bg-warning-900 dark:text-warning-50',
-        destructive: 'border-danger-200 bg-danger-50 text-danger-900 dark:border-danger-700 dark:bg-danger-900 dark:text-danger-50',
+        default:
+          'border-neutral-200 bg-white text-neutral-950 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50',
+        success:
+          'border-success-200 bg-success-50 text-success-900 dark:border-success-700 dark:bg-success-900 dark:text-success-50',
+        warning:
+          'border-warning-200 bg-warning-50 text-warning-900 dark:border-warning-700 dark:bg-warning-900 dark:text-warning-50',
+        destructive:
+          'border-danger-200 bg-danger-50 text-danger-900 dark:border-danger-700 dark:bg-danger-900 dark:text-danger-50',
       },
     },
     defaultVariants: {
@@ -43,8 +47,7 @@ const toastVariants = cva(
 
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitive.Root> &
-    VariantProps<typeof toastVariants>
+  React.ComponentPropsWithoutRef<typeof ToastPrimitive.Root> & VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitive.Root
@@ -101,7 +104,11 @@ const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitive.Description ref={ref} className={cn('text-sm opacity-90', className)} {...props} />
+  <ToastPrimitive.Description
+    ref={ref}
+    className={cn('text-sm opacity-90', className)}
+    {...props}
+  />
 ));
 ToastDescription.displayName = ToastPrimitive.Description.displayName;
 

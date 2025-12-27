@@ -15,9 +15,7 @@ import { downloadFile } from '../lib/storage';
  * - Store OCR result in ocr_artifacts table
  * - When all pages are done, enqueue extraction
  */
-export async function handleDocOcr(
-  job: Job<DocOcrJobData>
-): Promise<DocOcrResult> {
+export async function handleDocOcr(job: Job<DocOcrJobData>): Promise<DocOcrResult> {
   const { documentId, workspaceId, pageNumber, storagePath } = job.data;
 
   console.log(`[DOC_OCR] Processing page ${pageNumber} of document ${documentId}`);
@@ -93,7 +91,9 @@ export async function handleDocOcr(
       where: { documentId },
     });
 
-    console.log(`[DOC_OCR] Page ${pageNumber} done. ${ocrCount}/${document.pageCount} pages complete.`);
+    console.log(
+      `[DOC_OCR] Page ${pageNumber} done. ${ocrCount}/${document.pageCount} pages complete.`
+    );
 
     if (document.pageCount && ocrCount >= document.pageCount) {
       // All pages done - update status and enqueue extraction

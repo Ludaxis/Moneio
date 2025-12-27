@@ -12,9 +12,7 @@ function getVisionClient(): ImageAnnotatorClient {
     if (credentials) {
       try {
         // Credentials can be a JSON string or file path
-        const parsedCredentials = credentials.startsWith('{')
-          ? JSON.parse(credentials)
-          : undefined;
+        const parsedCredentials = credentials.startsWith('{') ? JSON.parse(credentials) : undefined;
 
         visionClient = new ImageAnnotatorClient({
           projectId,
@@ -121,17 +119,21 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
           let paragraphText = '';
 
           for (const word of paragraph.words || []) {
-            const wordText = word.symbols?.map((s: protos.google.cloud.vision.v1.ISymbol) => s.text).join('') || '';
+            const wordText =
+              word.symbols?.map((s: protos.google.cloud.vision.v1.ISymbol) => s.text).join('') ||
+              '';
             const wordConfidence = word.confidence || 0;
 
             paragraphWords.push({
               text: wordText,
               confidence: wordConfidence,
               boundingBox: {
-                vertices: (word.boundingBox?.vertices || []).map((v: protos.google.cloud.vision.v1.IVertex) => ({
-                  x: v.x || 0,
-                  y: v.y || 0,
-                })),
+                vertices: (word.boundingBox?.vertices || []).map(
+                  (v: protos.google.cloud.vision.v1.IVertex) => ({
+                    x: v.x || 0,
+                    y: v.y || 0,
+                  })
+                ),
               },
             });
 
@@ -153,10 +155,12 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
           text: blockText.trim(),
           confidence: block.confidence || 0,
           boundingBox: {
-            vertices: (block.boundingBox?.vertices || []).map((v: protos.google.cloud.vision.v1.IVertex) => ({
-              x: v.x || 0,
-              y: v.y || 0,
-            })),
+            vertices: (block.boundingBox?.vertices || []).map(
+              (v: protos.google.cloud.vision.v1.IVertex) => ({
+                x: v.x || 0,
+                y: v.y || 0,
+              })
+            ),
           },
           paragraphs: blockParagraphs,
         });
@@ -166,13 +170,18 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
     // Detect primary language
     const detectedLanguages = annotation.pages?.[0]?.property?.detectedLanguages || [];
     type DetectedLanguage = protos.google.cloud.vision.v1.TextAnnotation.IDetectedLanguage;
-    const primaryLanguage = detectedLanguages.length > 0
-      ? detectedLanguages.sort((a: DetectedLanguage, b: DetectedLanguage) => (b.confidence || 0) - (a.confidence || 0))[0].languageCode || null
-      : null;
+    const primaryLanguage =
+      detectedLanguages.length > 0
+        ? detectedLanguages.sort(
+            (a: DetectedLanguage, b: DetectedLanguage) => (b.confidence || 0) - (a.confidence || 0)
+          )[0].languageCode || null
+        : null;
 
     const averageConfidence = confidenceCount > 0 ? totalConfidence / confidenceCount : 0;
 
-    console.log(`[OCR] Extracted ${blocks.length} blocks, confidence: ${(averageConfidence * 100).toFixed(1)}%`);
+    console.log(
+      `[OCR] Extracted ${blocks.length} blocks, confidence: ${(averageConfidence * 100).toFixed(1)}%`
+    );
 
     return {
       fullText: annotation.text || '',

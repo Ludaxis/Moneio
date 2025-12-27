@@ -42,69 +42,45 @@ const connection = getRedisConnection();
 const workers: Worker[] = [];
 
 // DOC_NORMALIZE Worker
-const docNormalizeWorker = new Worker(
-  QUEUE_NAMES.DOC_NORMALIZE,
-  handleDocNormalize,
-  {
-    connection,
-    concurrency: config.concurrency.docNormalize,
-  }
-);
+const docNormalizeWorker = new Worker(QUEUE_NAMES.DOC_NORMALIZE, handleDocNormalize, {
+  connection,
+  concurrency: config.concurrency.docNormalize,
+});
 workers.push(docNormalizeWorker);
 
 // DOC_OCR Worker
-const docOcrWorker = new Worker(
-  QUEUE_NAMES.DOC_OCR,
-  handleDocOcr,
-  {
-    connection,
-    concurrency: config.concurrency.docOcr,
-  }
-);
+const docOcrWorker = new Worker(QUEUE_NAMES.DOC_OCR, handleDocOcr, {
+  connection,
+  concurrency: config.concurrency.docOcr,
+});
 workers.push(docOcrWorker);
 
 // DOC_EXTRACT Worker
-const docExtractWorker = new Worker(
-  QUEUE_NAMES.DOC_EXTRACT,
-  handleDocExtract,
-  {
-    connection,
-    concurrency: config.concurrency.docExtract,
-  }
-);
+const docExtractWorker = new Worker(QUEUE_NAMES.DOC_EXTRACT, handleDocExtract, {
+  connection,
+  concurrency: config.concurrency.docExtract,
+});
 workers.push(docExtractWorker);
 
 // DOC_POSTPROCESS Worker
-const docPostprocessWorker = new Worker(
-  QUEUE_NAMES.DOC_POSTPROCESS,
-  handleDocPostprocess,
-  {
-    connection,
-    concurrency: config.concurrency.docPostprocess,
-  }
-);
+const docPostprocessWorker = new Worker(QUEUE_NAMES.DOC_POSTPROCESS, handleDocPostprocess, {
+  connection,
+  concurrency: config.concurrency.docPostprocess,
+});
 workers.push(docPostprocessWorker);
 
 // CATEGORIZATION Worker
-const categorizationWorker = new Worker(
-  QUEUE_NAMES.CATEGORIZATION,
-  handleCategorization,
-  {
-    connection,
-    concurrency: config.concurrency.categorization,
-  }
-);
+const categorizationWorker = new Worker(QUEUE_NAMES.CATEGORIZATION, handleCategorization, {
+  connection,
+  concurrency: config.concurrency.categorization,
+});
 workers.push(categorizationWorker);
 
 // FX_FETCH Worker
-const fxFetchWorker = new Worker(
-  QUEUE_NAMES.FX_FETCH,
-  handleFxFetch,
-  {
-    connection,
-    concurrency: config.concurrency.fxFetch,
-  }
-);
+const fxFetchWorker = new Worker(QUEUE_NAMES.FX_FETCH, handleFxFetch, {
+  connection,
+  concurrency: config.concurrency.fxFetch,
+});
 workers.push(fxFetchWorker);
 
 // ============================================================

@@ -67,9 +67,7 @@ export class RulesEngine {
     const rules = await this.repository.findByWorkspace(workspaceId);
 
     // Sort by priority (higher priority first) and filter enabled rules
-    const activeRules = rules
-      .filter((r) => r.enabled)
-      .sort((a, b) => b.priority - a.priority);
+    const activeRules = rules.filter((r) => r.enabled).sort((a, b) => b.priority - a.priority);
 
     for (const rule of activeRules) {
       if (this.matchesCondition(rule.conditionJson, transaction)) {
@@ -91,9 +89,7 @@ export class RulesEngine {
     const results = new Map<UUID, RuleMatchResult>();
     const rules = await this.repository.findByWorkspace(workspaceId);
 
-    const activeRules = rules
-      .filter((r) => r.enabled)
-      .sort((a, b) => b.priority - a.priority);
+    const activeRules = rules.filter((r) => r.enabled).sort((a, b) => b.priority - a.priority);
 
     for (const transaction of transactions) {
       for (const rule of activeRules) {
@@ -143,10 +139,7 @@ export class RulesEngine {
     return counterparty.toLowerCase().includes(pattern.toLowerCase());
   }
 
-  private matchesText(
-    condition: ContainsTextCondition,
-    transaction: BankTransaction
-  ): boolean {
+  private matchesText(condition: ContainsTextCondition, transaction: BankTransaction): boolean {
     let text: string;
 
     switch (condition.field) {
@@ -169,10 +162,7 @@ export class RulesEngine {
     return text.toLowerCase().includes(condition.pattern.toLowerCase());
   }
 
-  private matchesAmount(
-    condition: AmountRangeCondition,
-    transaction: BankTransaction
-  ): boolean {
+  private matchesAmount(condition: AmountRangeCondition, transaction: BankTransaction): boolean {
     const amount = transaction.amount.amount;
 
     // Check currency if specified
@@ -191,10 +181,7 @@ export class RulesEngine {
     return true;
   }
 
-  private matchesIban(
-    condition: IbanMatchCondition,
-    _transaction: BankTransaction
-  ): boolean {
+  private matchesIban(condition: IbanMatchCondition, _transaction: BankTransaction): boolean {
     // IBAN matching would require access to bank account data
     // For now, this is a placeholder
     // In production, we'd look up the transaction's bank account IBAN
@@ -225,11 +212,7 @@ export const RuleConditionBuilder = {
     };
   },
 
-  amountRange(
-    minAmount?: number,
-    maxAmount?: number,
-    currency?: string
-  ): AmountRangeCondition {
+  amountRange(minAmount?: number, maxAmount?: number, currency?: string): AmountRangeCondition {
     return {
       kind: 'amount_range',
       minAmount,

@@ -123,12 +123,16 @@ export async function enqueueCategorization(data: CategorizationJobData): Promis
   const queue = getCategorizationQueue();
 
   if (!queue) {
-    console.log(`[QUEUE STUB] CATEGORIZATION queued for ${data.transactionIds.length} transactions`);
+    console.log(
+      `[QUEUE STUB] CATEGORIZATION queued for ${data.transactionIds.length} transactions`
+    );
     return null;
   }
 
   const job = await queue.add(`categorize:${data.workspaceId}`, data);
 
-  console.log(`[QUEUE] CATEGORIZATION job ${job.id} queued for ${data.transactionIds.length} transactions`);
+  console.log(
+    `[QUEUE] CATEGORIZATION job ${job.id} queued for ${data.transactionIds.length} transactions`
+  );
   return job.id || null;
 }

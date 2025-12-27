@@ -87,7 +87,9 @@ export function multiplyMoney(money: Money, scalar: number): Money {
  */
 export function convertMoney(money: Money, rate: FxRate): Money {
   if (money.currency !== rate.baseCurrency) {
-    throw new Error(`Money currency ${money.currency} doesn't match rate base ${rate.baseCurrency}`);
+    throw new Error(
+      `Money currency ${money.currency} doesn't match rate base ${rate.baseCurrency}`
+    );
   }
 
   const targetCurrencyInfo = getCurrencyInfo(rate.quoteCurrency);

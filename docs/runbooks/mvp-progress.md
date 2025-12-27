@@ -9,6 +9,7 @@ This document tracks progress on the MVP implementation, updated after each tick
 **Status:** Complete
 
 ### What's Done
+
 - Monorepo structure with Turborepo
 - All package directories created:
   - `apps/web` - Next.js web application
@@ -25,6 +26,7 @@ This document tracks progress on the MVP implementation, updated after each tick
 - Environment variable examples for web and worker
 
 ### How to Verify
+
 ```bash
 # Check directory structure
 ls -la apps/ packages/
@@ -41,6 +43,7 @@ cat apps/worker/.env.example
 ```
 
 ### Known Gaps
+
 - Need to install dependencies with `pnpm install`
 - packages/db still has old Drizzle config (will be replaced in T02)
 
@@ -51,6 +54,7 @@ cat apps/worker/.env.example
 **Status:** Complete
 
 ### What's Done
+
 - Replaced Drizzle with Prisma ORM
 - Created `prisma/schema.prisma` with full MVP schema:
   - Core: users, workspaces, workspace_members
@@ -65,6 +69,7 @@ cat apps/worker/.env.example
 - All tables have proper indexes for workspace_id scoping
 
 ### How to Verify
+
 ```bash
 # View Prisma schema
 cat packages/db/prisma/schema.prisma
@@ -80,6 +85,7 @@ pnpm db:generate
 ```
 
 ### Known Gaps
+
 - Need to run `pnpm install` then `pnpm db:generate` to create Prisma client
 - Seed script will be added in T03
 
@@ -90,6 +96,7 @@ pnpm db:generate
 **Status:** Complete
 
 ### What's Done
+
 - Full MVP schema implemented in T02 with all tables:
   - users, workspaces, workspace_members
   - documents, document_blobs, ocr_artifacts, extractions
@@ -110,6 +117,7 @@ pnpm db:generate
   - Demo user for development testing
 
 ### How to Verify
+
 ```bash
 # View seed script
 cat packages/db/prisma/seed.ts
@@ -119,6 +127,7 @@ pnpm db:seed
 ```
 
 ### Known Gaps
+
 - None - ready for database connection
 
 ---
@@ -128,6 +137,7 @@ pnpm db:seed
 **Status:** Complete
 
 ### What's Done
+
 - Next.js 14 App Router with next-intl
 - Locale-based routing: `/{locale}/...` (en, et, fa, ar)
 - RTL support for fa/ar via `<html dir="rtl">`
@@ -141,6 +151,7 @@ pnpm db:seed
 - Reduced motion support
 
 ### How to Verify
+
 ```bash
 # View locale layout
 cat apps/web/src/app/[locale]/layout.tsx
@@ -156,6 +167,7 @@ ls apps/web/messages/
 ```
 
 ### Known Gaps
+
 - Need to install dependencies with `pnpm install`
 - Auth not yet integrated (T05)
 
@@ -166,6 +178,7 @@ ls apps/web/messages/
 **Status:** Complete
 
 ### What's Done
+
 - Supabase SSR client setup (server, browser, middleware)
 - Magic link authentication on login page
 - Auth callback handler with user bootstrap
@@ -175,6 +188,7 @@ ls apps/web/messages/
 - Sign out server action
 
 ### How to Verify
+
 ```bash
 # View Supabase client setup
 cat apps/web/src/lib/supabase/server.ts
@@ -190,6 +204,7 @@ cat apps/web/src/lib/auth/user-bootstrap.ts
 ```
 
 ### Known Gaps
+
 - Need NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY env vars
 - User dropdown with sign out not yet in topbar (T06)
 
@@ -200,6 +215,7 @@ cat apps/web/src/lib/auth/user-bootstrap.ts
 **Status:** Complete
 
 ### What's Done
+
 - Workspace service with create/get/update functions
 - RBAC system with owner/admin/member roles
 - Role-based permissions (24 permissions across 8 categories)
@@ -210,6 +226,7 @@ cat apps/web/src/lib/auth/user-bootstrap.ts
 - Categories seeded on workspace creation
 
 ### How to Verify
+
 ```bash
 # View workspace service
 cat apps/web/src/lib/workspace/service.ts
@@ -225,6 +242,7 @@ cat apps/web/src/app/[locale]/(app)/workspace/new/page.tsx
 ```
 
 ### Known Gaps
+
 - Member invitation flow (future enhancement)
 - Workspace settings page (future enhancement)
 
@@ -235,6 +253,7 @@ cat apps/web/src/app/[locale]/(app)/workspace/new/page.tsx
 **Status:** Complete
 
 ### What's Done
+
 - Storage service with signed upload/read URLs
 - Signed upload URL API endpoint
 - Document creation with blob record
@@ -245,6 +264,7 @@ cat apps/web/src/app/[locale]/(app)/workspace/new/page.tsx
 - Document service with CRUD operations
 
 ### How to Verify
+
 ```bash
 # View storage service
 cat apps/web/src/lib/storage/service.ts
@@ -258,6 +278,7 @@ cat apps/web/src/app/api/documents/upload-url/route.ts
 ```
 
 ### Known Gaps
+
 - Queue integration in T09
 - Worker processing in T10-T14
 
@@ -268,6 +289,7 @@ cat apps/web/src/app/api/documents/upload-url/route.ts
 **Status:** Complete
 
 ### What's Done
+
 - Documents list page with table view
 - Status filter dropdown (all/uploaded/processing/ready/failed)
 - Pagination with next/previous controls
@@ -281,6 +303,7 @@ cat apps/web/src/app/api/documents/upload-url/route.ts
 - Full i18n support for all 4 locales (en, et, fa, ar)
 
 ### How to Verify
+
 ```bash
 # View documents list page
 cat apps/web/src/app/[locale]/(app)/documents/page.tsx
@@ -296,6 +319,7 @@ cat apps/web/src/app/api/documents/[id]/route.ts
 ```
 
 ### Known Gaps
+
 - Extraction review UI will be implemented in T15
 - Real document processing will be implemented in T09-T14
 
@@ -306,6 +330,7 @@ cat apps/web/src/app/api/documents/[id]/route.ts
 **Status:** Complete
 
 ### What's Done
+
 - Worker service with BullMQ + ioredis
 - 6 queue workers configured:
   - DOC_NORMALIZE (document normalization)
@@ -324,6 +349,7 @@ cat apps/web/src/app/api/documents/[id]/route.ts
 - Environment variable examples updated
 
 ### How to Verify
+
 ```bash
 # View worker entry point
 cat apps/worker/src/index.ts
@@ -339,6 +365,7 @@ cat apps/web/src/lib/queue/client.ts
 ```
 
 ### Known Gaps
+
 - All handlers are stubs - will be implemented in T10-T14, T18, T20
 - Need REDIS_URL configured to actually enqueue jobs
 
@@ -349,6 +376,7 @@ cat apps/web/src/lib/queue/client.ts
 **Status:** Complete
 
 ### What's Done
+
 - Supabase storage client for worker (download/upload files)
 - Document processor utility:
   - PDF page counting using pdf-lib
@@ -365,6 +393,7 @@ cat apps/web/src/lib/queue/client.ts
   - Error handling with document failure marking
 
 ### How to Verify
+
 ```bash
 # View document processor
 cat apps/worker/src/lib/document-processor.ts
@@ -377,6 +406,7 @@ cat apps/worker/src/handlers/doc-normalize.ts
 ```
 
 ### Known Gaps
+
 - Image normalization passes through (no resize/conversion yet)
 - For production: add sharp for image processing
 
@@ -387,6 +417,7 @@ cat apps/worker/src/handlers/doc-normalize.ts
 **Status:** Complete
 
 ### What's Done
+
 - OCR service with Google Cloud Vision API:
   - Supports PDF and image documents
   - Uses documentTextDetection for structured output
@@ -402,6 +433,7 @@ cat apps/worker/src/handlers/doc-normalize.ts
   - Graceful fallback on OCR failure
 
 ### How to Verify
+
 ```bash
 # View OCR service
 cat apps/worker/src/lib/ocr.ts
@@ -411,6 +443,7 @@ cat apps/worker/src/handlers/doc-ocr.ts
 ```
 
 ### Known Gaps
+
 - Requires GOOGLE_CLOUD_CREDENTIALS env var
 - No caching of Vision API results
 
@@ -421,6 +454,7 @@ cat apps/worker/src/handlers/doc-ocr.ts
 **Status:** Complete
 
 ### What's Done
+
 - OpenAI LLM client implementing LlmClient interface:
   - `complete(prompt)` method with JSON mode
   - `getModelInfo()` for tracking/audit
@@ -438,6 +472,7 @@ cat apps/worker/src/handlers/doc-ocr.ts
 - Fixed worker type errors for Prisma compatibility
 
 ### How to Verify
+
 ```bash
 # View OpenAI client
 cat packages/ai/src/clients/openai.ts
@@ -450,6 +485,7 @@ cat packages/ai/src/extraction/invoice-extractor.ts
 ```
 
 ### Known Gaps
+
 - Requires OPENAI_API_KEY env var
 - No streaming support yet (T22)
 
@@ -460,6 +496,7 @@ cat packages/ai/src/extraction/invoice-extractor.ts
 **Status:** Complete
 
 ### What's Done
+
 - Full DOC_EXTRACT handler implementation:
   - Builds OcrPayload from OCR artifacts stored in database
   - Document type detection using pattern matching (invoice, receipt, statement)
@@ -471,6 +508,7 @@ cat packages/ai/src/extraction/invoice-extractor.ts
   - Updates document type in database
 
 ### How to Verify
+
 ```bash
 # View extraction handler
 cat apps/worker/src/handlers/doc-extract.ts
@@ -480,6 +518,7 @@ grep -A 50 "detectDocumentType" apps/worker/src/handlers/doc-extract.ts
 ```
 
 ### Known Gaps
+
 - Requires OPENAI_API_KEY env var
 - Evidence extraction could be improved with better source text matching
 
@@ -490,6 +529,7 @@ grep -A 50 "detectDocumentType" apps/worker/src/handlers/doc-extract.ts
 **Status:** Complete
 
 ### What's Done
+
 - Full DOC_POSTPROCESS handler implementation:
   - Parses extraction payload based on document type (invoice, receipt, statement)
   - Merchant matching: normalizes vendor name, looks up existing or creates new
@@ -501,6 +541,7 @@ grep -A 50 "detectDocumentType" apps/worker/src/handlers/doc-extract.ts
   - Error handling with document failure marking
 
 ### How to Verify
+
 ```bash
 # View postprocess handler
 cat apps/worker/src/handlers/doc-postprocess.ts
@@ -510,6 +551,7 @@ grep -A 30 "findOrCreateMerchant" apps/worker/src/handlers/doc-postprocess.ts
 ```
 
 ### Known Gaps
+
 - Statement extraction doesn't create records (deferred to T17 CSV import)
 - Address parsing for country extraction could be improved
 
@@ -520,6 +562,7 @@ grep -A 30 "findOrCreateMerchant" apps/worker/src/handlers/doc-postprocess.ts
 **Status:** Complete
 
 ### What's Done
+
 - ExtractionReviewPanel component:
   - Displays extracted data in structured form (invoice/receipt/statement)
   - Shows confidence scores with visual indicators
@@ -539,6 +582,7 @@ grep -A 30 "findOrCreateMerchant" apps/worker/src/handlers/doc-postprocess.ts
   - Auto-refresh after updates
 
 ### How to Verify
+
 ```bash
 # View extraction review panel component
 cat apps/web/src/components/documents/extraction-review-panel.tsx
@@ -552,6 +596,7 @@ cat apps/web/src/app/api/audit-log/route.ts
 ```
 
 ### Known Gaps
+
 - Line item editing not yet implemented (edit entire payload only)
 - Audit log UI component (can view via API)
 
@@ -562,6 +607,7 @@ cat apps/web/src/app/api/audit-log/route.ts
 **Status:** Complete
 
 ### What's Done
+
 - Multi-step CSV import wizard:
   - Step 1: Upload - Drag & drop or file picker for CSV
   - Step 2: Mapping - Auto-detect + manual column mapping
@@ -584,6 +630,7 @@ cat apps/web/src/app/api/audit-log/route.ts
 - Audit logging for imports
 
 ### How to Verify
+
 ```bash
 # View import wizard
 cat apps/web/src/app/[locale]/(app)/transactions/import/page.tsx
@@ -597,6 +644,7 @@ cat apps/web/src/app/api/transactions/import/route.ts
 ```
 
 ### Known Gaps
+
 - Bank account selection (auto-creates default)
 - CSV template download
 
@@ -607,6 +655,7 @@ cat apps/web/src/app/api/transactions/import/route.ts
 **Status:** Complete
 
 ### What's Done
+
 - Zero-dependency CSV parsing utilities in @moneio/core-ledger:
   - `parseCsv()` - Main CSV parser with options
   - `detectDelimiter()` - Auto-detect comma, semicolon, tab, pipe
@@ -623,6 +672,7 @@ cat apps/web/src/app/api/transactions/import/route.ts
   - Returns warnings for empty descriptions or unparseable amounts
 
 ### How to Verify
+
 ```bash
 # View CSV utilities
 cat packages/core-ledger/src/utils/csv.ts
@@ -632,40 +682,48 @@ cat packages/core-ledger/src/index.ts
 ```
 
 ### Known Gaps
+
 - No streaming support for very large files
 - Column detection could be improved with ML
 
 ---
 
 ## T18: Tx categorization suggestions
+
 **Status:** Pending
 
 ---
 
 ## T19: Matching suggestions UI
+
 **Status:** Pending
 
 ---
 
 ## T20: FX_FETCH job + FX utilities
+
 **Status:** Pending
 
 ---
 
 ## T21: Dashboard + Reports
+
 **Status:** Pending
 
 ---
 
 ## T22: Chat API with citations
+
 **Status:** Pending
 
 ---
 
 ## T23: Observability + tests
+
 **Status:** Pending
 
 ---
 
 ## T24: Deployment runbooks + smoke checklist
+
 **Status:** Pending

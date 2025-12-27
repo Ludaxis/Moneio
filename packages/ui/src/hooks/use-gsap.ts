@@ -51,7 +51,10 @@ export function useFadeIn(options?: { duration?: number; delay?: number; y?: num
 }
 
 // Hook for staggered list animation
-export function useStaggerAnimation(itemCount: number, options?: { stagger?: number; duration?: number }) {
+export function useStaggerAnimation(
+  itemCount: number,
+  options?: { stagger?: number; duration?: number }
+) {
   const ref = useRef<HTMLElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 

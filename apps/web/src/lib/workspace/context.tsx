@@ -46,9 +46,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       // Set workspace from URL or first
       const workspaceId = searchParams.get('workspace');
       if (data.length > 0) {
-        const ws = workspaceId
-          ? data.find((w: Workspace) => w.id === workspaceId)
-          : data[0];
+        const ws = workspaceId ? data.find((w: Workspace) => w.id === workspaceId) : data[0];
         setWorkspace(ws || data[0]);
       }
     });

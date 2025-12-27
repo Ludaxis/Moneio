@@ -69,7 +69,9 @@ export default function CsvImportPage() {
   const [preview, setPreview] = useState<PreviewTransaction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [_importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ imported: number; skipped: number } | null>(null);
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number } | null>(
+    null
+  );
 
   const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
     const lines = text.split(/\r?\n/).filter((line) => line.trim());
@@ -119,12 +121,28 @@ export default function CsvImportPage() {
     const detected: Partial<ColumnMapping> = {};
 
     // Date patterns
-    const datePatterns = ['date', 'datum', 'kuupäev', 'تاريخ', 'posted', 'value date', 'transaction date'];
+    const datePatterns = [
+      'date',
+      'datum',
+      'kuupäev',
+      'تاريخ',
+      'posted',
+      'value date',
+      'transaction date',
+    ];
     const dateIdx = normalized.findIndex((h) => datePatterns.some((p) => h.includes(p)));
     if (dateIdx >= 0) detected.date = csvHeaders[dateIdx];
 
     // Description patterns
-    const descPatterns = ['description', 'memo', 'kirjeldus', 'توضیحات', 'details', 'narrative', 'text'];
+    const descPatterns = [
+      'description',
+      'memo',
+      'kirjeldus',
+      'توضیحات',
+      'details',
+      'narrative',
+      'text',
+    ];
     const descIdx = normalized.findIndex((h) => descPatterns.some((p) => h.includes(p)));
     if (descIdx >= 0) detected.description = csvHeaders[descIdx];
 
@@ -191,7 +209,11 @@ export default function CsvImportPage() {
     // Handle different number formats
     let cleaned = value.replace(/[^\d.,-]/g, '');
     // Handle European format (1.234,56)
-    if (cleaned.includes(',') && cleaned.includes('.') && cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+    if (
+      cleaned.includes(',') &&
+      cleaned.includes('.') &&
+      cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')
+    ) {
       cleaned = cleaned.replace(/\./g, '').replace(',', '.');
     } else if (cleaned.includes(',') && !cleaned.includes('.')) {
       // Handle comma as decimal separator
@@ -300,9 +322,25 @@ export default function CsvImportPage() {
                     : 'border-border bg-background text-muted-foreground'
               )}
             >
-              {isComplete ? <Check className="h-5 w-5" /> : <Icon className={cn('h-5 w-5', step === 'importing' && s === 'complete' && 'animate-spin')} />}
+              {isComplete ? (
+                <Check className="h-5 w-5" />
+              ) : (
+                <Icon
+                  className={cn(
+                    'h-5 w-5',
+                    step === 'importing' && s === 'complete' && 'animate-spin'
+                  )}
+                />
+              )}
             </div>
-            {i < 3 && <div className={cn('h-0.5 w-8 transition-colors', isComplete ? 'bg-success' : 'bg-border')} />}
+            {i < 3 && (
+              <div
+                className={cn(
+                  'h-0.5 w-8 transition-colors',
+                  isComplete ? 'bg-success' : 'bg-border'
+                )}
+              />
+            )}
           </div>
         );
       })}
@@ -342,7 +380,7 @@ export default function CsvImportPage() {
           <div key={field} className="space-y-2">
             <label className="flex items-center gap-1 text-sm font-medium">
               {field.charAt(0).toUpperCase() + field.slice(1)}
-              {REQUIRED_COLUMNS.includes(field as typeof REQUIRED_COLUMNS[number]) && (
+              {REQUIRED_COLUMNS.includes(field as (typeof REQUIRED_COLUMNS)[number]) && (
                 <span className="text-destructive">*</span>
               )}
             </label>
@@ -437,7 +475,9 @@ export default function CsvImportPage() {
                 <th className="px-4 py-2 text-left font-medium">Description</th>
                 <th className="px-4 py-2 text-right font-medium">Amount</th>
                 {mapping.balance && <th className="px-4 py-2 text-right font-medium">Balance</th>}
-                {mapping.reference && <th className="px-4 py-2 text-left font-medium">Reference</th>}
+                {mapping.reference && (
+                  <th className="px-4 py-2 text-left font-medium">Reference</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -451,11 +491,17 @@ export default function CsvImportPage() {
                       tx.amount >= 0 ? 'text-success' : 'text-destructive'
                     )}
                   >
-                    {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {tx.amount.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </td>
                   {mapping.balance && (
                     <td className="px-4 py-2 text-right font-tabular-nums">
-                      {tx.balance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {tx.balance?.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </td>
                   )}
                   {mapping.reference && <td className="px-4 py-2">{tx.reference}</td>}

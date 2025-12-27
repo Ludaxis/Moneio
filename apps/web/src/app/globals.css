@@ -83,7 +83,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 }
 
@@ -133,12 +135,7 @@
   bottom: 0;
   left: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    hsl(var(--muted-foreground) / 0.1),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, hsl(var(--muted-foreground) / 0.1), transparent);
   animation: shimmer 1.5s infinite;
 }
 

@@ -201,7 +201,8 @@ export default function TransactionsPage() {
             {total > pageSize && (
               <div className="flex items-center justify-between border-t border-border px-4 py-3">
                 <p className="text-sm text-muted-foreground">
-                  Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+                  Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of{' '}
+                  {total}
                 </p>
                 <div className="flex gap-2">
                   <button

@@ -4,13 +4,12 @@ import { getDocument, getDocumentViewUrl } from '@/lib/documents';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

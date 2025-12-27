@@ -20,7 +20,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { DocumentUploader } from '@/components/documents';
 import { useWorkspace } from '@/lib/workspace';
 
-type DocumentStatus = 'uploaded' | 'processing' | 'ocr_complete' | 'extracting' | 'ready' | 'failed';
+type DocumentStatus =
+  | 'uploaded'
+  | 'processing'
+  | 'ocr_complete'
+  | 'extracting'
+  | 'ready'
+  | 'failed';
 
 interface Document {
   id: string;
@@ -34,16 +40,30 @@ interface Document {
   createdAt: string;
 }
 
-const STATUS_CONFIG: Record<DocumentStatus, { icon: React.ElementType; color: string; labelKey: string }> = {
+const STATUS_CONFIG: Record<
+  DocumentStatus,
+  { icon: React.ElementType; color: string; labelKey: string }
+> = {
   uploaded: { icon: Clock, color: 'text-muted-foreground', labelKey: 'statusUploaded' },
   processing: { icon: Loader2, color: 'text-blue-500 animate-spin', labelKey: 'statusProcessing' },
-  ocr_complete: { icon: Loader2, color: 'text-blue-500 animate-spin', labelKey: 'statusOcrComplete' },
+  ocr_complete: {
+    icon: Loader2,
+    color: 'text-blue-500 animate-spin',
+    labelKey: 'statusOcrComplete',
+  },
   extracting: { icon: Loader2, color: 'text-blue-500 animate-spin', labelKey: 'statusExtracting' },
   ready: { icon: CheckCircle2, color: 'text-success', labelKey: 'statusReady' },
   failed: { icon: AlertCircle, color: 'text-destructive', labelKey: 'statusFailed' },
 };
 
-const STATUS_OPTIONS: DocumentStatus[] = ['uploaded', 'processing', 'ocr_complete', 'extracting', 'ready', 'failed'];
+const STATUS_OPTIONS: DocumentStatus[] = [
+  'uploaded',
+  'processing',
+  'ocr_complete',
+  'extracting',
+  'ready',
+  'failed',
+];
 
 export default function DocumentsPage() {
   const t = useTranslations('documents');
@@ -159,10 +179,7 @@ export default function DocumentsPage() {
       {/* Uploader */}
       {showUploader && (
         <div className="rounded-lg border border-border bg-card p-4">
-          <DocumentUploader
-            workspaceId={workspace.id}
-            onUploadComplete={handleUploadComplete}
-          />
+          <DocumentUploader workspaceId={workspace.id} onUploadComplete={handleUploadComplete} />
         </div>
       )}
 
@@ -238,7 +255,9 @@ export default function DocumentsPage() {
                 return (
                   <tr
                     key={doc.id}
-                    onClick={() => router.push(`/${locale}/documents/${doc.id}?workspace=${workspace.id}`)}
+                    onClick={() =>
+                      router.push(`/${locale}/documents/${doc.id}?workspace=${workspace.id}`)
+                    }
                     className="cursor-pointer hover:bg-muted/50"
                   >
                     <td className="px-4 py-3">

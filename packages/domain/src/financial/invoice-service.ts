@@ -120,7 +120,9 @@ export class InvoiceService {
     return this.repository.findById(id);
   }
 
-  async getInvoiceWithLineItems(id: UUID): Promise<{ invoice: Invoice; lineItems: InvoiceLineItem[] } | null> {
+  async getInvoiceWithLineItems(
+    id: UUID
+  ): Promise<{ invoice: Invoice; lineItems: InvoiceLineItem[] } | null> {
     const invoice = await this.repository.findById(id);
     if (!invoice) return null;
 

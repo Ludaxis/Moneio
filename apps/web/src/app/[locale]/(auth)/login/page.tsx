@@ -47,12 +47,8 @@ export default function LoginPage() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             M
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-foreground">
-            {tCommon('appName')}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t('signIn')}
-          </p>
+          <h1 className="mt-4 text-2xl font-bold text-foreground">{tCommon('appName')}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t('signIn')}</p>
         </div>
 
         {/* Form */}

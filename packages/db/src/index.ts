@@ -28,8 +28,4 @@ export type {
 } from '@prisma/client';
 
 // Export enums as values (not just types)
-export {
-  DocumentStatus,
-  DocumentType,
-  SuggestionType,
-} from '@prisma/client';
+export { DocumentStatus, DocumentType, SuggestionType } from '@prisma/client';

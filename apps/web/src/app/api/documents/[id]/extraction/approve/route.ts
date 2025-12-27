@@ -8,13 +8,12 @@ import { hasPermission } from '@/lib/workspace';
  * POST /api/documents/[id]/extraction/approve
  * Approve an extraction
  */
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -50,10 +49,7 @@ export async function POST(
     }
 
     if (extraction.approved) {
-      return NextResponse.json(
-        { error: 'Extraction already approved' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Extraction already approved' }, { status: 400 });
     }
 
     // Approve extraction

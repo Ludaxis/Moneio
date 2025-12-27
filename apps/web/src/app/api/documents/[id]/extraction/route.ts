@@ -8,13 +8,12 @@ import { hasPermission } from '@/lib/workspace';
  * PATCH /api/documents/[id]/extraction
  * Update extraction payload
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -50,10 +49,7 @@ export async function PATCH(
     }
 
     if (extraction.approved) {
-      return NextResponse.json(
-        { error: 'Cannot edit approved extraction' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Cannot edit approved extraction' }, { status: 400 });
     }
 
     // Store old value for audit log

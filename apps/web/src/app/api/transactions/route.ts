@@ -11,7 +11,9 @@ import { hasPermission } from '@/lib/workspace';
 export async function GET(request: Request) {
   try {
     const supabase = createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -17,11 +17,7 @@ export interface EmbeddingAdapter {
 }
 
 export interface VectorStore {
-  upsert(
-    id: string,
-    embedding: number[],
-    metadata: Record<string, unknown>
-  ): Promise<void>;
+  upsert(id: string, embedding: number[], metadata: Record<string, unknown>): Promise<void>;
   query(
     embedding: number[],
     topK: number,
@@ -75,11 +71,7 @@ export class FinancialRagService implements RagService {
     });
   }
 
-  async retrieve(
-    query: string,
-    workspaceId: UUID,
-    topK = 5
-  ): Promise<RetrievedDocument[]> {
+  async retrieve(query: string, workspaceId: UUID, topK = 5): Promise<RetrievedDocument[]> {
     // Generate query embedding
     const queryEmbedding = await this.embedding.embed(query);
 
@@ -115,11 +107,7 @@ export class InMemoryVectorStore implements VectorStore {
     { embedding: number[]; metadata: Record<string, unknown> }
   > = new Map();
 
-  async upsert(
-    id: string,
-    embedding: number[],
-    metadata: Record<string, unknown>
-  ): Promise<void> {
+  async upsert(id: string, embedding: number[], metadata: Record<string, unknown>): Promise<void> {
     this.vectors.set(id, { embedding, metadata });
   }
 

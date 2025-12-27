@@ -27,10 +27,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
           return (
             <li
               key={step.id}
-              className={cn(
-                'relative',
-                index !== steps.length - 1 && 'flex-1 pr-8 sm:pr-20'
-              )}
+              className={cn('relative', index !== steps.length - 1 && 'flex-1 pr-8 sm:pr-20')}
             >
               <div className="flex items-center">
                 <div
@@ -39,15 +36,11 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                     isCompleted
                       ? 'border-primary-600 bg-primary-600 text-white'
                       : isCurrent
-                      ? 'border-primary-600 bg-white text-primary-600 dark:bg-neutral-900'
-                      : 'border-neutral-300 bg-white text-neutral-500 dark:border-neutral-600 dark:bg-neutral-800'
+                        ? 'border-primary-600 bg-white text-primary-600 dark:bg-neutral-900'
+                        : 'border-neutral-300 bg-white text-neutral-500 dark:border-neutral-600 dark:bg-neutral-800'
                   )}
                 >
-                  {isCompleted ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
+                  {isCompleted ? <Check className="h-4 w-4" /> : <span>{index + 1}</span>}
                 </div>
                 {index !== steps.length - 1 && (
                   <div

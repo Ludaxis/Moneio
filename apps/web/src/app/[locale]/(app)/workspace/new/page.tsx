@@ -97,9 +97,7 @@ export default function NewWorkspacePage() {
         </div>
 
         {error && (
-          <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
+          <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">{error}</div>
         )}
 
         <div className="flex gap-4">

@@ -126,10 +126,7 @@ Return only valid JSON. Use null for fields that cannot be determined.`;
     return Math.min(Math.round((score / maxScore) * 100), 100);
   }
 
-  private buildEvidence(
-    ocrPayload: OcrPayload,
-    extraction: InvoiceExtraction
-  ): AiEvidence[] {
+  private buildEvidence(ocrPayload: OcrPayload, extraction: InvoiceExtraction): AiEvidence[] {
     const evidence: AiEvidence[] = [];
 
     // Find evidence for key fields in OCR data

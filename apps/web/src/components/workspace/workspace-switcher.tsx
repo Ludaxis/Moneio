@@ -30,9 +30,7 @@ export function WorkspaceSwitcher() {
     // Set current workspace from URL or first workspace
     const workspaceId = searchParams.get('workspace');
     if (workspaces.length > 0) {
-      const workspace = workspaceId
-        ? workspaces.find((w) => w.id === workspaceId)
-        : workspaces[0];
+      const workspace = workspaceId ? workspaces.find((w) => w.id === workspaceId) : workspaces[0];
       setCurrentWorkspace(workspace || workspaces[0]);
     }
   }, [workspaces, searchParams]);
@@ -61,9 +59,7 @@ export function WorkspaceSwitcher() {
   };
 
   if (loading) {
-    return (
-      <div className="h-10 w-40 animate-pulse rounded-lg bg-muted" />
-    );
+    return <div className="h-10 w-40 animate-pulse rounded-lg bg-muted" />;
   }
 
   if (workspaces.length === 0) {
@@ -91,10 +87,7 @@ export function WorkspaceSwitcher() {
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           {/* Dropdown */}
           <div className="absolute end-0 z-50 mt-2 w-64 rounded-lg border border-border bg-popover p-1 shadow-lg">

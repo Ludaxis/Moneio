@@ -101,10 +101,7 @@ Return only valid JSON. Use null for fields that cannot be determined.`;
     return Math.min(Math.round(score), 100);
   }
 
-  private buildEvidence(
-    ocrPayload: OcrPayload,
-    extraction: StatementExtraction
-  ): AiEvidence[] {
+  private buildEvidence(ocrPayload: OcrPayload, extraction: StatementExtraction): AiEvidence[] {
     const evidence: AiEvidence[] = [];
 
     for (const page of ocrPayload.pages) {

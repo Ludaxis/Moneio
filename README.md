@@ -74,28 +74,33 @@ pnpm db:push      # Push schema to database (development)
 ## API Endpoints
 
 ### Documents
+
 - `POST /api/documents/upload` - Upload a document
 - `GET /api/documents/:id` - Get document details
 - `POST /api/documents/:id/retry` - Retry processing
 - `POST /api/documents/:id/approve-extraction` - Approve extracted data
 
 ### Invoices
+
 - `GET /api/invoices` - List invoices
 - `POST /api/invoices` - Create invoice
 - `POST /api/invoices/:id/approve` - Approve invoice
 - `POST /api/invoices/:id/mark-paid` - Mark as paid
 
 ### Transactions
+
 - `GET /api/transactions` - List transactions
 - `POST /api/transactions/:id/categorize` - Categorize transaction
 - `POST /api/transactions/import-csv` - Import from CSV
 
 ### Reports
+
 - `GET /api/reports/cashflow` - Cashflow report
 - `GET /api/reports/vat` - VAT summary
 - `GET /api/reports/dashboard` - Dashboard metrics
 
 ### Chat
+
 - `POST /api/chat` - Send a message to the AI assistant
 
 ## Technology Stack

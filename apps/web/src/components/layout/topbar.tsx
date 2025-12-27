@@ -65,10 +65,7 @@ export function Topbar() {
 
           {userMenuOpen && (
             <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setUserMenuOpen(false)}
-              />
+              <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
               <div className="absolute end-0 z-50 mt-2 w-48 rounded-lg border border-border bg-popover p-1 shadow-lg">
                 <Link
                   href={`/${locale}/settings/profile`}

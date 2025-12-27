@@ -8,12 +8,7 @@ interface SkeletonProps {
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
-    <div
-      className={cn(
-        'animate-pulse rounded-md bg-neutral-200 dark:bg-neutral-700',
-        className
-      )}
-    />
+    <div className={cn('animate-pulse rounded-md bg-neutral-200 dark:bg-neutral-700', className)} />
   );
 }
 
@@ -21,13 +16,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
   return (
     <div className={cn('space-y-2', className)}>
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className={cn(
-            'h-4',
-            i === lines - 1 ? 'w-3/4' : 'w-full'
-          )}
-        />
+        <Skeleton key={i} className={cn('h-4', i === lines - 1 ? 'w-3/4' : 'w-full')} />
       ))}
     </div>
   );
@@ -35,10 +24,12 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
 
 export function SkeletonCard({ className }: SkeletonProps) {
   return (
-    <div className={cn(
-      'rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800',
-      className
-    )}>
+    <div
+      className={cn(
+        'rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800',
+        className
+      )}
+    >
       <Skeleton className="h-4 w-1/3 mb-4" />
       <Skeleton className="h-8 w-1/2 mb-2" />
       <SkeletonText lines={2} />
@@ -46,7 +37,15 @@ export function SkeletonCard({ className }: SkeletonProps) {
   );
 }
 
-export function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: number; columns?: number; className?: string }) {
+export function SkeletonTable({
+  rows = 5,
+  columns = 4,
+  className,
+}: {
+  rows?: number;
+  columns?: number;
+  className?: string;
+}) {
   return (
     <div className={cn('space-y-3', className)}>
       {/* Header */}

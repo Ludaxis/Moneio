@@ -179,7 +179,8 @@ export function isToday(date: Date): boolean {
  * Get fiscal year start date
  */
 export function getFiscalYearStart(date: Date, fiscalYearStartMonth: number = 0): Date {
-  const year = date.getMonth() >= fiscalYearStartMonth ? date.getFullYear() : date.getFullYear() - 1;
+  const year =
+    date.getMonth() >= fiscalYearStartMonth ? date.getFullYear() : date.getFullYear() - 1;
   return new Date(year, fiscalYearStartMonth, 1, 0, 0, 0, 0);
 }
 

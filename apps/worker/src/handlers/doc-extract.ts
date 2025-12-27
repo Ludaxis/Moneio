@@ -8,7 +8,6 @@ import type { OcrPayload, OcrPage, OcrBlock } from '@moneio/core-ledger';
 import { prisma, DocumentStatus } from '@moneio/db';
 import { Job } from 'bullmq';
 
-
 import type { DocExtractJobData, DocExtractResult } from '../lib/queues';
 import { enqueueDocPostprocess } from '../lib/queues';
 
@@ -23,9 +22,7 @@ import { enqueueDocPostprocess } from '../lib/queues';
  * - Store extraction in extractions table
  * - Enqueue postprocessing
  */
-export async function handleDocExtract(
-  job: Job<DocExtractJobData>
-): Promise<DocExtractResult> {
+export async function handleDocExtract(job: Job<DocExtractJobData>): Promise<DocExtractResult> {
   const { documentId, workspaceId } = job.data;
 
   console.log(`[DOC_EXTRACT] Processing document ${documentId}`);
@@ -238,12 +235,8 @@ function buildOcrPayload(
       boundingBox: {
         x: block.boundingBox?.vertices[0]?.x || 0,
         y: block.boundingBox?.vertices[0]?.y || 0,
-        width:
-          (block.boundingBox?.vertices[1]?.x || 0) -
-          (block.boundingBox?.vertices[0]?.x || 0),
-        height:
-          (block.boundingBox?.vertices[2]?.y || 0) -
-          (block.boundingBox?.vertices[0]?.y || 0),
+        width: (block.boundingBox?.vertices[1]?.x || 0) - (block.boundingBox?.vertices[0]?.x || 0),
+        height: (block.boundingBox?.vertices[2]?.y || 0) - (block.boundingBox?.vertices[0]?.y || 0),
       },
     }));
 
@@ -263,7 +256,10 @@ function buildOcrPayload(
  * Detect document type based on OCR content
  */
 function detectDocumentType(payload: OcrPayload): string {
-  const fullText = payload.pages.map((p) => p.text).join(' ').toLowerCase();
+  const fullText = payload.pages
+    .map((p) => p.text)
+    .join(' ')
+    .toLowerCase();
 
   // Invoice indicators
   const invoicePatterns = [

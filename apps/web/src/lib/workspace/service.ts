@@ -60,7 +60,7 @@ export async function getUserWorkspaces(userId: string) {
     },
   });
 
-  return memberships.map((m: typeof memberships[number]) => ({
+  return memberships.map((m: (typeof memberships)[number]) => ({
     ...m.workspace,
     role: m.role as WorkspaceRole,
   }));

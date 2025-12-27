@@ -18,7 +18,13 @@ import { useState, useEffect } from 'react';
 
 import { DocumentViewer, ExtractionReviewPanel } from '@/components/documents';
 
-type DocumentStatus = 'uploaded' | 'processing' | 'ocr_complete' | 'extracting' | 'ready' | 'failed';
+type DocumentStatus =
+  | 'uploaded'
+  | 'processing'
+  | 'ocr_complete'
+  | 'extracting'
+  | 'ready'
+  | 'failed';
 
 interface DocumentBlob {
   id: string;
@@ -49,13 +55,46 @@ interface DocumentDetail {
   extractions: Extraction[];
 }
 
-const STATUS_CONFIG: Record<DocumentStatus, { icon: React.ElementType; color: string; bgColor: string; labelKey: string }> = {
-  uploaded: { icon: Clock, color: 'text-muted-foreground', bgColor: 'bg-muted', labelKey: 'statusUploaded' },
-  processing: { icon: Loader2, color: 'text-blue-500', bgColor: 'bg-blue-500/10', labelKey: 'statusProcessing' },
-  ocr_complete: { icon: Loader2, color: 'text-blue-500', bgColor: 'bg-blue-500/10', labelKey: 'statusOcrComplete' },
-  extracting: { icon: Loader2, color: 'text-blue-500', bgColor: 'bg-blue-500/10', labelKey: 'statusExtracting' },
-  ready: { icon: CheckCircle2, color: 'text-success', bgColor: 'bg-success/10', labelKey: 'statusReady' },
-  failed: { icon: AlertCircle, color: 'text-destructive', bgColor: 'bg-destructive/10', labelKey: 'statusFailed' },
+const STATUS_CONFIG: Record<
+  DocumentStatus,
+  { icon: React.ElementType; color: string; bgColor: string; labelKey: string }
+> = {
+  uploaded: {
+    icon: Clock,
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted',
+    labelKey: 'statusUploaded',
+  },
+  processing: {
+    icon: Loader2,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    labelKey: 'statusProcessing',
+  },
+  ocr_complete: {
+    icon: Loader2,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    labelKey: 'statusOcrComplete',
+  },
+  extracting: {
+    icon: Loader2,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    labelKey: 'statusExtracting',
+  },
+  ready: {
+    icon: CheckCircle2,
+    color: 'text-success',
+    bgColor: 'bg-success/10',
+    labelKey: 'statusReady',
+  },
+  failed: {
+    icon: AlertCircle,
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
+    labelKey: 'statusFailed',
+  },
 };
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
@@ -106,7 +145,12 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   useEffect(() => {
     if (!document) return undefined;
 
-    const processingStatuses: DocumentStatus[] = ['uploaded', 'processing', 'ocr_complete', 'extracting'];
+    const processingStatuses: DocumentStatus[] = [
+      'uploaded',
+      'processing',
+      'ocr_complete',
+      'extracting',
+    ];
     if (processingStatuses.includes(document.status)) {
       const interval = setInterval(() => {
         fetchDocument(true);

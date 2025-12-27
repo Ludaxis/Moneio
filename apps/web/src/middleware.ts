@@ -66,7 +66,9 @@ export default async function middleware(request: NextRequest) {
   );
 
   // Refresh session if expired
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Check if this is a public page
   const pathnameWithoutLocale = pathname.replace(/^\/(en|et|fa|ar)/, '') || '/';
@@ -98,5 +100,5 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(en|et|fa|ar)/:path*', '/((?!_next|api|auth|.*\\..*).*)',],
+  matcher: ['/', '/(en|et|fa|ar)/:path*', '/((?!_next|api|auth|.*\\..*).*)'],
 };

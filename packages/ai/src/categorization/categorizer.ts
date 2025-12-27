@@ -84,9 +84,7 @@ export class TransactionCategorizer implements TransactionCategorizerAdapter {
     categories: Category[],
     context: WorkspaceContext
   ): string {
-    const categoryList = categories
-      .map((c) => `- ${c.id}: ${c.name} (${c.type})`)
-      .join('\n');
+    const categoryList = categories.map((c) => `- ${c.id}: ${c.name} (${c.type})`).join('\n');
 
     return `You are a financial transaction categorizer. Categorize the following transaction.
 
@@ -215,8 +213,7 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
     }
 
     // Default to first expense category
-    const defaultCategory =
-      categories.find((c) => c.type === 'expense') || categories[0];
+    const defaultCategory = categories.find((c) => c.type === 'expense') || categories[0];
 
     return {
       data: {

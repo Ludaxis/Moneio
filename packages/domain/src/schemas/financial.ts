@@ -90,14 +90,21 @@ export const createCategorySchema = z.object({
   name: z.string().min(1).max(100),
   type: categoryTypeSchema,
   parentId: uuidSchema.optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
   icon: z.string().max(50).optional(),
 });
 
 export const updateCategorySchema = z.object({
   name: z.string().min(1).max(100).optional(),
   parentId: uuidSchema.optional().nullable(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional()
+    .nullable(),
   icon: z.string().max(50).optional().nullable(),
   sortOrder: z.number().int().optional(),
 });

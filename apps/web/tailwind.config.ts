@@ -89,7 +89,11 @@ const config: Config = {
   },
   plugins: [
     // Tabular nums utility
-    function ({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+    function ({
+      addUtilities,
+    }: {
+      addUtilities: (utilities: Record<string, Record<string, string>>) => void;
+    }) {
       addUtilities({
         '.tabular-nums': {
           'font-variant-numeric': 'tabular-nums',

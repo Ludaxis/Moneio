@@ -96,11 +96,7 @@ export function parseCsvLine(line: string, delimiter: string): string[] {
  * Parse a CSV file into headers and rows
  */
 export function parseCsv(text: string, options: CsvParseOptions = {}): CsvParseResult {
-  const {
-    delimiter = detectDelimiter(text),
-    hasHeader = true,
-    trimValues = true,
-  } = options;
+  const { delimiter = detectDelimiter(text), hasHeader = true, trimValues = true } = options;
 
   const lines = text.split(/\r?\n/).filter((line) => line.trim());
 
@@ -119,7 +115,7 @@ export function parseCsv(text: string, options: CsvParseOptions = {}): CsvParseR
   const rows = dataLines.map((values) => {
     const row: Record<string, string> = {};
     headers.forEach((header, i) => {
-      row[header] = trimValues ? (values[i] || '').trim() : (values[i] || '');
+      row[header] = trimValues ? (values[i] || '').trim() : values[i] || '';
     });
     return row;
   });
@@ -141,54 +137,73 @@ export function autoDetectMapping(headers: string[]): Partial<ColumnMapping> {
 
   // Date patterns (multilingual)
   const datePatterns = [
-    'date', 'datum', 'kuupäev', 'تاريخ', 'تاریخ',
-    'posted', 'value date', 'transaction date', 'booking date',
-    'päev', 'jour', 'fecha',
+    'date',
+    'datum',
+    'kuupäev',
+    'تاريخ',
+    'تاریخ',
+    'posted',
+    'value date',
+    'transaction date',
+    'booking date',
+    'päev',
+    'jour',
+    'fecha',
   ];
-  const dateIdx = normalized.findIndex((h) =>
-    datePatterns.some((p) => h.includes(p))
-  );
+  const dateIdx = normalized.findIndex((h) => datePatterns.some((p) => h.includes(p)));
   if (dateIdx >= 0) mapping.date = headers[dateIdx];
 
   // Description patterns
   const descPatterns = [
-    'description', 'memo', 'kirjeldus', 'توضیحات', 'توضيحات',
-    'details', 'narrative', 'text', 'reference text',
-    'selgitus', 'libellé', 'concepto', 'bezeichnung',
+    'description',
+    'memo',
+    'kirjeldus',
+    'توضیحات',
+    'توضيحات',
+    'details',
+    'narrative',
+    'text',
+    'reference text',
+    'selgitus',
+    'libellé',
+    'concepto',
+    'bezeichnung',
   ];
-  const descIdx = normalized.findIndex((h) =>
-    descPatterns.some((p) => h.includes(p))
-  );
+  const descIdx = normalized.findIndex((h) => descPatterns.some((p) => h.includes(p)));
   if (descIdx >= 0) mapping.description = headers[descIdx];
 
   // Amount patterns
   const amountPatterns = [
-    'amount', 'summa', 'مبلغ', 'value', 'betrag',
-    'debit', 'credit', 'sum', 'montant', 'importe',
+    'amount',
+    'summa',
+    'مبلغ',
+    'value',
+    'betrag',
+    'debit',
+    'credit',
+    'sum',
+    'montant',
+    'importe',
   ];
-  const amountIdx = normalized.findIndex((h) =>
-    amountPatterns.some((p) => h.includes(p))
-  );
+  const amountIdx = normalized.findIndex((h) => amountPatterns.some((p) => h.includes(p)));
   if (amountIdx >= 0) mapping.amount = headers[amountIdx];
 
   // Balance patterns
   const balancePatterns = [
-    'balance', 'saldo', 'موجودی', 'running balance',
-    'solde', 'saldo final', 'kontostand',
+    'balance',
+    'saldo',
+    'موجودی',
+    'running balance',
+    'solde',
+    'saldo final',
+    'kontostand',
   ];
-  const balanceIdx = normalized.findIndex((h) =>
-    balancePatterns.some((p) => h.includes(p))
-  );
+  const balanceIdx = normalized.findIndex((h) => balancePatterns.some((p) => h.includes(p)));
   if (balanceIdx >= 0) mapping.balance = headers[balanceIdx];
 
   // Reference patterns
-  const refPatterns = [
-    'reference', 'ref', 'viide', 'مرجع',
-    'transaction id', 'id', 'numéro',
-  ];
-  const refIdx = normalized.findIndex((h) =>
-    refPatterns.some((p) => h.includes(p))
-  );
+  const refPatterns = ['reference', 'ref', 'viide', 'مرجع', 'transaction id', 'id', 'numéro'];
+  const refIdx = normalized.findIndex((h) => refPatterns.some((p) => h.includes(p)));
   if (refIdx >= 0) mapping.reference = headers[refIdx];
 
   return mapping;
@@ -356,7 +371,7 @@ export function generateTransactionHash(tx: {
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     const char = input.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }
 

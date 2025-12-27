@@ -7,16 +7,12 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.warn('Supabase credentials not configured - storage operations will fail');
 }
 
-export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseServiceKey || '',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+export const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '', {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 const DOCUMENTS_BUCKET = 'documents';
 
@@ -24,9 +20,7 @@ const DOCUMENTS_BUCKET = 'documents';
  * Download a file from Supabase storage
  */
 export async function downloadFile(storagePath: string): Promise<Buffer> {
-  const { data, error } = await supabase.storage
-    .from(DOCUMENTS_BUCKET)
-    .download(storagePath);
+  const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).download(storagePath);
 
   if (error) {
     throw new Error(`Failed to download file: ${error.message}`);
@@ -44,12 +38,10 @@ export async function uploadFile(
   data: Buffer,
   contentType: string
 ): Promise<string> {
-  const { error } = await supabase.storage
-    .from(DOCUMENTS_BUCKET)
-    .upload(storagePath, data, {
-      contentType,
-      upsert: true,
-    });
+  const { error } = await supabase.storage.from(DOCUMENTS_BUCKET).upload(storagePath, data, {
+    contentType,
+    upsert: true,
+  });
 
   if (error) {
     throw new Error(`Failed to upload file: ${error.message}`);

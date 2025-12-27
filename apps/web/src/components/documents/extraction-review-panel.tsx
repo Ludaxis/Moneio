@@ -71,7 +71,11 @@ interface StatementPayload {
   closingBalance?: number;
 }
 
-type ExtractionPayload = InvoicePayload | ReceiptPayload | StatementPayload | { kind?: string; [key: string]: unknown };
+type ExtractionPayload =
+  | InvoicePayload
+  | ReceiptPayload
+  | StatementPayload
+  | { kind?: string; [key: string]: unknown };
 
 interface Extraction {
   id: string;
@@ -173,7 +177,10 @@ export function ExtractionReviewPanel({
     type: 'text' | 'number' | 'date' = 'text'
   ) => {
     const displayValue = value ?? '-';
-    const editValue = (editedPayload as Record<string, unknown>)[field] as string | number | undefined;
+    const editValue = (editedPayload as Record<string, unknown>)[field] as
+      | string
+      | number
+      | undefined;
 
     return (
       <div className="flex items-start gap-3 py-3">
@@ -195,7 +202,10 @@ export function ExtractionReviewPanel({
           ) : (
             <p className={cn('text-sm font-medium', type === 'number' && 'font-tabular-nums')}>
               {type === 'number' && typeof displayValue === 'number'
-                ? displayValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                ? displayValue.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
                 : displayValue}
             </p>
           )}
@@ -207,21 +217,61 @@ export function ExtractionReviewPanel({
   const renderInvoice = (data: InvoicePayload) => (
     <div className="space-y-1 divide-y divide-border">
       <div className="grid gap-1 sm:grid-cols-2">
-        {renderField(tInvoices('number'), data.invoiceNumber, 'invoiceNumber', <Hash className="h-4 w-4" />)}
+        {renderField(
+          tInvoices('number'),
+          data.invoiceNumber,
+          'invoiceNumber',
+          <Hash className="h-4 w-4" />
+        )}
         {renderField(t('type'), 'Invoice', 'kind', <FileText className="h-4 w-4" />)}
       </div>
       <div className="grid gap-1 sm:grid-cols-2">
-        {renderField(tInvoices('date'), data.issueDate, 'issueDate', <Calendar className="h-4 w-4" />, 'date')}
-        {renderField(tInvoices('dueDate'), data.dueDate, 'dueDate', <Calendar className="h-4 w-4" />, 'date')}
+        {renderField(
+          tInvoices('date'),
+          data.issueDate,
+          'issueDate',
+          <Calendar className="h-4 w-4" />,
+          'date'
+        )}
+        {renderField(
+          tInvoices('dueDate'),
+          data.dueDate,
+          'dueDate',
+          <Calendar className="h-4 w-4" />,
+          'date'
+        )}
       </div>
       <div className="grid gap-1 sm:grid-cols-2">
-        {renderField(tInvoices('vendor'), data.vendorName, 'vendorName', <Building2 className="h-4 w-4" />)}
+        {renderField(
+          tInvoices('vendor'),
+          data.vendorName,
+          'vendorName',
+          <Building2 className="h-4 w-4" />
+        )}
         {renderField('VAT ID', data.vendorVatId, 'vendorVatId')}
       </div>
       <div className="grid gap-1 sm:grid-cols-3">
-        {renderField('Subtotal', data.subtotal, 'subtotal', <DollarSign className="h-4 w-4" />, 'number')}
-        {renderField(tInvoices('vat'), data.vatTotal, 'vatTotal', <Percent className="h-4 w-4" />, 'number')}
-        {renderField(tInvoices('total'), data.total, 'total', <DollarSign className="h-4 w-4" />, 'number')}
+        {renderField(
+          'Subtotal',
+          data.subtotal,
+          'subtotal',
+          <DollarSign className="h-4 w-4" />,
+          'number'
+        )}
+        {renderField(
+          tInvoices('vat'),
+          data.vatTotal,
+          'vatTotal',
+          <Percent className="h-4 w-4" />,
+          'number'
+        )}
+        {renderField(
+          tInvoices('total'),
+          data.total,
+          'total',
+          <DollarSign className="h-4 w-4" />,
+          'number'
+        )}
       </div>
       {data.lineItems && data.lineItems.length > 0 && (
         <div className="pt-3">
@@ -256,17 +306,46 @@ export function ExtractionReviewPanel({
   const renderReceipt = (data: ReceiptPayload) => (
     <div className="space-y-1 divide-y divide-border">
       <div className="grid gap-1 sm:grid-cols-2">
-        {renderField('Merchant', data.merchantName, 'merchantName', <Building2 className="h-4 w-4" />)}
+        {renderField(
+          'Merchant',
+          data.merchantName,
+          'merchantName',
+          <Building2 className="h-4 w-4" />
+        )}
         {renderField(t('type'), 'Receipt', 'kind', <FileText className="h-4 w-4" />)}
       </div>
       <div className="grid gap-1 sm:grid-cols-2">
-        {renderField(tInvoices('date'), data.date, 'date', <Calendar className="h-4 w-4" />, 'date')}
+        {renderField(
+          tInvoices('date'),
+          data.date,
+          'date',
+          <Calendar className="h-4 w-4" />,
+          'date'
+        )}
         {renderField('Payment Method', data.paymentMethod, 'paymentMethod')}
       </div>
       <div className="grid gap-1 sm:grid-cols-3">
-        {renderField('Subtotal', data.subtotal, 'subtotal', <DollarSign className="h-4 w-4" />, 'number')}
-        {renderField(tInvoices('vat'), data.vatTotal, 'vatTotal', <Percent className="h-4 w-4" />, 'number')}
-        {renderField(tInvoices('total'), data.total, 'total', <DollarSign className="h-4 w-4" />, 'number')}
+        {renderField(
+          'Subtotal',
+          data.subtotal,
+          'subtotal',
+          <DollarSign className="h-4 w-4" />,
+          'number'
+        )}
+        {renderField(
+          tInvoices('vat'),
+          data.vatTotal,
+          'vatTotal',
+          <Percent className="h-4 w-4" />,
+          'number'
+        )}
+        {renderField(
+          tInvoices('total'),
+          data.total,
+          'total',
+          <DollarSign className="h-4 w-4" />,
+          'number'
+        )}
       </div>
       {data.items && data.items.length > 0 && (
         <div className="pt-3">
@@ -306,12 +385,36 @@ export function ExtractionReviewPanel({
         {renderField('IBAN', data.iban, 'iban')}
       </div>
       <div className="grid gap-1 sm:grid-cols-2">
-        {renderField('Period Start', data.periodStart, 'periodStart', <Calendar className="h-4 w-4" />, 'date')}
-        {renderField('Period End', data.periodEnd, 'periodEnd', <Calendar className="h-4 w-4" />, 'date')}
+        {renderField(
+          'Period Start',
+          data.periodStart,
+          'periodStart',
+          <Calendar className="h-4 w-4" />,
+          'date'
+        )}
+        {renderField(
+          'Period End',
+          data.periodEnd,
+          'periodEnd',
+          <Calendar className="h-4 w-4" />,
+          'date'
+        )}
       </div>
       <div className="grid gap-1 sm:grid-cols-2">
-        {renderField('Opening Balance', data.openingBalance, 'openingBalance', <DollarSign className="h-4 w-4" />, 'number')}
-        {renderField('Closing Balance', data.closingBalance, 'closingBalance', <DollarSign className="h-4 w-4" />, 'number')}
+        {renderField(
+          'Opening Balance',
+          data.openingBalance,
+          'openingBalance',
+          <DollarSign className="h-4 w-4" />,
+          'number'
+        )}
+        {renderField(
+          'Closing Balance',
+          data.closingBalance,
+          'closingBalance',
+          <DollarSign className="h-4 w-4" />,
+          'number'
+        )}
       </div>
     </div>
   );
@@ -327,9 +430,7 @@ export function ExtractionReviewPanel({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            Version {extraction.version}
-          </span>
+          <span className="text-sm text-muted-foreground">Version {extraction.version}</span>
           {confidence !== undefined && (
             <span
               className={cn(
@@ -398,7 +499,8 @@ export function ExtractionReviewPanel({
         {kind === 'invoice' && renderInvoice(payload as InvoicePayload)}
         {kind === 'receipt' && renderReceipt(payload as ReceiptPayload)}
         {kind === 'statement' && renderStatement(payload as StatementPayload)}
-        {!['invoice', 'receipt', 'statement'].includes(kind) && renderUnknown(payload as Record<string, unknown>)}
+        {!['invoice', 'receipt', 'statement'].includes(kind) &&
+          renderUnknown(payload as Record<string, unknown>)}
       </div>
     </div>
   );

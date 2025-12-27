@@ -180,9 +180,7 @@ export class MatchingService {
     for (const suggestion of suggestions) {
       // Check if match already exists
       const existing = await this.repository.findByInvoice(invoice.id);
-      const alreadyMatched = existing.some(
-        (m) => m.transactionId === suggestion.transactionId
-      );
+      const alreadyMatched = existing.some((m) => m.transactionId === suggestion.transactionId);
 
       if (!alreadyMatched) {
         const match = await this.repository.create({

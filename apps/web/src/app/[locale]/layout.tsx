@@ -31,10 +31,7 @@ interface LocaleLayoutProps {
   params: { locale: string };
 }
 
-export default async function LocaleLayout({
-  children,
-  params: { locale },
-}: LocaleLayoutProps) {
+export default async function LocaleLayout({ children, params: { locale } }: LocaleLayoutProps) {
   // Validate locale
   if (!locales.includes(locale as Locale)) {
     notFound();
@@ -49,9 +46,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={direction} className={fontClasses} suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <NextIntlClientProvider messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
       </body>
     </html>
   );

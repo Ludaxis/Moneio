@@ -16,10 +16,7 @@ export interface ProcessedPage {
 /**
  * Get document info (page count, dimensions) without full processing
  */
-export async function getDocumentInfo(
-  data: Buffer,
-  mimeType: string
-): Promise<DocumentInfo> {
+export async function getDocumentInfo(data: Buffer, mimeType: string): Promise<DocumentInfo> {
   if (mimeType === 'application/pdf') {
     return getPdfInfo(data);
   } else if (mimeType.startsWith('image/')) {
@@ -123,7 +120,7 @@ function parseJpegDimensions(data: Buffer): { width: number; height: number } | 
     if (
       marker === 0xc0 || // SOF0 (Baseline)
       marker === 0xc1 || // SOF1 (Extended sequential)
-      marker === 0xc2    // SOF2 (Progressive)
+      marker === 0xc2 // SOF2 (Progressive)
     ) {
       // Height at offset+5, Width at offset+7
       const height = data.readUInt16BE(offset + 5);

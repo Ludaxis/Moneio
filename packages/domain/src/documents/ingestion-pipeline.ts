@@ -74,15 +74,19 @@ export interface OcrStep {
 }
 
 export interface ExtractStep {
-  execute(job: ExtractJob): Promise<PipelineResult<{ extraction: ExtractionPayload; confidence: number }>>;
+  execute(
+    job: ExtractJob
+  ): Promise<PipelineResult<{ extraction: ExtractionPayload; confidence: number }>>;
 }
 
 export interface PostProcessStep {
-  execute(job: PostProcessJob): Promise<PipelineResult<{
-    merchantId?: UUID;
-    categoryIds?: UUID[];
-    matchSuggestions?: UUID[];
-  }>>;
+  execute(job: PostProcessJob): Promise<
+    PipelineResult<{
+      merchantId?: UUID;
+      categoryIds?: UUID[];
+      matchSuggestions?: UUID[];
+    }>
+  >;
 }
 
 export interface IndexStep {
@@ -100,7 +104,12 @@ export class IngestionPipeline {
     private readonly onStateChange: (ctx: PipelineContext) => Promise<void>
   ) {}
 
-  async process(documentId: UUID, workspaceId: UUID, mimeType: string, storageKey: string): Promise<void> {
+  async process(
+    documentId: UUID,
+    workspaceId: UUID,
+    mimeType: string,
+    storageKey: string
+  ): Promise<void> {
     const ctx: PipelineContext = {
       documentId,
       workspaceId,
@@ -114,7 +123,8 @@ export class IngestionPipeline {
       ctx.state = 'normalizing';
       await this.onStateChange(ctx);
       const normalizeResult = await this.executeWithRetry(
-        () => this.normalizeStep.execute({ type: 'DOC_NORMALIZE', documentId, mimeType, storageKey }),
+        () =>
+          this.normalizeStep.execute({ type: 'DOC_NORMALIZE', documentId, mimeType, storageKey }),
         ctx
       );
       if (!normalizeResult.success || !normalizeResult.data) {
@@ -125,7 +135,12 @@ export class IngestionPipeline {
       ctx.state = 'ocr';
       await this.onStateChange(ctx);
       const ocrResult = await this.executeWithRetry(
-        () => this.ocrStep.execute({ type: 'DOC_OCR', documentId, storageKey: normalizeResult.data!.storageKey }),
+        () =>
+          this.ocrStep.execute({
+            type: 'DOC_OCR',
+            documentId,
+            storageKey: normalizeResult.data!.storageKey,
+          }),
         ctx
       );
       if (!ocrResult.success || !ocrResult.data) {
@@ -136,7 +151,12 @@ export class IngestionPipeline {
       ctx.state = 'extracting';
       await this.onStateChange(ctx);
       const extractResult = await this.executeWithRetry(
-        () => this.extractStep.execute({ type: 'DOC_EXTRACT', documentId, ocrPayload: ocrResult.data! }),
+        () =>
+          this.extractStep.execute({
+            type: 'DOC_EXTRACT',
+            documentId,
+            ocrPayload: ocrResult.data!,
+          }),
         ctx
       );
       if (!extractResult.success || !extractResult.data) {
@@ -147,12 +167,13 @@ export class IngestionPipeline {
       ctx.state = 'postprocessing';
       await this.onStateChange(ctx);
       await this.executeWithRetry(
-        () => this.postProcessStep.execute({
-          type: 'DOC_POSTPROCESS',
-          documentId,
-          workspaceId,
-          extraction: extractResult.data!.extraction,
-        }),
+        () =>
+          this.postProcessStep.execute({
+            type: 'DOC_POSTPROCESS',
+            documentId,
+            workspaceId,
+            extraction: extractResult.data!.extraction,
+          }),
         ctx
       );
 

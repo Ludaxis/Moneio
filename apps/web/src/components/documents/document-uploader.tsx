@@ -19,13 +19,7 @@ interface UploadingFile {
   error?: string;
 }
 
-const ACCEPTED_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/heic',
-];
+const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -40,18 +34,13 @@ export function DocumentUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateFileStatus = (id: string, updates: Partial<UploadingFile>) => {
-    setUploadingFiles((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
-    );
+    setUploadingFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   };
 
   const uploadFile = async (file: File) => {
     const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    setUploadingFiles((prev) => [
-      ...prev,
-      { id: fileId, file, progress: 0, status: 'uploading' },
-    ]);
+    setUploadingFiles((prev) => [...prev, { id: fileId, file, progress: 0, status: 'uploading' }]);
 
     try {
       // Step 1: Get signed upload URL
@@ -119,29 +108,35 @@ export function DocumentUploader({
     }
   };
 
-  const handleFiles = useCallback((files: FileList | null) => {
-    if (!files) return;
+  const handleFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      if (!ACCEPTED_TYPES.includes(file.type)) {
-        console.warn(`Unsupported file type: ${file.type}`);
-        return;
-      }
+      Array.from(files).forEach((file) => {
+        if (!ACCEPTED_TYPES.includes(file.type)) {
+          console.warn(`Unsupported file type: ${file.type}`);
+          return;
+        }
 
-      if (file.size > MAX_FILE_SIZE) {
-        console.warn(`File too large: ${file.name}`);
-        return;
-      }
+        if (file.size > MAX_FILE_SIZE) {
+          console.warn(`File too large: ${file.name}`);
+          return;
+        }
 
-      uploadFile(file);
-    });
-  }, [workspaceId]);
+        uploadFile(file);
+      });
+    },
+    [workspaceId]
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFiles(e.dataTransfer.files);
-  }, [handleFiles]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      handleFiles(e.dataTransfer.files);
+    },
+    [handleFiles]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -169,12 +164,8 @@ export function DocumentUploader({
         )}
       >
         <Upload className="h-10 w-10 text-muted-foreground" />
-        <p className="mt-4 text-sm font-medium text-foreground">
-          {t('upload')}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          PDF, JPG, PNG, WebP, HEIC (max 50MB)
-        </p>
+        <p className="mt-4 text-sm font-medium text-foreground">{t('upload')}</p>
+        <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG, WebP, HEIC (max 50MB)</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -195,9 +186,7 @@ export function DocumentUploader({
             >
               <FileText className="h-8 w-8 text-muted-foreground" />
               <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {upload.file.name}
-                </p>
+                <p className="truncate text-sm font-medium text-foreground">{upload.file.name}</p>
                 {upload.status === 'uploading' || upload.status === 'processing' ? (
                   <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
@@ -209,12 +198,8 @@ export function DocumentUploader({
                   <p className="mt-1 text-xs text-destructive">{upload.error}</p>
                 ) : null}
               </div>
-              {upload.status === 'complete' && (
-                <CheckCircle2 className="h-5 w-5 text-success" />
-              )}
-              {upload.status === 'error' && (
-                <AlertCircle className="h-5 w-5 text-destructive" />
-              )}
+              {upload.status === 'complete' && <CheckCircle2 className="h-5 w-5 text-success" />}
+              {upload.status === 'error' && <AlertCircle className="h-5 w-5 text-destructive" />}
             </div>
           ))}
         </div>
