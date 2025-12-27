@@ -82,7 +82,9 @@ export default async function middleware(request: NextRequest) {
 
   // Check if this is a public page
   const pathnameWithoutLocale = pathname.replace(/^\/(en|et|fa|ar)/, '') || '/';
-  const isPublicPage = publicPages.some((page) => pathnameWithoutLocale.startsWith(page));
+  const isPublicPage = publicPages.some((page) =>
+    page === '/' ? pathnameWithoutLocale === '/' : pathnameWithoutLocale.startsWith(page)
+  );
 
   // Redirect to login if not authenticated and not on a public page
   if (!user && !isPublicPage) {
