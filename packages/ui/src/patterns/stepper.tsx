@@ -1,6 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
+
 import { cn } from '../utils.js';
 
 interface Step {

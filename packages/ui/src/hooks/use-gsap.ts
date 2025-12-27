@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
+import { useEffect, useRef, useCallback } from 'react';
 
 // Hook to check for reduced motion preference
 export function usePrefersReducedMotion(): boolean {

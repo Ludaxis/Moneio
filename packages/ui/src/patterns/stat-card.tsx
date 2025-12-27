@@ -1,7 +1,8 @@
 'use client';
 
-import * as React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import * as React from 'react';
+
 import { cn } from '../utils.js';
 
 interface StatCardProps {
