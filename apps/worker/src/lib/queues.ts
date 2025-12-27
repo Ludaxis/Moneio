@@ -8,12 +8,12 @@ import { getRedisConnection } from './redis';
 // ============================================================
 
 export const QUEUE_NAMES = {
-  DOC_NORMALIZE: 'doc:normalize',
-  DOC_OCR: 'doc:ocr',
-  DOC_EXTRACT: 'doc:extract',
-  DOC_POSTPROCESS: 'doc:postprocess',
+  DOC_NORMALIZE: 'doc-normalize',
+  DOC_OCR: 'doc-ocr',
+  DOC_EXTRACT: 'doc-extract',
+  DOC_POSTPROCESS: 'doc-postprocess',
   CATEGORIZATION: 'categorization',
-  FX_FETCH: 'fx:fetch',
+  FX_FETCH: 'fx-fetch',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
