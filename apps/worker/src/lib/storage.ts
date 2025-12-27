@@ -11,7 +11,9 @@ function getSupabase(): SupabaseClient {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase credentials not configured - set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+      throw new Error(
+        'Supabase credentials not configured - set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
+      );
     }
 
     supabase = createClient(supabaseUrl, supabaseServiceKey, {
