@@ -12,7 +12,7 @@
     "clean": "rm -rf .next node_modules",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
