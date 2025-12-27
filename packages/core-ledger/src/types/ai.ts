@@ -1,7 +1,7 @@
 // AI suggestion types
 
-import type { EntityBase, UUID } from './common.js';
-import type { BoundingBox } from './documents.js';
+import type { EntityBase, UUID } from './common';
+import type { BoundingBox } from './documents';
 
 export type AiSubjectType = 'invoice' | 'transaction' | 'document' | 'match';
 

@@ -5,6 +5,8 @@ import { enqueueDocNormalize } from '@/lib/queue';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const supabase = createServerClient();

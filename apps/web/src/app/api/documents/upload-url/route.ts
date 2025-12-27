@@ -4,6 +4,8 @@ import { createSignedUploadUrl } from '@/lib/storage';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const supabase = createServerClient();

@@ -1,6 +1,6 @@
 // Document types
 
-import type { EntityBase, UUID } from './common.js';
+import type { EntityBase, UUID } from './common';
 
 export type DocumentType = 'invoice' | 'statement' | 'receipt' | 'other';
 

@@ -3,9 +3,9 @@
 import { Search, X } from 'lucide-react';
 import * as React from 'react';
 
-import { Button } from '../primitives/button.js';
-import { Input } from '../primitives/input.js';
-import { cn } from '../utils.js';
+import { Button } from '../primitives/button';
+import { Input } from '../primitives/input';
+import { cn } from '../utils';
 
 interface FilterBarProps {
   searchValue?: string;

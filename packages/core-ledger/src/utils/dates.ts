@@ -1,6 +1,6 @@
 // Date utilities - pure functions, no external dependencies
 
-import type { SupportedLocale } from '../types/common.js';
+import type { SupportedLocale } from '../types/common';
 
 /**
  * Get current ISO timestamp

@@ -2,7 +2,7 @@
 export { prisma } from './client';
 export type { PrismaClient } from './client';
 export * from './health';
-export { seedWorkspaceCategories, defaultCategories } from './categories.js';
+export { seedWorkspaceCategories, defaultCategories } from './categories';
 
 // Re-export Prisma types for convenience
 export type {

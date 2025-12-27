@@ -1,12 +1,21 @@
-import { createClient } from '@supabase/supabase-js';
-
-// Create admin client for storage operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const DOCUMENTS_BUCKET = 'documents';
+
+// Lazy initialization of Supabase admin client
+let supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdmin) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) {
+      throw new Error('Supabase environment variables not configured');
+    }
+    supabaseAdmin = createClient(url, key);
+  }
+  return supabaseAdmin;
+}
 
 export interface SignedUploadResult {
   signedUrl: string;
@@ -26,8 +35,8 @@ export async function createSignedUploadUrl(
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
   const path = `${workspaceId}/${timestamp}_${sanitizedFileName}`;
 
-  const { data, error } = await supabaseAdmin.storage
-    .from(DOCUMENTS_BUCKET)
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(DOCUMENTS_BUCKET)
     .createSignedUploadUrl(path);
 
   if (error) {
@@ -45,8 +54,8 @@ export async function createSignedUploadUrl(
  * Generate a signed read URL for a document
  */
 export async function createSignedReadUrl(path: string, expiresIn: number = 3600): Promise<string> {
-  const { data, error } = await supabaseAdmin.storage
-    .from(DOCUMENTS_BUCKET)
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(DOCUMENTS_BUCKET)
     .createSignedUrl(path, expiresIn);
 
   if (error) {
@@ -60,7 +69,7 @@ export async function createSignedReadUrl(path: string, expiresIn: number = 3600
  * Delete a document from storage
  */
 export async function deleteFromStorage(path: string): Promise<void> {
-  const { error } = await supabaseAdmin.storage.from(DOCUMENTS_BUCKET).remove([path]);
+  const { error } = await getSupabaseAdmin().storage.from(DOCUMENTS_BUCKET).remove([path]);
 
   if (error) {
     throw new Error(`Failed to delete file: ${error.message}`);
@@ -80,8 +89,8 @@ export interface FileMetadata {
  * Get file metadata from storage
  */
 export async function getFileMetadata(path: string): Promise<FileMetadata | null> {
-  const { data, error } = await supabaseAdmin.storage
-    .from(DOCUMENTS_BUCKET)
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(DOCUMENTS_BUCKET)
     .list(path.split('/').slice(0, -1).join('/'), {
       search: path.split('/').pop(),
     });

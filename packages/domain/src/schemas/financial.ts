@@ -1,7 +1,7 @@
 // Financial validation schemas
 import { z } from 'zod';
 
-import { currencyCodeSchema, moneySchema, uuidSchema } from './common.js';
+import { currencyCodeSchema, moneySchema, uuidSchema } from './common';
 
 // Invoice schemas
 export const invoiceStatusSchema = z.enum(['draft', 'approved', 'paid', 'void']);

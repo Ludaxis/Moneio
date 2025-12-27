@@ -5,7 +5,7 @@ import createIntlMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './lib/i18n';
 
 // Pages that don't require authentication
-const publicPages = ['/login', '/signup', '/forgot-password'];
+const publicPages = ['/login', '/signup', '/forgot-password', '/'];
 
 // Create intl middleware
 const intlMiddleware = createIntlMiddleware({
@@ -14,12 +14,22 @@ const intlMiddleware = createIntlMiddleware({
   localePrefix: 'as-needed',
 });
 
+// Check if Supabase is configured
+const isSupabaseConfigured = () => {
+  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+};
+
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip auth routes and API routes
   if (pathname.startsWith('/auth/') || pathname.startsWith('/api/')) {
     return NextResponse.next();
+  }
+
+  // If Supabase is not configured, skip auth and just apply intl middleware
+  if (!isSupabaseConfigured()) {
+    return intlMiddleware(request);
   }
 
   // Create Supabase client for session refresh

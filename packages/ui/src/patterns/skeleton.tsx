@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '../utils.js';
+import { cn } from '../utils';
 
 interface SkeletonProps {
   className?: string;

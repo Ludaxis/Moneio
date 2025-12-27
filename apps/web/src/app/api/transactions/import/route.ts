@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
+export const dynamic = 'force-dynamic';
+
 interface ImportTransaction {
   date: string;
   description: string;

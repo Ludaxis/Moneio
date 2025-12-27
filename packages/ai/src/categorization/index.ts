@@ -1,2 +1,2 @@
 // Categorization module exports
-export * from './categorizer.js';
+export * from './categorizer';

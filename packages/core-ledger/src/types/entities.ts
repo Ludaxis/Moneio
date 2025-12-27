@@ -1,7 +1,7 @@
 // Financial entities
 
-import type { EntityBase, UUID, WorkspaceRole } from './common.js';
-import type { CurrencyCode, Money } from './money.js';
+import type { EntityBase, UUID, WorkspaceRole } from './common';
+import type { CurrencyCode, Money } from './money';
 
 // User and Workspace
 export interface User {

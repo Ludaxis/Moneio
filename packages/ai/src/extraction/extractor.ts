@@ -7,7 +7,7 @@ import type {
   StatementExtraction,
 } from '@moneio/domain';
 
-import type { AiProposal, WorkspaceContext } from '../types.js';
+import type { AiProposal, WorkspaceContext } from '../types';
 
 export interface ExtractionInput {
   ocrPayload: OcrPayload;

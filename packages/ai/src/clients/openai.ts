@@ -1,8 +1,8 @@
 // OpenAI LLM client adapter
 import OpenAI from 'openai';
 
-import type { LlmClient } from '../extraction/invoice-extractor.js';
-import type { AiConfig, ModelInfo } from '../types.js';
+import type { LlmClient } from '../extraction/invoice-extractor';
+import type { AiConfig, ModelInfo } from '../types';
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
 const DEFAULT_MAX_TOKENS = 4096;

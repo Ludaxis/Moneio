@@ -1,7 +1,7 @@
 // Extraction and AI validation schemas
 import { z } from 'zod';
 
-import { currencyCodeSchema, uuidSchema } from './common.js';
+import { currencyCodeSchema, uuidSchema } from './common';
 
 // Extraction output schemas
 export const invoiceLineItemExtractionSchema = z.object({

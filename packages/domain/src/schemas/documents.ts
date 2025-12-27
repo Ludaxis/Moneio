@@ -1,7 +1,7 @@
 // Document validation schemas
 import { z } from 'zod';
 
-import { uuidSchema } from './common.js';
+import { uuidSchema } from './common';
 
 export const documentTypeSchema = z.enum(['invoice', 'statement', 'receipt', 'other']);
 

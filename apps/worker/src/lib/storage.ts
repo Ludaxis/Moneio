@@ -1,26 +1,34 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.warn('Supabase credentials not configured - storage operations will fail');
-}
-
-export const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '', {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const DOCUMENTS_BUCKET = 'documents';
+
+// Lazy initialization of Supabase client
+let supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (!supabase) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase credentials not configured - set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+    }
+
+    supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  }
+  return supabase;
+}
 
 /**
  * Download a file from Supabase storage
  */
 export async function downloadFile(storagePath: string): Promise<Buffer> {
-  const { data, error } = await supabase.storage.from(DOCUMENTS_BUCKET).download(storagePath);
+  const { data, error } = await getSupabase().storage.from(DOCUMENTS_BUCKET).download(storagePath);
 
   if (error) {
     throw new Error(`Failed to download file: ${error.message}`);
@@ -38,7 +46,7 @@ export async function uploadFile(
   data: Buffer,
   contentType: string
 ): Promise<string> {
-  const { error } = await supabase.storage.from(DOCUMENTS_BUCKET).upload(storagePath, data, {
+  const { error } = await getSupabase().storage.from(DOCUMENTS_BUCKET).upload(storagePath, data, {
     contentType,
     upsert: true,
   });
@@ -54,8 +62,8 @@ export async function uploadFile(
  * Get a signed URL for reading a file
  */
 export async function getSignedUrl(storagePath: string, expiresIn = 3600): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from(DOCUMENTS_BUCKET)
+  const { data, error } = await getSupabase()
+    .storage.from(DOCUMENTS_BUCKET)
     .createSignedUrl(storagePath, expiresIn);
 
   if (error) {

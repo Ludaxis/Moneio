@@ -1,2 +1,2 @@
-export * from './use-gsap.js';
-export * from './use-toast.js';
+export * from './use-gsap';
+export * from './use-toast';

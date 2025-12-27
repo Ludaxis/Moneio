@@ -1,11 +1,11 @@
 // Utility functions
-export { cn } from './utils.js';
+export { cn } from './utils';
 
 // Primitives
-export * from './primitives/index.js';
+export * from './primitives';
 
 // Patterns
-export * from './patterns/index.js';
+export * from './patterns';
 
 // Hooks
-export * from './hooks/index.js';
+export * from './hooks';

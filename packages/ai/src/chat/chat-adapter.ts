@@ -1,10 +1,10 @@
 // Chat adapter for financial Q&A
 import type { ChatCitation, ChatMessage, ChatResponse } from '@moneio/domain';
 
-import type { LlmClient } from '../extraction/invoice-extractor.js';
-import type { WorkspaceContext } from '../types.js';
+import type { LlmClient } from '../extraction/invoice-extractor';
+import type { WorkspaceContext } from '../types';
 
-import type { RagService, RetrievedDocument } from './rag-service.js';
+import type { RagService, RetrievedDocument } from './rag-service';
 
 export interface ChatAdapter {
   answer(

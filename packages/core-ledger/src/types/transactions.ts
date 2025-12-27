@@ -1,6 +1,6 @@
 // Transaction categorization and matching
 
-import type { EntityBase, UUID } from './common.js';
+import type { EntityBase, UUID } from './common';
 
 // Categorization
 export type CategorizationMethod = 'ai' | 'rule' | 'user';

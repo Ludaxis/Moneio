@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { WorkspaceSwitcher } from '@/components/workspace';
-import { createBrowserClient } from '@/lib/supabase';
+import { createClient as createBrowserClient } from '@/lib/supabase/client';
 
 export function Topbar() {
   const t = useTranslations('common');

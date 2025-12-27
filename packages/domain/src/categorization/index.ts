@@ -1,3 +1,3 @@
 // Categorization domain exports
-export * from './rules-engine.js';
-export * from './matching-service.js';
+export * from './rules-engine';
+export * from './matching-service';

@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { createWorkspace, getUserWorkspaces } from '@/lib/workspace';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const supabase = createServerClient();

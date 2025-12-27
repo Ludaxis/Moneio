@@ -1,7 +1,7 @@
 // Money utilities - pure functions, no external dependencies
 
-import type { CurrencyCode, CurrencyInfo, FxRate, Money } from '../types/money.js';
-import { CURRENCIES } from '../types/money.js';
+import type { CurrencyCode, CurrencyInfo, FxRate, Money } from '../types/money';
+import { CURRENCIES } from '../types/money';
 
 /**
  * Create a Money object from a decimal amount

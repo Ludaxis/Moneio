@@ -2,7 +2,7 @@
 
 import { Check } from 'lucide-react';
 
-import { cn } from '../utils.js';
+import { cn } from '../utils';
 
 interface Step {
   id: string;

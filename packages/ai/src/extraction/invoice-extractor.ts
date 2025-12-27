@@ -3,9 +3,9 @@ import type { AiEvidence, OcrPayload } from '@moneio/core-ledger';
 import type { InvoiceExtraction } from '@moneio/domain';
 import { invoiceExtractionSchema } from '@moneio/domain';
 
-import type { AiProposal, ModelInfo, WorkspaceContext } from '../types.js';
+import type { AiProposal, ModelInfo, WorkspaceContext } from '../types';
 
-import type { InvoiceExtractorAdapter } from './extractor.js';
+import type { InvoiceExtractorAdapter } from './extractor';
 
 export interface LlmClient {
   complete(prompt: string, schema?: unknown): Promise<string>;

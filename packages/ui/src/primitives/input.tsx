@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { cn } from '../utils.js';
+import { cn } from '../utils';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: boolean;

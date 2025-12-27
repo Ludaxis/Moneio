@@ -1,8 +1,8 @@
 // AI-powered transaction categorizer
 import type { BankTransaction, Category, UUID } from '@moneio/core-ledger';
 
-import type { LlmClient } from '../extraction/invoice-extractor.js';
-import type { AiProposal, WorkspaceContext } from '../types.js';
+import type { LlmClient } from '../extraction/invoice-extractor';
+import type { AiProposal, WorkspaceContext } from '../types';
 
 export interface CategoryProposal {
   categoryId: UUID;

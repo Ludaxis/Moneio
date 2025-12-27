@@ -1,2 +1,2 @@
 // LLM client exports
-export * from './openai.js';
+export * from './openai';

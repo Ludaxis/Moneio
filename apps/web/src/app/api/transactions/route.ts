@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/transactions
  * List bank transactions for a workspace

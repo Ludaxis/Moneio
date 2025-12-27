@@ -3,10 +3,10 @@ import type { AiEvidence, OcrPayload } from '@moneio/core-ledger';
 import type { ReceiptExtraction } from '@moneio/domain';
 import { receiptExtractionSchema } from '@moneio/domain';
 
-import type { AiProposal, WorkspaceContext } from '../types.js';
+import type { AiProposal, WorkspaceContext } from '../types';
 
-import type { ReceiptExtractorAdapter } from './extractor.js';
-import type { LlmClient } from './invoice-extractor.js';
+import type { ReceiptExtractorAdapter } from './extractor';
+import type { LlmClient } from './invoice-extractor';
 
 export class ReceiptExtractor implements ReceiptExtractorAdapter {
   constructor(private readonly llm: LlmClient) {}
