@@ -1,4 +1,11 @@
-// UI Components Library
-// This package contains shared UI components built with shadcn/ui
+// Utility functions
+export { cn } from './utils.js';
 
-export * from './lib/utils';
+// Primitives
+export * from './primitives/index.js';
+
+// Patterns
+export * from './patterns/index.js';
+
+// Hooks
+export * from './hooks/index.js';
