@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "AI-First Accounting Assistant",
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.21.5"
+    }
+  },
   "scripts": {
     "dev": "turbo run dev",
     "dev:web": "turbo run dev --filter=@moneio/web",
