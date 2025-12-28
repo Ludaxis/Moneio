@@ -17,6 +17,12 @@ export async function handleFxFetch(job: Job<FxFetchJobData>): Promise<FxFetchRe
   console.log(`[FX_FETCH] Fetching rates for ${baseCurrency}`);
 
   try {
+    // If no workspaceId provided, skip (schema requires a valid UUID workspace)
+    if (!workspaceId) {
+      console.warn('[FX_FETCH] workspaceId missing, skipping rate storage');
+      return { success: true, baseCurrency, ratesCount: 0 };
+    }
+
     await job.updateProgress(10);
 
     // TODO: Implement actual FX fetch in T20
