@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "turbo run build --filter=@moneio/web",
+  "buildCommand": "turbo run build --filter=@moneio/web && cp -r apps/web/.next .next && cp -r apps/web/public public 2>/dev/null || true",
   "installCommand": "corepack enable && corepack prepare pnpm@9.0.0 --activate && corepack pnpm install",
-  "outputDirectory": "apps/web/.next",
-  "framework": null
+  "framework": "nextjs"
 }
