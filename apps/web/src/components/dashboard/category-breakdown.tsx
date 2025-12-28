@@ -1,6 +1,10 @@
 'use client';
 
+import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
+import { getChartColor, tooltipStyle } from '@moneio/ui/lib/chart-theme';
+import type React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+
 
 interface CategoryData {
   categoryId: string;
@@ -18,17 +22,6 @@ interface CategoryBreakdownProps {
   baseCurrency: string;
 }
 
-const COLORS = [
-  '#3b82f6', // blue
-  '#ef4444', // red
-  '#22c55e', // green
-  '#f59e0b', // amber
-  '#8b5cf6', // violet
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#f97316', // orange
-];
-
 function formatCurrency(value: number, currency: string): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -39,6 +32,8 @@ function formatCurrency(value: number, currency: string): string {
 }
 
 export function CategoryBreakdown({ data, loading, baseCurrency }: CategoryBreakdownProps) {
+  const containerRef = useFadeIn({ duration: 0.5, delay: 0.1, y: 20 }) as React.RefObject<HTMLDivElement>;
+
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
@@ -56,7 +51,7 @@ export function CategoryBreakdown({ data, loading, baseCurrency }: CategoryBreak
 
   if (expenseData.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-lg font-semibold text-foreground">Expenses by Category</h2>
         <div className="mt-4 flex h-64 items-center justify-center">
           <p className="text-muted-foreground">No expense data available</p>
@@ -72,7 +67,7 @@ export function CategoryBreakdown({ data, loading, baseCurrency }: CategoryBreak
   }));
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
+    <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
       <h2 className="text-lg font-semibold text-foreground">Expenses by Category</h2>
       <div className="mt-4 h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -85,18 +80,14 @@ export function CategoryBreakdown({ data, loading, baseCurrency }: CategoryBreak
               outerRadius={80}
               paddingAngle={2}
               dataKey="value"
+              animationDuration={500}
             >
               {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={getChartColor(index)} />
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--popover))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                fontSize: '12px',
-              }}
+              contentStyle={tooltipStyle}
               formatter={(value) => [formatCurrency(Number(value) || 0, baseCurrency), 'Amount']}
             />
             <Legend

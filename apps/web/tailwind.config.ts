@@ -56,6 +56,21 @@ const config: Config = {
         success: 'hsl(var(--success))',
         warning: 'hsl(var(--warning))',
         info: 'hsl(var(--info))',
+        // Chart colors
+        chart: {
+          income: 'hsl(var(--chart-income))',
+          expense: 'hsl(var(--chart-expense))',
+          neutral: 'hsl(var(--chart-neutral))',
+          grid: 'hsl(var(--chart-grid))',
+          1: 'hsl(var(--chart-1))',
+          2: 'hsl(var(--chart-2))',
+          3: 'hsl(var(--chart-3))',
+          4: 'hsl(var(--chart-4))',
+          5: 'hsl(var(--chart-5))',
+          6: 'hsl(var(--chart-6))',
+          7: 'hsl(var(--chart-7))',
+          8: 'hsl(var(--chart-8))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

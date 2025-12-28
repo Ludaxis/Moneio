@@ -1,6 +1,10 @@
 'use client';
 
+import { useFadeIn, useStaggerAnimation } from '@moneio/ui/hooks/use-gsap';
 import { ArrowDownLeft, ArrowUpRight, Clock } from 'lucide-react';
+import type React from 'react';
+
+
 
 interface Transaction {
   id: string;
@@ -37,6 +41,12 @@ function formatDate(dateStr: string): string {
 }
 
 export function RecentActivity({ transactions, loading }: RecentActivityProps) {
+  const containerRef = useFadeIn({ duration: 0.5, delay: 0.2, y: 20 }) as React.RefObject<HTMLDivElement>;
+  const listRef = useStaggerAnimation(
+    Math.min(transactions.length, 5),
+    { stagger: 0.08, duration: 0.35 }
+  ) as React.RefObject<HTMLDivElement>;
+
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
@@ -51,9 +61,9 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
+    <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
       <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
-      <div className="mt-4 space-y-1">
+      <div ref={listRef} className="mt-4 space-y-1">
         {transactions.length === 0 ? (
           <div className="flex h-48 items-center justify-center">
             <div className="text-center">
@@ -71,14 +81,14 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
                 <div
                   className={`flex h-9 w-9 items-center justify-center rounded-full ${
                     tx.amount < 0
-                      ? 'bg-red-100 dark:bg-red-900/20'
-                      : 'bg-green-100 dark:bg-green-900/20'
+                      ? 'bg-chart-expense/10'
+                      : 'bg-chart-income/10'
                   }`}
                 >
                   {tx.amount < 0 ? (
-                    <ArrowUpRight className="h-4 w-4 text-red-500" />
+                    <ArrowUpRight className="h-4 w-4 text-chart-expense" />
                   ) : (
-                    <ArrowDownLeft className="h-4 w-4 text-green-500" />
+                    <ArrowDownLeft className="h-4 w-4 text-chart-income" />
                   )}
                 </div>
                 <div>
@@ -92,7 +102,7 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
               </div>
               <p
                 className={`text-sm font-semibold tabular-nums ${
-                  tx.amount < 0 ? 'text-red-500' : 'text-green-500'
+                  tx.amount < 0 ? 'text-chart-expense' : 'text-chart-income'
                 }`}
               >
                 {tx.amount < 0 ? '-' : '+'}

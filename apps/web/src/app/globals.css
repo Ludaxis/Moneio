@@ -30,6 +30,22 @@
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
 
+    /* Chart colors - semantic */
+    --chart-income: 142 71% 45%;
+    --chart-expense: 0 84% 60%;
+    --chart-neutral: 215 16% 47%;
+    --chart-grid: 214 32% 91%;
+
+    /* Chart palette - categorical */
+    --chart-1: 217 91% 60%;
+    --chart-2: 0 84% 60%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 262 83% 58%;
+    --chart-6: 330 81% 60%;
+    --chart-7: 187 92% 41%;
+    --chart-8: 24 95% 53%;
+
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -65,6 +81,22 @@
     --success: 142 70% 45%;
     --warning: 38 92% 50%;
     --info: 199 89% 60%;
+
+    /* Chart colors - semantic (dark) */
+    --chart-income: 142 71% 45%;
+    --chart-expense: 0 72% 51%;
+    --chart-neutral: 215 20% 65%;
+    --chart-grid: 217 33% 18%;
+
+    /* Chart palette - categorical (dark) */
+    --chart-1: 217 91% 60%;
+    --chart-2: 0 72% 51%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 45 93% 47%;
+    --chart-5: 262 83% 58%;
+    --chart-6: 330 81% 60%;
+    --chart-7: 187 92% 41%;
+    --chart-8: 24 95% 53%;
 
     /* Sidebar */
     --sidebar-background: 222.2 47% 8%;

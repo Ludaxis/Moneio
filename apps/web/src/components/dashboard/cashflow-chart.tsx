@@ -1,5 +1,13 @@
 'use client';
 
+import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
+import {
+  chartColors,
+  tooltipStyle,
+  axisStyle,
+  gridStyle,
+} from '@moneio/ui/lib/chart-theme';
+import type React from 'react';
 import {
   AreaChart,
   Area,
@@ -10,6 +18,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+
 
 interface MonthlyData {
   month: string;
@@ -35,6 +44,8 @@ function formatCurrency(value: number, currency: string): string {
 }
 
 export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProps) {
+  const containerRef = useFadeIn({ duration: 0.5, y: 20 }) as React.RefObject<HTMLDivElement>;
+
   if (loading) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
@@ -45,43 +56,36 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
+    <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
       <h2 className="text-lg font-semibold text-foreground">Cashflow</h2>
       <div className="mt-4 h-64">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                <stop offset="5%" stopColor={chartColors.income} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={chartColors.income} stopOpacity={0} />
               </linearGradient>
               <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                <stop offset="5%" stopColor={chartColors.expense} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={chartColors.expense} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid {...gridStyle} />
             <XAxis
               dataKey="monthLabel"
-              tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
+              tick={axisStyle}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              tick={{ fontSize: 12 }}
-              className="text-muted-foreground"
+              tick={axisStyle}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value, baseCurrency)}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--popover))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                fontSize: '12px',
-              }}
+              contentStyle={tooltipStyle}
               formatter={(value, name) => [
                 formatCurrency(Number(value) || 0, baseCurrency),
                 name === 'income' ? 'Income' : 'Expenses',
@@ -93,17 +97,19 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
               type="monotone"
               dataKey="income"
               name="Income"
-              stroke="#22c55e"
+              stroke={chartColors.income}
               strokeWidth={2}
               fill="url(#incomeGradient)"
+              animationDuration={500}
             />
             <Area
               type="monotone"
               dataKey="expenses"
               name="Expenses"
-              stroke="#ef4444"
+              stroke={chartColors.expense}
               strokeWidth={2}
               fill="url(#expenseGradient)"
+              animationDuration={500}
             />
           </AreaChart>
         </ResponsiveContainer>

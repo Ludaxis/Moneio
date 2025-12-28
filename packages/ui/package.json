@@ -10,6 +10,9 @@
     "./primitives": "./src/primitives/index.ts",
     "./patterns": "./src/patterns/index.ts",
     "./hooks": "./src/hooks/index.ts",
+    "./hooks/use-gsap": "./src/hooks/use-gsap.ts",
+    "./lib/chart-theme": "./src/lib/chart-theme.ts",
+    "./lib/utils": "./src/lib/utils.ts",
     "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
