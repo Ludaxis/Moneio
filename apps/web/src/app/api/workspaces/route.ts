@@ -40,7 +40,10 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to get workspaces:', error);
     return NextResponse.json(
-      { error: 'Workspace service unavailable', detail: error instanceof Error ? error.message : String(error) },
+      {
+        error: 'Workspace service unavailable',
+        detail: error instanceof Error ? error.message : String(error),
+      },
       { status: 503 }
     );
   }
