@@ -10,6 +10,8 @@ const withNextIntl = createNextIntlPlugin('./src/lib/i18n.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Standalone output for Vercel - bundles all dependencies including Prisma
+  output: 'standalone',
   // Output file tracing root for monorepo - helps Vercel find Prisma engines
   outputFileTracingRoot: join(__dirname, '../../'),
   transpilePackages: [
