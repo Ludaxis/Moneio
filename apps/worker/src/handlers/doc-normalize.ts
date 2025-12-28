@@ -16,6 +16,10 @@ import { downloadFile, uploadFile } from '../lib/storage';
  * - Create normalized blob(s)
  * - Enqueue OCR jobs for each page
  */
+
+const MAX_PAGE_COUNT = 200;
+const MAX_IMAGE_DIMENSION_PX = 5000;
+
 export async function handleDocNormalize(
   job: Job<DocNormalizeJobData>
 ): Promise<DocNormalizeResult> {
@@ -71,6 +75,10 @@ export async function handleDocNormalize(
       data: { pageCount: docInfo.pageCount },
     });
 
+    if (docInfo.pageCount && docInfo.pageCount > MAX_PAGE_COUNT) {
+      throw new Error(`Document too large: ${docInfo.pageCount} pages (max ${MAX_PAGE_COUNT})`);
+    }
+
     // Process based on document type
     const isPdf = document.mimeType === 'application/pdf';
 
@@ -119,12 +127,23 @@ export async function handleDocNormalize(
     } else {
       // Image: Normalize if needed
       console.log(`[DOC_NORMALIZE] Processing image`);
+
+      if (
+        docInfo.width &&
+        docInfo.height &&
+        (docInfo.width > MAX_IMAGE_DIMENSION_PX || docInfo.height > MAX_IMAGE_DIMENSION_PX)
+      ) {
+        throw new Error(
+          `Image dimensions too large: ${docInfo.width}x${docInfo.height} (max ${MAX_IMAGE_DIMENSION_PX}px on any side)`
+        );
+      }
+
       const normalized = await normalizeImage(fileData, document.mimeType);
 
       await job.updateProgress(70);
 
-      // If normalized data is different, upload it
-      if (normalized.data !== fileData) {
+      // If image was normalized, upload the new version
+      if (normalized.normalized) {
         const normalizedPath = `${workspaceId}/${documentId}/normalized.${getExtension(normalized.mimeType)}`;
         await uploadFile(normalizedPath, normalized.data, normalized.mimeType);
 

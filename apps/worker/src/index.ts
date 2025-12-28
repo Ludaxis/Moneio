@@ -15,6 +15,8 @@ import {
   handleCategorization,
   handleFxFetch,
 } from './handlers';
+import { logger } from './lib/logger';
+import { attachMonitoring, getMetrics, isHealthy } from './lib/monitoring';
 import { QUEUE_NAMES, getQueues, closeQueues } from './lib/queues';
 import { getRedisConnection, closeRedisConnection } from './lib/redis';
 
@@ -84,21 +86,11 @@ const fxFetchWorker = new Worker(QUEUE_NAMES.FX_FETCH, handleFxFetch, {
 workers.push(fxFetchWorker);
 
 // ============================================================
-// Event Handlers
+// Attach Monitoring to All Workers
 // ============================================================
 
 for (const worker of workers) {
-  worker.on('completed', (job) => {
-    console.log(`[${worker.name}] Job ${job.id} completed`);
-  });
-
-  worker.on('failed', (job, err) => {
-    console.error(`[${worker.name}] Job ${job?.id} failed:`, err.message);
-  });
-
-  worker.on('error', (err) => {
-    console.error(`[${worker.name}] Worker error:`, err.message);
-  });
+  attachMonitoring(worker);
 }
 
 // ============================================================
@@ -132,19 +124,23 @@ async function scheduleRecurringJobs() {
 // ============================================================
 
 async function shutdown(signal: string) {
-  console.log(`\nReceived ${signal}, shutting down...`);
+  logger.info({ signal }, 'Received shutdown signal');
+
+  // Log final metrics
+  const finalMetrics = getMetrics();
+  logger.info({ metrics: finalMetrics }, 'Final worker metrics');
 
   // Close workers
   await Promise.all(workers.map((w) => w.close()));
-  console.log('Workers closed');
+  logger.info('Workers closed');
 
   // Close queues
   await closeQueues();
-  console.log('Queues closed');
+  logger.info('Queues closed');
 
   // Close Redis
   await closeRedisConnection();
-  console.log('Redis disconnected');
+  logger.info('Redis disconnected');
 
   process.exit(0);
 }
@@ -153,8 +149,40 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
 // ============================================================
+// Periodic Metrics Logging
+// ============================================================
+
+const METRICS_LOG_INTERVAL = 60 * 1000; // 1 minute
+
+setInterval(() => {
+  const metrics = getMetrics();
+  const health = isHealthy();
+
+  logger.info(
+    {
+      uptime: Math.round(metrics.uptime / 1000),
+      healthy: health.healthy,
+      queues: metrics.queues,
+    },
+    'Worker metrics'
+  );
+
+  if (!health.healthy) {
+    logger.warn({ reason: health.reason }, 'Worker unhealthy');
+  }
+}, METRICS_LOG_INTERVAL);
+
+// ============================================================
 // Startup
 // ============================================================
+
+logger.info(
+  {
+    concurrency: config.concurrency,
+    queues: Object.values(QUEUE_NAMES),
+  },
+  'Moneio Worker Service started'
+);
 
 console.log('');
 console.log('═══════════════════════════════════════════');
@@ -162,14 +190,14 @@ console.log('       Moneio Worker Service Started       ');
 console.log('═══════════════════════════════════════════');
 console.log('');
 console.log('Workers:');
-console.log(`  • DOC_NORMALIZE  (concurrency: ${config.concurrency.docNormalize})`);
-console.log(`  • DOC_OCR        (concurrency: ${config.concurrency.docOcr})`);
-console.log(`  • DOC_EXTRACT    (concurrency: ${config.concurrency.docExtract})`);
+console.log(`  • DOC_NORMALIZE   (concurrency: ${config.concurrency.docNormalize})`);
+console.log(`  • DOC_OCR         (concurrency: ${config.concurrency.docOcr})`);
+console.log(`  • DOC_EXTRACT     (concurrency: ${config.concurrency.docExtract})`);
 console.log(`  • DOC_POSTPROCESS (concurrency: ${config.concurrency.docPostprocess})`);
-console.log(`  • CATEGORIZATION (concurrency: ${config.concurrency.categorization})`);
-console.log(`  • FX_FETCH       (concurrency: ${config.concurrency.fxFetch})`);
+console.log(`  • CATEGORIZATION  (concurrency: ${config.concurrency.categorization})`);
+console.log(`  • FX_FETCH        (concurrency: ${config.concurrency.fxFetch})`);
 console.log('');
 console.log('Press Ctrl+C to stop');
 console.log('');
 
-scheduleRecurringJobs().catch(console.error);
+scheduleRecurringJobs().catch((err) => logger.error({ err }, 'Failed to schedule recurring jobs'));

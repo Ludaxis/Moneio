@@ -1,4 +1,6 @@
+import { SUPPORTED_DOCUMENT_MIME_TYPES } from '@moneio/domain';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createDocument, getWorkspaceDocuments } from '@/lib/documents';
 import { enqueueDocNormalize } from '@/lib/queue';
@@ -6,6 +8,22 @@ import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
+
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
+
+const createDocumentSchema = z.object({
+  workspaceId: z.string().uuid(),
+  fileName: z.string().min(1).max(512),
+  mimeType: z
+    .string()
+    .min(1)
+    .max(255)
+    .refine((value) => SUPPORTED_DOCUMENT_MIME_TYPES.includes(value as (typeof SUPPORTED_DOCUMENT_MIME_TYPES)[number]), {
+      message: 'Unsupported MIME type',
+    }),
+  fileSize: z.number().int().positive().max(MAX_FILE_SIZE_BYTES),
+  storagePath: z.string().min(1).max(1024),
+});
 
 export async function GET(request: Request) {
   try {
@@ -23,7 +41,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    if (!workspaceId) {
+    if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
       return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
     }
 
@@ -43,6 +61,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > 256 * 1024) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
     const supabase = createServerClient();
     const {
       data: { user },
@@ -53,11 +76,12 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { workspaceId, fileName, mimeType, fileSize, storagePath } = body;
+    const parsed = createDocumentSchema.safeParse(body);
 
-    if (!workspaceId || !fileName || !mimeType || !fileSize || !storagePath) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { workspaceId, fileName, mimeType, fileSize, storagePath } = parsed.data;
 
     // Check permission
     const canCreate = await hasPermission(user.id, workspaceId, 'document:create');
