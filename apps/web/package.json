@@ -5,8 +5,9 @@
   "description": "Web application - Next.js frontend",
   "type": "module",
   "scripts": {
+    "postinstall": "prisma generate --schema=../../packages/db/prisma/schema.prisma",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate --schema=../../packages/db/prisma/schema.prisma && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next node_modules",
@@ -41,6 +42,7 @@
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
+    "prisma": "^5.22.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.0",
     "vitest": "^1.6.0"
