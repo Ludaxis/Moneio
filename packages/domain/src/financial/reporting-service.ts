@@ -275,12 +275,11 @@ export class ReportingService {
     endDate: string,
     baseCurrency: CurrencyCode
   ): Promise<DashboardMetrics> {
-    const cashflow = await this.getCashflowReport(
-      workspaceId,
-      startDate,
-      endDate,
-      baseCurrency
-    );
+    const [cashflow, invoices, fxRates] = await Promise.all([
+      this.getCashflowReport(workspaceId, startDate, endDate, baseCurrency),
+      this.repository.getInvoicesByPeriod(workspaceId, startDate, endDate),
+      this.repository.getLatestFxRates(baseCurrency),
+    ]);
 
     // Calculate burn rate (average monthly expenses)
     const months = cashflow.byMonth.length || 1;
@@ -311,6 +310,9 @@ export class ReportingService {
       };
     }
 
+    // Aggregate spending by merchant
+    const topMerchants = this.aggregateMerchantSpending(invoices, baseCurrency, fxRates);
+
     return {
       period: { start: startDate, end: endDate },
       baseCurrency,
@@ -318,7 +320,7 @@ export class ReportingService {
       totalExpenses: cashflow.expenses,
       netCashflow: cashflow.netCashflow,
       burnRate,
-      topMerchants: [], // TODO: Implement merchant aggregation
+      topMerchants,
       categoryBreakdown: cashflow.byCategory,
       trend,
     };
@@ -348,5 +350,50 @@ export class ReportingService {
     }
 
     return convertMoney(amount, rate);
+  }
+
+  private aggregateMerchantSpending(
+    invoices: InvoiceSummary[],
+    baseCurrency: CurrencyCode,
+    fxRates: FxRate[]
+  ): MerchantSpend[] {
+    const merchantTotals = new Map<string, { totalAmount: number; count: number }>();
+
+    for (const invoice of invoices) {
+      const merchantName = invoice.merchantName || 'Unknown';
+      const amount = this.convertToBaseCurrency(invoice.total, baseCurrency, fxRates);
+
+      const existing = merchantTotals.get(merchantName) || { totalAmount: 0, count: 0 };
+      existing.totalAmount += amount.amount;
+      existing.count++;
+      merchantTotals.set(merchantName, existing);
+    }
+
+    // Convert to MerchantSpend array and sort by total spend descending
+    const merchants: MerchantSpend[] = Array.from(merchantTotals.entries())
+      .map(([merchantName, data]) => ({
+        // Generate a deterministic ID from merchant name
+        merchantId: this.generateMerchantId(merchantName),
+        merchantName,
+        totalSpend: createMoney(data.totalAmount / 100, baseCurrency),
+        transactionCount: data.count,
+      }))
+      .sort((a, b) => toDecimal(b.totalSpend) - toDecimal(a.totalSpend));
+
+    // Return top 10 merchants
+    return merchants.slice(0, 10);
+  }
+
+  private generateMerchantId(merchantName: string): UUID {
+    // Generate a simple deterministic ID from merchant name
+    // Uses a basic hash to create a UUID-like string
+    let hash = 0;
+    for (let i = 0; i < merchantName.length; i++) {
+      const char = merchantName.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    const hex = Math.abs(hash).toString(16).padStart(8, '0');
+    return `merchant-${hex}-${hex.split('').reverse().join('')}`;
   }
 }
