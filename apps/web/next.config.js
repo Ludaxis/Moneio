@@ -30,6 +30,13 @@ const nextConfig = {
       },
     ],
   },
+  // Explicitly include Prisma engine files in the bundle for pnpm monorepo
+  experimental: {
+    outputFileTracingIncludes: {
+      '/api/**/*': ['./node_modules/.prisma/**/*'],
+      '/': ['./node_modules/.prisma/**/*'],
+    },
+  },
 };
 
 export default withNextIntl(nextConfig);

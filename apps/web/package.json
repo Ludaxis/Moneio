@@ -23,6 +23,7 @@
     "@moneio/i18n": "workspace:*",
     "@moneio/ui": "workspace:*",
     "@moneio/utils": "workspace:*",
+    "@prisma/client": "^5.22.0",
     "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.43.0",
     "bullmq": "^5.7.0",

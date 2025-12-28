@@ -71,6 +71,9 @@ importers:
       '@moneio/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@prisma/client':
+        specifier: ^5.22.0
+        version: 5.22.0(prisma@5.22.0)
       '@supabase/ssr':
         specifier: ^0.3.0
         version: 0.3.0(@supabase/supabase-js@2.89.0)
