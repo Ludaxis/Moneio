@@ -30,6 +30,14 @@ const rolePermissions: Record<WorkspaceRole, string[]> = {
     'report:export',
     'settings:read',
     'settings:update',
+    'category:read',
+    'category:create',
+    'category:update',
+    'category:delete',
+    'rule:read',
+    'rule:create',
+    'rule:update',
+    'rule:delete',
   ],
   admin: [
     'workspace:read',
@@ -54,6 +62,14 @@ const rolePermissions: Record<WorkspaceRole, string[]> = {
     'report:read',
     'report:export',
     'settings:read',
+    'category:read',
+    'category:create',
+    'category:update',
+    'category:delete',
+    'rule:read',
+    'rule:create',
+    'rule:update',
+    'rule:delete',
   ],
   member: [
     'workspace:read',
@@ -67,6 +83,8 @@ const rolePermissions: Record<WorkspaceRole, string[]> = {
     'transaction:categorize',
     'report:read',
     'settings:read',
+    'category:read',
+    'rule:read',
   ],
 };
 
