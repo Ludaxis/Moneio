@@ -79,6 +79,7 @@ export async function POST(request: Request) {
       baseCurrency: baseCurrency || 'EUR',
       locale: locale || 'en',
       ownerId: user.id,
+      ownerEmail: user.email,
     });
 
     return NextResponse.json(workspace, { status: 201 });

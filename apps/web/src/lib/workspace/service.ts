@@ -7,6 +7,21 @@ interface CreateWorkspaceInput {
   baseCurrency?: string;
   locale?: string;
   ownerId: string;
+  ownerEmail?: string;
+}
+
+/**
+ * Ensure a user exists in the database (upsert from Supabase Auth)
+ */
+export async function ensureUser(userId: string, email?: string) {
+  return prisma.user.upsert({
+    where: { id: userId },
+    update: {}, // Don't update existing users
+    create: {
+      id: userId,
+      email: email || `user-${userId}@moneio.app`,
+    },
+  });
 }
 
 /**
@@ -17,7 +32,11 @@ export async function createWorkspace({
   baseCurrency = 'EUR',
   locale = 'en',
   ownerId,
+  ownerEmail,
 }: CreateWorkspaceInput) {
+  // Ensure the user exists in our database first
+  await ensureUser(ownerId, ownerEmail);
+
   const workspace = await prisma.workspace.create({
     data: {
       name,
