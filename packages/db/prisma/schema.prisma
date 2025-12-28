@@ -3,8 +3,8 @@
 
 generator client {
   provider = "prisma-client-js"
-  // Include serverless-friendly target for Vercel (Amazon Linux, glibc + OpenSSL 3)
-  binaryTargets = ["native", "linux-openssl-3.0.x"]
+  // Include serverless-friendly target for Vercel (Amazon Linux 2, RHEL-based with OpenSSL 3)
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
