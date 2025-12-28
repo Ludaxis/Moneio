@@ -4,8 +4,6 @@ import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import type React from 'react';
 
-
-
 interface StatCardProps {
   label: string;
   value: string;
@@ -18,7 +16,11 @@ interface StatCardProps {
 }
 
 export function StatCard({ label, value, trend, loading, delay = 0 }: StatCardProps) {
-  const containerRef = useFadeIn({ duration: 0.4, delay, y: 15 }) as React.RefObject<HTMLDivElement>;
+  const containerRef = useFadeIn({
+    duration: 0.4,
+    delay,
+    y: 15,
+  }) as React.RefObject<HTMLDivElement>;
 
   if (loading) {
     return (

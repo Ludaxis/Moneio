@@ -1,7 +1,7 @@
 'use client';
 
-
-import { Button ,
+import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -85,9 +85,7 @@ export function InvoiceDetailDialog({
             </DialogTitle>
             <InvoiceStatusBadge status={invoice.status} />
           </div>
-          <DialogDescription>
-            Created on {formatDate(invoice.createdAt, locale)}
-          </DialogDescription>
+          <DialogDescription>Created on {formatDate(invoice.createdAt, locale)}</DialogDescription>
         </DialogHeader>
 
         {/* Metadata Grid */}

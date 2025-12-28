@@ -4,8 +4,6 @@ import { useFadeIn, useStaggerAnimation } from '@moneio/ui/hooks/use-gsap';
 import { ArrowDownLeft, ArrowUpRight, Clock } from 'lucide-react';
 import type React from 'react';
 
-
-
 interface Transaction {
   id: string;
   description: string;
@@ -41,11 +39,15 @@ function formatDate(dateStr: string): string {
 }
 
 export function RecentActivity({ transactions, loading }: RecentActivityProps) {
-  const containerRef = useFadeIn({ duration: 0.5, delay: 0.2, y: 20 }) as React.RefObject<HTMLDivElement>;
-  const listRef = useStaggerAnimation(
-    Math.min(transactions.length, 5),
-    { stagger: 0.08, duration: 0.35 }
-  ) as React.RefObject<HTMLDivElement>;
+  const containerRef = useFadeIn({
+    duration: 0.5,
+    delay: 0.2,
+    y: 20,
+  }) as React.RefObject<HTMLDivElement>;
+  const listRef = useStaggerAnimation(Math.min(transactions.length, 5), {
+    stagger: 0.08,
+    duration: 0.35,
+  }) as React.RefObject<HTMLDivElement>;
 
   if (loading) {
     return (
@@ -80,9 +82,7 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
               <div className="flex items-center gap-3">
                 <div
                   className={`flex h-9 w-9 items-center justify-center rounded-full ${
-                    tx.amount < 0
-                      ? 'bg-chart-expense/10'
-                      : 'bg-chart-income/10'
+                    tx.amount < 0 ? 'bg-chart-expense/10' : 'bg-chart-income/10'
                   }`}
                 >
                   {tx.amount < 0 ? (

@@ -21,13 +21,21 @@ function getFieldValue(transaction: TransactionData, field: RuleConditionField):
       return transaction.description || '';
     case 'amount':
       // Handle Decimal type from Prisma
-      if (typeof transaction.amount === 'object' && transaction.amount !== null && 'toNumber' in transaction.amount) {
+      if (
+        typeof transaction.amount === 'object' &&
+        transaction.amount !== null &&
+        'toNumber' in transaction.amount
+      ) {
         return transaction.amount.toNumber();
       }
       return Number(transaction.amount);
     case 'merchant':
       // Extract merchant from rawData if available
-      if (transaction.rawData && typeof transaction.rawData === 'object' && !Array.isArray(transaction.rawData)) {
+      if (
+        transaction.rawData &&
+        typeof transaction.rawData === 'object' &&
+        !Array.isArray(transaction.rawData)
+      ) {
         const rawObj = transaction.rawData as Record<string, unknown>;
         return typeof rawObj.merchant === 'string' ? rawObj.merchant : '';
       }

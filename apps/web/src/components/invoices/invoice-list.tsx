@@ -4,8 +4,6 @@ import { useStaggerAnimation } from '@moneio/ui/hooks/use-gsap';
 import { CheckCircle, FileText, Link2 } from 'lucide-react';
 import type React from 'react';
 
-
-
 import { InvoiceStatusBadge } from './invoice-status-badge';
 
 export interface Invoice {
@@ -90,7 +88,12 @@ function LoadingSkeleton() {
   );
 }
 
-export function InvoiceList({ invoices, loading, onInvoiceClick, locale = 'en-US' }: InvoiceListProps) {
+export function InvoiceList({
+  invoices,
+  loading,
+  onInvoiceClick,
+  locale = 'en-US',
+}: InvoiceListProps) {
   const listRef = useStaggerAnimation(invoices.length, {
     stagger: 0.05,
     duration: 0.3,

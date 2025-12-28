@@ -1,8 +1,8 @@
 'use client';
 
-
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
-import { Button ,
+import {
+  Button,
   Select,
   SelectContent,
   SelectItem,

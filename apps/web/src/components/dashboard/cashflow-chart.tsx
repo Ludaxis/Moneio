@@ -1,12 +1,7 @@
 'use client';
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
-import {
-  chartColors,
-  tooltipStyle,
-  axisStyle,
-  gridStyle,
-} from '@moneio/ui/lib/chart-theme';
+import { chartColors, tooltipStyle, axisStyle, gridStyle } from '@moneio/ui/lib/chart-theme';
 import type React from 'react';
 import {
   AreaChart,
@@ -18,7 +13,6 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-
 
 interface MonthlyData {
   month: string;
@@ -72,12 +66,7 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
               </linearGradient>
             </defs>
             <CartesianGrid {...gridStyle} />
-            <XAxis
-              dataKey="monthLabel"
-              tick={axisStyle}
-              tickLine={false}
-              axisLine={false}
-            />
+            <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />
             <YAxis
               tick={axisStyle}
               tickLine={false}

@@ -5,7 +5,6 @@ import { getChartColor, tooltipStyle } from '@moneio/ui/lib/chart-theme';
 import type React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-
 interface CategoryData {
   categoryId: string;
   categoryName: string;
@@ -32,7 +31,11 @@ function formatCurrency(value: number, currency: string): string {
 }
 
 export function CategoryBreakdown({ data, loading, baseCurrency }: CategoryBreakdownProps) {
-  const containerRef = useFadeIn({ duration: 0.5, delay: 0.1, y: 20 }) as React.RefObject<HTMLDivElement>;
+  const containerRef = useFadeIn({
+    duration: 0.5,
+    delay: 0.1,
+    y: 20,
+  }) as React.RefObject<HTMLDivElement>;
 
   if (loading) {
     return (

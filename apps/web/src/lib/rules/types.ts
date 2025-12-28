@@ -41,7 +41,16 @@ export interface RuleConditions {
  */
 export const ruleConditionSchema = z.object({
   field: z.enum(['description', 'amount', 'merchant']),
-  operator: z.enum(['contains', 'equals', 'startsWith', 'endsWith', 'regex', 'gt', 'lt', 'between']),
+  operator: z.enum([
+    'contains',
+    'equals',
+    'startsWith',
+    'endsWith',
+    'regex',
+    'gt',
+    'lt',
+    'between',
+  ]),
   value: z.union([z.string(), z.number(), z.tuple([z.number(), z.number()])]),
   caseSensitive: z.boolean().optional(),
 });
