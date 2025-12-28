@@ -38,6 +38,12 @@ const rolePermissions: Record<WorkspaceRole, string[]> = {
     'rule:create',
     'rule:update',
     'rule:delete',
+    'gl:read',
+    'gl:create',
+    'gl:update',
+    'gl:delete',
+    'gl:post',
+    'gl:close',
   ],
   admin: [
     'workspace:read',
@@ -70,6 +76,11 @@ const rolePermissions: Record<WorkspaceRole, string[]> = {
     'rule:create',
     'rule:update',
     'rule:delete',
+    'gl:read',
+    'gl:create',
+    'gl:update',
+    'gl:delete',
+    'gl:post',
   ],
   member: [
     'workspace:read',
@@ -85,6 +96,7 @@ const rolePermissions: Record<WorkspaceRole, string[]> = {
     'settings:read',
     'category:read',
     'rule:read',
+    'gl:read',
   ],
 };
 

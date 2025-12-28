@@ -39,19 +39,23 @@ model Workspace {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  members                  WorkspaceMember[]
-  documents                Document[]
-  merchants                Merchant[]
-  invoices                 Invoice[]
-  bankAccounts             BankAccount[]
-  bankTransactions         BankTransaction[]
-  categories               Category[]
+  members                    WorkspaceMember[]
+  documents                  Document[]
+  merchants                  Merchant[]
+  invoices                   Invoice[]
+  bankAccounts               BankAccount[]
+  bankTransactions           BankTransaction[]
+  categories                 Category[]
   transactionCategorizations TransactionCategorization[]
-  rules                    Rule[]
-  matches                  Match[]
-  aiSuggestions            AiSuggestion[]
-  auditLogs                AuditLog[]
-  fxRates                  FxRate[]
+  rules                      Rule[]
+  matches                    Match[]
+  aiSuggestions              AiSuggestion[]
+  auditLogs                  AuditLog[]
+  fxRates                    FxRate[]
+  glAccounts                 GLAccount[]
+  journalEntries             JournalEntry[]
+  accountingPeriods          AccountingPeriod[]
+  glBalances                 GLBalance[]
 
   @@map("workspaces")
 }
@@ -274,6 +278,7 @@ model Category {
   name        String
   parentId    String?  @map("parent_id") @db.Uuid
   taxCode     String?  @map("tax_code") @db.VarChar(20)
+  glAccountId String?  @map("gl_account_id") @db.Uuid
   isSystem    Boolean  @default(false) @map("is_system")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -281,6 +286,7 @@ model Category {
   workspace       Workspace                   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   parent          Category?                   @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children        Category[]                  @relation("CategoryHierarchy")
+  glAccount       GLAccount?                  @relation(fields: [glAccountId], references: [id], onDelete: SetNull)
   categorizations TransactionCategorization[]
   rules           Rule[]
 
@@ -323,6 +329,159 @@ model Rule {
   category  Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@map("rules")
+}
+
+// ============================================================
+// General Ledger Tables
+// ============================================================
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+
+  @@map("account_type")
+}
+
+enum NormalBalance {
+  DEBIT
+  CREDIT
+
+  @@map("normal_balance")
+}
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  REVERSED
+
+  @@map("journal_status")
+}
+
+enum PeriodStatus {
+  OPEN
+  LOCKED
+  CLOSED
+
+  @@map("period_status")
+}
+
+model GLAccount {
+  id            String        @id @default(uuid()) @db.Uuid
+  workspaceId   String        @map("workspace_id") @db.Uuid
+  accountCode   String        @map("account_code") @db.VarChar(20)
+  accountName   String        @map("account_name") @db.VarChar(255)
+  accountType   AccountType   @map("account_type")
+  subType       String?       @map("sub_type") @db.VarChar(50)
+  normalBalance NormalBalance @map("normal_balance")
+  parentId      String?       @map("parent_id") @db.Uuid
+  description   String?
+  isActive      Boolean       @default(true) @map("is_active")
+  isSystem      Boolean       @default(false) @map("is_system")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent       GLAccount?    @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     GLAccount[]   @relation("AccountHierarchy")
+  journalLines JournalLine[]
+  balances     GLBalance[]
+  categories   Category[]
+
+  @@unique([workspaceId, accountCode])
+  @@index([workspaceId, accountType])
+  @@index([workspaceId, isActive])
+  @@map("gl_accounts")
+}
+
+model JournalEntry {
+  id            String        @id @default(uuid()) @db.Uuid
+  workspaceId   String        @map("workspace_id") @db.Uuid
+  entryNumber   String        @map("entry_number") @db.VarChar(50)
+  entryDate     DateTime      @map("entry_date") @db.Date
+  description   String
+  referenceType String?       @map("reference_type") @db.VarChar(50)
+  referenceId   String?       @map("reference_id") @db.Uuid
+  status        JournalStatus @default(DRAFT)
+  postedAt      DateTime?     @map("posted_at")
+  postedBy      String?       @map("posted_by") @db.Uuid
+  reversedAt    DateTime?     @map("reversed_at")
+  reversedBy    String?       @map("reversed_by") @db.Uuid
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lines     JournalLine[]
+
+  @@unique([workspaceId, entryNumber])
+  @@index([workspaceId, entryDate])
+  @@index([workspaceId, status])
+  @@index([workspaceId, referenceType, referenceId])
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id             String   @id @default(uuid()) @db.Uuid
+  journalEntryId String   @map("journal_entry_id") @db.Uuid
+  glAccountId    String   @map("gl_account_id") @db.Uuid
+  description    String?
+  debitAmount    Decimal  @default(0) @map("debit_amount") @db.Decimal(15, 2)
+  creditAmount   Decimal  @default(0) @map("credit_amount") @db.Decimal(15, 2)
+  currency       String   @default("EUR") @db.VarChar(3)
+  lineOrder      Int      @map("line_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  glAccount    GLAccount    @relation(fields: [glAccountId], references: [id], onDelete: Restrict)
+
+  @@index([journalEntryId])
+  @@index([glAccountId])
+  @@map("journal_lines")
+}
+
+model AccountingPeriod {
+  id          String       @id @default(uuid()) @db.Uuid
+  workspaceId String       @map("workspace_id") @db.Uuid
+  periodName  String       @map("period_name") @db.VarChar(50)
+  periodStart DateTime     @map("period_start") @db.Date
+  periodEnd   DateTime     @map("period_end") @db.Date
+  fiscalYear  Int          @map("fiscal_year")
+  status      PeriodStatus @default(OPEN)
+  closedAt    DateTime?    @map("closed_at")
+  closedBy    String?      @map("closed_by") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, periodStart, periodEnd])
+  @@index([workspaceId, fiscalYear])
+  @@index([workspaceId, status])
+  @@map("accounting_periods")
+}
+
+model GLBalance {
+  id             String   @id @default(uuid()) @db.Uuid
+  workspaceId    String   @map("workspace_id") @db.Uuid
+  glAccountId    String   @map("gl_account_id") @db.Uuid
+  periodStart    DateTime @map("period_start") @db.Date
+  periodEnd      DateTime @map("period_end") @db.Date
+  openingBalance Decimal  @default(0) @map("opening_balance") @db.Decimal(15, 2)
+  debitTotal     Decimal  @default(0) @map("debit_total") @db.Decimal(15, 2)
+  creditTotal    Decimal  @default(0) @map("credit_total") @db.Decimal(15, 2)
+  closingBalance Decimal  @default(0) @map("closing_balance") @db.Decimal(15, 2)
+  currency       String   @default("EUR") @db.VarChar(3)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  glAccount GLAccount @relation(fields: [glAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, glAccountId, periodStart, periodEnd])
+  @@index([workspaceId, periodStart, periodEnd])
+  @@map("gl_balances")
 }
 
 // ============================================================
