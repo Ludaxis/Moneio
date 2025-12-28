@@ -91,8 +91,8 @@ export async function GET(request: Request) {
     const parsed = querySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
       period: searchParams.get('period') || 'month',
-      startDate: searchParams.get('startDate'),
-      endDate: searchParams.get('endDate'),
+      startDate: searchParams.get('startDate') || undefined,
+      endDate: searchParams.get('endDate') || undefined,
     });
 
     if (!parsed.success) {
