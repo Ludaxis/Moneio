@@ -218,7 +218,10 @@ export function attachMonitoring(worker: Worker): void {
 
   worker.on('stalled', (jobId) => {
     logger.warn({ queue: queueName, jobId }, 'Job stalled');
-    sendAlert(`Job ${jobId} stalled in queue "${queueName}"`, 'warning', { queue: queueName, jobId });
+    sendAlert(`Job ${jobId} stalled in queue "${queueName}"`, 'warning', {
+      queue: queueName,
+      jobId,
+    });
   });
 }
 

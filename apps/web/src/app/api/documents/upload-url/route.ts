@@ -16,9 +16,15 @@ const uploadUrlSchema = z.object({
     .string()
     .min(1)
     .max(255)
-    .refine((value) => SUPPORTED_DOCUMENT_MIME_TYPES.includes(value as (typeof SUPPORTED_DOCUMENT_MIME_TYPES)[number]), {
-      message: 'Unsupported MIME type',
-    }),
+    .refine(
+      (value) =>
+        SUPPORTED_DOCUMENT_MIME_TYPES.includes(
+          value as (typeof SUPPORTED_DOCUMENT_MIME_TYPES)[number]
+        ),
+      {
+        message: 'Unsupported MIME type',
+      }
+    ),
 });
 
 export async function POST(request: Request) {
@@ -41,7 +47,10 @@ export async function POST(request: Request) {
     const parsed = uploadUrlSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
     const { workspaceId, fileName, mimeType } = parsed.data;
 

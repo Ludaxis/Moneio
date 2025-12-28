@@ -73,35 +73,22 @@ pnpm db:push      # Push schema to database (development)
 
 ## API Endpoints
 
-### Documents
+### Implemented (Next.js API routes)
 
-- `POST /api/documents/upload` - Upload a document
-- `GET /api/documents/:id` - Get document details
-- `POST /api/documents/:id/retry` - Retry processing
-- `POST /api/documents/:id/approve-extraction` - Approve extracted data
+- `POST /api/documents/upload-url` — Get a signed upload URL for Supabase Storage
+- `POST /api/documents` — Create a document record and enqueue processing
+- `GET /api/documents` — List workspace documents
+- `GET /api/documents/:id` — Get document details + signed view URL
+- `PATCH /api/documents/:id/extraction` — Edit extracted payload (server-side review)
+- `POST /api/documents/:id/extraction/approve` — Approve extraction and linked invoice
+- `GET /api/transactions` — List bank transactions
+- `POST /api/transactions/import` — Import bank transactions from CSV data
+- `GET /api/workspaces` / `POST /api/workspaces` — Workspace listing/creation
+- `GET /api/audit-log` — Workspace audit log entries
 
-### Invoices
+### Planned/Not Yet Implemented
 
-- `GET /api/invoices` - List invoices
-- `POST /api/invoices` - Create invoice
-- `POST /api/invoices/:id/approve` - Approve invoice
-- `POST /api/invoices/:id/mark-paid` - Mark as paid
-
-### Transactions
-
-- `GET /api/transactions` - List transactions
-- `POST /api/transactions/:id/categorize` - Categorize transaction
-- `POST /api/transactions/import-csv` - Import from CSV
-
-### Reports
-
-- `GET /api/reports/cashflow` - Cashflow report
-- `GET /api/reports/vat` - VAT summary
-- `GET /api/reports/dashboard` - Dashboard metrics
-
-### Chat
-
-- `POST /api/chat` - Send a message to the AI assistant
+The README previously listed invoice approval, reports, and chat endpoints for the planned Hono API service. These are not yet wired up; extend the API surface (or adjust the contract) before promising them to users.
 
 ## Technology Stack
 

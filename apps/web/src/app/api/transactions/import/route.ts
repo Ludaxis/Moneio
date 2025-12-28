@@ -2,19 +2,29 @@ import { createHash } from 'crypto';
 
 import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
 
-interface ImportTransaction {
-  date: string;
-  description: string;
-  amount: number;
-  balance?: number;
-  reference?: string;
-}
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024; // 2MB
+const MAX_TRANSACTIONS = 2000;
+
+const transactionSchema = z.object({
+  date: z.string().min(1).max(100),
+  description: z.string().min(1).max(512),
+  amount: z.number().finite(),
+  balance: z.number().finite().optional(),
+  reference: z.string().max(256).optional(),
+});
+
+const importSchema = z.object({
+  workspaceId: z.string().uuid(),
+  transactions: z.array(transactionSchema).min(1).max(MAX_TRANSACTIONS),
+  fileName: z.string().max(512).optional(),
+});
 
 /**
  * POST /api/transactions/import
@@ -22,6 +32,11 @@ interface ImportTransaction {
  */
 export async function POST(request: Request) {
   try {
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > MAX_IMPORT_BYTES) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
     const supabase = createServerClient();
     const {
       data: { user },
@@ -32,22 +47,18 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { workspaceId, transactions, fileName } = body as {
-      workspaceId: string;
-      transactions: ImportTransaction[];
-      fileName?: string;
-    };
-
-    if (!workspaceId || !transactions || !Array.isArray(transactions)) {
+    const parsed = importSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'workspaceId and transactions array are required' },
+        { error: 'Invalid request', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
+    const { workspaceId, transactions, fileName } = parsed.data;
 
     // Check permission
-    const canWrite = await hasPermission(user.id, workspaceId, 'document:write');
-    if (!canWrite) {
+    const canCreateTransactions = await hasPermission(user.id, workspaceId, 'transaction:create');
+    if (!canCreateTransactions) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     }
 

@@ -18,9 +18,15 @@ const createDocumentSchema = z.object({
     .string()
     .min(1)
     .max(255)
-    .refine((value) => SUPPORTED_DOCUMENT_MIME_TYPES.includes(value as (typeof SUPPORTED_DOCUMENT_MIME_TYPES)[number]), {
-      message: 'Unsupported MIME type',
-    }),
+    .refine(
+      (value) =>
+        SUPPORTED_DOCUMENT_MIME_TYPES.includes(
+          value as (typeof SUPPORTED_DOCUMENT_MIME_TYPES)[number]
+        ),
+      {
+        message: 'Unsupported MIME type',
+      }
+    ),
   fileSize: z.number().int().positive().max(MAX_FILE_SIZE_BYTES),
   storagePath: z.string().min(1).max(1024),
 });
@@ -79,7 +85,10 @@ export async function POST(request: Request) {
     const parsed = createDocumentSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
     const { workspaceId, fileName, mimeType, fileSize, storagePath } = parsed.data;
 

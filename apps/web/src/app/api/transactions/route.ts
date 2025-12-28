@@ -1,5 +1,6 @@
 import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
@@ -23,15 +24,15 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const workspaceId = searchParams.get('workspaceId');
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '20');
+    const page = Math.max(parseInt(searchParams.get('page') || '1'), 1);
+    const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '20'), 200);
 
-    if (!workspaceId) {
+    if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
       return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
     }
 
     // Check permission
-    const canRead = await hasPermission(user.id, workspaceId, 'workspace:read');
+    const canRead = await hasPermission(user.id, workspaceId, 'transaction:read');
     if (!canRead) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     }

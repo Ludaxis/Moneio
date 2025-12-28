@@ -1,10 +1,16 @@
 import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
+
+const approveExtractionSchema = z.object({
+  workspaceId: z.string().uuid(),
+  extractionId: z.string().uuid(),
+});
 
 /**
  * POST /api/documents/[id]/extraction/approve
@@ -12,6 +18,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > 64 * 1024) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
     const supabase = createServerClient();
     const {
       data: { user },
@@ -22,17 +33,17 @@ export async function POST(request: Request, { params }: { params: { id: string 
     }
 
     const body = await request.json();
-    const { workspaceId, extractionId } = body;
-
-    if (!workspaceId || !extractionId) {
+    const parsed = approveExtractionSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'workspaceId and extractionId are required' },
+        { error: 'Invalid request', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
+    const { workspaceId, extractionId } = parsed.data;
 
     // Check permission - require document:approve permission
-    const canApprove = await hasPermission(user.id, workspaceId, 'document:write');
+    const canApprove = await hasPermission(user.id, workspaceId, 'document:approve');
     if (!canApprove) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     }

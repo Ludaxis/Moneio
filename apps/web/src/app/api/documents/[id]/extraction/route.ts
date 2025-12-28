@@ -1,10 +1,17 @@
 import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
+
+const updateExtractionSchema = z.object({
+  workspaceId: z.string().uuid(),
+  extractionId: z.string().uuid(),
+  payload: z.record(z.any()),
+});
 
 /**
  * PATCH /api/documents/[id]/extraction
@@ -12,6 +19,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > 512 * 1024) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
     const supabase = createServerClient();
     const {
       data: { user },
@@ -22,18 +34,18 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     const body = await request.json();
-    const { workspaceId, extractionId, payload } = body;
-
-    if (!workspaceId || !extractionId || !payload) {
+    const parsed = updateExtractionSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'workspaceId, extractionId, and payload are required' },
+        { error: 'Invalid request', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
+    const { workspaceId, extractionId, payload } = parsed.data;
 
     // Check permission
-    const canWrite = await hasPermission(user.id, workspaceId, 'document:write');
-    if (!canWrite) {
+    const canUpdate = await hasPermission(user.id, workspaceId, 'document:update');
+    if (!canUpdate) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     }
 

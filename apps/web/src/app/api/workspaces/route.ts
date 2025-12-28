@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createServerClient } from '@/lib/supabase';
 import { createWorkspace, getUserWorkspaces } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
+
+const createWorkspaceSchema = z.object({
+  name: z.string().min(1).max(100),
+  baseCurrency: z.string().length(3).optional(),
+  locale: z.string().max(5).optional(),
+});
 
 export async function GET() {
   try {
@@ -36,11 +43,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, baseCurrency, locale } = body;
-
-    if (!name) {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    const parsed = createWorkspaceSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
+    const { name, baseCurrency, locale } = parsed.data;
 
     const workspace = await createWorkspace({
       name,

@@ -1,5 +1,6 @@
 import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
@@ -25,10 +26,10 @@ export async function GET(request: Request) {
     const workspaceId = searchParams.get('workspaceId');
     const entityType = searchParams.get('entityType');
     const entityId = searchParams.get('entityId');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200);
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0'), 0);
 
-    if (!workspaceId) {
+    if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
       return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
     }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getDocument, getDocumentViewUrl } from '@/lib/documents';
 import { createServerClient } from '@/lib/supabase';
@@ -20,7 +21,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const { searchParams } = new URL(request.url);
     const workspaceId = searchParams.get('workspaceId');
 
-    if (!workspaceId) {
+    if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
       return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
     }
 
