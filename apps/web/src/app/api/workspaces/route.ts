@@ -23,7 +23,7 @@ const createWorkspaceSchema = z.object({
 export async function GET() {
   try {
     if (!isSupabaseConfigured()) {
-      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+      return NextResponse.json({ error: 'Supabase/DB not configured' }, { status: 503 });
     }
 
     const supabase = createServerClient();
@@ -39,14 +39,17 @@ export async function GET() {
     return NextResponse.json(workspaces);
   } catch (error) {
     console.error('Failed to get workspaces:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Workspace service unavailable', detail: error instanceof Error ? error.message : String(error) },
+      { status: 503 }
+    );
   }
 }
 
 export async function POST(request: Request) {
   try {
     if (!isSupabaseConfigured()) {
-      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+      return NextResponse.json({ error: 'Supabase/DB not configured' }, { status: 503 });
     }
 
     const supabase = createServerClient();
