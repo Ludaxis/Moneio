@@ -6,6 +6,14 @@ import { createWorkspace, getUserWorkspaces } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
 
+function isSupabaseConfigured() {
+  return (
+    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+    !!process.env.DATABASE_URL
+  );
+}
+
 const createWorkspaceSchema = z.object({
   name: z.string().min(1).max(100),
   baseCurrency: z.string().length(3).optional(),
@@ -14,6 +22,10 @@ const createWorkspaceSchema = z.object({
 
 export async function GET() {
   try {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+    }
+
     const supabase = createServerClient();
     const {
       data: { user },
@@ -33,6 +45,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+    }
+
     const supabase = createServerClient();
     const {
       data: { user },
