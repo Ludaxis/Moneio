@@ -26,6 +26,27 @@ const importSchema = z.object({
   fileName: z.string().max(512).optional(),
 });
 
+function parsePostedAt(dateString: string): Date {
+  try {
+    const direct = new Date(dateString);
+    if (!isNaN(direct.getTime())) {
+      return direct;
+    }
+
+    const parts = dateString.split(/[-/.]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      }
+      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+  } catch {
+    // fall through to now()
+  }
+
+  return new Date();
+}
+
 /**
  * POST /api/transactions/import
  * Import bank transactions from CSV data
@@ -85,65 +106,56 @@ export async function POST(request: Request) {
     let imported = 0;
     let skipped = 0;
 
-    for (const tx of transactions) {
-      // Create unique hash for deduplication
+    // Precompute hashes and normalized dates up front
+    const prepared = transactions.map((tx) => {
       const txHash = createHash('sha256')
         .update(`${tx.date}|${tx.description}|${tx.amount}|${tx.reference || ''}`)
         .digest('hex');
 
-      // Check if already exists
-      const existing = await prisma.bankTransaction.findFirst({
-        where: {
-          workspaceId,
-          txHash,
+      return {
+        ...tx,
+        txHash,
+        postedAt: parsePostedAt(tx.date),
+      };
+    });
+
+    // Fetch existing hashes in a single query to avoid per-row round-trips
+    const existing = await prisma.bankTransaction.findMany({
+      where: {
+        workspaceId,
+        txHash: { in: Array.from(new Set(prepared.map((p) => p.txHash))) },
+      },
+      select: { txHash: true },
+    });
+    const existingHashes = new Set(existing.map((e) => e.txHash));
+
+    const createPayload = prepared
+      .filter((tx) => !existingHashes.has(tx.txHash))
+      .map((tx) => ({
+        workspaceId,
+        bankAccountId: bankAccount.id,
+        txHash: tx.txHash,
+        postedAt: tx.postedAt,
+        description: tx.description || null,
+        amount: tx.amount,
+        currency: bankAccount.currency,
+        balance: tx.balance ?? null,
+        rawData: {
+          imported: true,
+          fileName,
+          reference: tx.reference,
         },
+      }));
+
+    if (createPayload.length > 0) {
+      const result = await prisma.bankTransaction.createMany({
+        data: createPayload,
+        skipDuplicates: true, // extra safety if a concurrent import races
       });
-
-      if (existing) {
-        skipped++;
-        continue;
-      }
-
-      // Parse date
-      let postedAt: Date;
-      try {
-        postedAt = new Date(tx.date);
-        if (isNaN(postedAt.getTime())) {
-          // Try alternate parsing
-          const parts = tx.date.split(/[-/.]/);
-          if (parts.length === 3) {
-            // Assume YYYY-MM-DD or DD-MM-YYYY
-            if (parts[0].length === 4) {
-              postedAt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            } else {
-              postedAt = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-            }
-          }
-        }
-      } catch {
-        postedAt = new Date();
-      }
-
-      await prisma.bankTransaction.create({
-        data: {
-          workspaceId,
-          bankAccountId: bankAccount.id,
-          txHash,
-          postedAt,
-          description: tx.description || null,
-          amount: tx.amount,
-          currency: bankAccount.currency,
-          balance: tx.balance ?? null,
-          rawData: {
-            imported: true,
-            fileName,
-            reference: tx.reference,
-          },
-        },
-      });
-
-      imported++;
+      imported = result.count;
     }
+
+    skipped = transactions.length - imported;
 
     // Create audit log entry
     await prisma.auditLog.create({

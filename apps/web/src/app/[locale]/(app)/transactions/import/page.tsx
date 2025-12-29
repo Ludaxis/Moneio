@@ -442,7 +442,7 @@ export default function CsvImportPage() {
       reference: tx.reference,
     }));
 
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = 500;
     const batches: (typeof toImport)[] = [];
     for (let i = 0; i < toImport.length; i += BATCH_SIZE) {
       batches.push(toImport.slice(i, i + BATCH_SIZE));
