@@ -443,7 +443,7 @@ export default function CsvImportPage() {
 
     // Import in batches for progress tracking
     const BATCH_SIZE = 50;
-    const batches: typeof transactions[] = [];
+    const batches: (typeof transactions)[] = [];
     for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
       batches.push(transactions.slice(i, i + BATCH_SIZE));
     }
