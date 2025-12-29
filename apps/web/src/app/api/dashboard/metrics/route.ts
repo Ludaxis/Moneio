@@ -24,9 +24,10 @@ export const dynamic = 'force-dynamic';
 
 const querySchema = z.object({
   workspaceId: z.string().uuid(),
-  period: z.enum(['month', 'quarter', 'year', 'ytd']).default('month'),
+  period: z.enum(['last7', 'last30', 'month', 'quarter', 'year', 'ytd']).default('month'),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  baseCurrency: z.string().optional(), // Ignored, we use workspace baseCurrency
 });
 
 function getDateRange(period: string): { startDate: string; endDate: string } {
@@ -36,6 +37,15 @@ function getDateRange(period: string): { startDate: string; endDate: string } {
   let startDate: string;
 
   switch (period) {
+    case 'last7': {
+      // Last 7 days
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      startDate = weekAgo.toISOString().split('T')[0];
+      break;
+    }
+
+    case 'last30':
     case 'month': {
       // Last 30 days
       const monthAgo = new Date(now);
