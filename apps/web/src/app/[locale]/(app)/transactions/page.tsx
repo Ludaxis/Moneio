@@ -11,9 +11,11 @@ import {
   Link as LinkIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+
+import { useWorkspace } from '@/lib/workspace';
 
 interface BankTransaction {
   id: string;
@@ -37,8 +39,8 @@ export default function TransactionsPage() {
   const t = useTranslations('transactions');
   const tCommon = useTranslations('common');
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const workspaceId = searchParams.get('workspace');
+  const { workspace, loading: workspaceLoading } = useWorkspace();
+  const workspaceId = workspace?.id;
 
   const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
   const locale = localeMatch?.[1] ?? 'en';
@@ -90,6 +92,14 @@ export default function TransactionsPage() {
       day: 'numeric',
     });
   };
+
+  if (workspaceLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!workspaceId) {
     return (

@@ -59,45 +59,54 @@ interface DocumentDetail {
 
 const STATUS_CONFIG: Record<
   DocumentStatus,
-  { icon: React.ElementType; color: string; bgColor: string; labelKey: string }
+  { icon: React.ElementType; color: string; bgColor: string; labelKey: string; progress: number }
 > = {
   uploaded: {
     icon: Clock,
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
     labelKey: 'statusUploaded',
+    progress: 10,
   },
   processing: {
     icon: Loader2,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     labelKey: 'statusProcessing',
+    progress: 30,
   },
   ocr_complete: {
     icon: Loader2,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     labelKey: 'statusOcrComplete',
+    progress: 60,
   },
   extracting: {
     icon: Loader2,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     labelKey: 'statusExtracting',
+    progress: 80,
   },
   ready: {
     icon: CheckCircle2,
     color: 'text-success',
     bgColor: 'bg-success/10',
     labelKey: 'statusReady',
+    progress: 100,
   },
   failed: {
     icon: AlertCircle,
     color: 'text-destructive',
     bgColor: 'bg-destructive/10',
     labelKey: 'statusFailed',
+    progress: 0,
   },
 };
+
+// Estimated processing time per page (in seconds)
+const EST_SECONDS_PER_PAGE = 15;
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
   const t = useTranslations('documents');
@@ -111,6 +120,8 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [startTime] = useState(() => Date.now());
 
   const handleCancel = async (action: 'cancel' | 'retry') => {
     if (!workspaceId || !document) return;
@@ -185,10 +196,42 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     return undefined;
   }, [document?.status]);
 
+  // Track elapsed time for processing documents
+  useEffect(() => {
+    if (!document) return undefined;
+
+    const processingStatuses: DocumentStatus[] = [
+      'uploaded',
+      'processing',
+      'ocr_complete',
+      'extracting',
+    ];
+    if (processingStatuses.includes(document.status)) {
+      const interval = setInterval(() => {
+        setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [document?.status, startTime]);
+
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const formatElapsedTime = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+  const getEstimatedTime = () => {
+    if (!document?.pageCount) return null;
+    const estSeconds = document.pageCount * EST_SECONDS_PER_PAGE;
+    return formatElapsedTime(estSeconds);
   };
 
   const formatDate = (dateStr: string) => {
@@ -272,52 +315,70 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       </div>
 
       {/* Status Banner */}
-      <div className={cn('flex items-center justify-between rounded-lg p-4', statusConfig.bgColor)}>
-        <div className="flex items-center gap-3">
-          <StatusIcon
-            className={cn('h-5 w-5', statusConfig.color, isProcessing && 'animate-spin')}
-          />
-          <div>
-            <p className={cn('font-medium', statusConfig.color)}>{t(statusConfig.labelKey)}</p>
-            {document.failReason && (
-              <p className="mt-1 text-sm text-destructive">{document.failReason}</p>
-            )}
+      <div className={cn('rounded-lg p-4', statusConfig.bgColor)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <StatusIcon
+              className={cn('h-5 w-5', statusConfig.color, isProcessing && 'animate-spin')}
+            />
+            <div>
+              <p className={cn('font-medium', statusConfig.color)}>{t(statusConfig.labelKey)}</p>
+              {document.failReason && (
+                <p className="mt-1 text-sm text-destructive">{document.failReason}</p>
+              )}
+            </div>
+          </div>
+          {/* Cancel/Retry buttons */}
+          <div className="flex items-center gap-2">
             {isProcessing && (
-              <p className="mt-1 text-sm text-muted-foreground">{t('processingNote')}</p>
+              <button
+                onClick={() => handleCancel('cancel')}
+                disabled={cancelling}
+                className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 disabled:opacity-50"
+              >
+                {cancelling ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <XCircle className="h-4 w-4" />
+                )}
+                {tCommon('cancel')}
+              </button>
+            )}
+            {document.status === 'failed' && (
+              <button
+                onClick={() => handleCancel('retry')}
+                disabled={cancelling}
+                className="flex items-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/20 disabled:opacity-50"
+              >
+                {cancelling ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+                {tCommon('retry')}
+              </button>
             )}
           </div>
         </div>
-        {/* Cancel/Retry buttons */}
-        <div className="flex items-center gap-2">
-          {isProcessing && (
-            <button
-              onClick={() => handleCancel('cancel')}
-              disabled={cancelling}
-              className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 disabled:opacity-50"
-            >
-              {cancelling ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4" />
-              )}
-              {tCommon('cancel')}
-            </button>
-          )}
-          {document.status === 'failed' && (
-            <button
-              onClick={() => handleCancel('retry')}
-              disabled={cancelling}
-              className="flex items-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/20 disabled:opacity-50"
-            >
-              {cancelling ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RotateCcw className="h-4 w-4" />
-              )}
-              {tCommon('retry')}
-            </button>
-          )}
-        </div>
+
+        {/* Progress bar for processing documents */}
+        {isProcessing && (
+          <div className="mt-4 space-y-2">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-blue-500 transition-all duration-500"
+                style={{ width: `${statusConfig.progress}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                Elapsed: {formatElapsedTime(elapsedSeconds)}
+                {getEstimatedTime() && ` • Est: ${getEstimatedTime()}`}
+              </span>
+              <span>{statusConfig.progress}% complete</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
