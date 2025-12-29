@@ -186,13 +186,13 @@ export default function CsvImportPage() {
     // Date patterns - support various bank formats
     const datePatterns = [
       // Exact matches first
-      'makse kuupäev',           // Swedbank Estonia
-      'created on',              // Wise
-      'finished on',             // Wise
-      'booking date',            // Common
-      'value date',              // Common
-      'transaction date',        // Common
-      'posted',                  // Common
+      'makse kuupäev', // Swedbank Estonia
+      'created on', // Wise
+      'finished on', // Wise
+      'booking date', // Common
+      'value date', // Common
+      'transaction date', // Common
+      'posted', // Common
       // Partial matches
       'date',
       'datum',
@@ -206,12 +206,12 @@ export default function CsvImportPage() {
     // Description patterns - merchant/payee info
     const descPatterns = [
       // Exact matches first
-      'selgitus',                // Swedbank Estonia (explanation)
-      'target name',             // Wise
-      'saaja/maksja nimi',       // Swedbank (recipient/payer name)
-      'merchant',                // Common
-      'payee',                   // Common
-      'narrative',               // Common
+      'selgitus', // Swedbank Estonia (explanation)
+      'target name', // Wise
+      'saaja/maksja nimi', // Swedbank (recipient/payer name)
+      'merchant', // Common
+      'payee', // Common
+      'narrative', // Common
       // Partial matches
       'description',
       'memo',
@@ -219,7 +219,7 @@ export default function CsvImportPage() {
       'توضیحات',
       'details',
       'text',
-      'nimi',                    // Estonian: name
+      'nimi', // Estonian: name
     ];
     const descIdx = findColumn(descPatterns);
     if (descIdx >= 0) detected.description = csvHeaders[descIdx];
@@ -227,17 +227,17 @@ export default function CsvImportPage() {
     // Amount patterns - handle various formats
     const amountPatterns = [
       // Exact matches first
-      'summa',                   // Swedbank Estonia
+      'summa', // Swedbank Estonia
       'source amount (after fees)', // Wise
       'target amount (after fees)', // Wise
-      'amount',                  // Common
+      'amount', // Common
       // Partial matches
       'مبلغ',
       'value',
       'debit',
       'credit',
       'sum',
-      'betrag',                  // German
+      'betrag', // German
     ];
     const amountIdx = findColumn(amountPatterns);
     if (amountIdx >= 0) detected.amount = csvHeaders[amountIdx];
@@ -248,7 +248,7 @@ export default function CsvImportPage() {
       'saldo',
       'موجودی',
       'running balance',
-      'jääk',                    // Estonian
+      'jääk', // Estonian
     ];
     const balanceIdx = findColumn(balancePatterns);
     if (balanceIdx >= 0) detected.balance = csvHeaders[balanceIdx];
@@ -256,10 +256,10 @@ export default function CsvImportPage() {
     // Reference patterns - transaction identifiers
     const refPatterns = [
       // Exact matches first
-      'arhiveerimistunnus',      // Swedbank Estonia (archive ID)
-      'viitenumber',             // Swedbank Estonia (reference number)
-      'id',                      // Wise
-      'reference',               // Common
+      'arhiveerimistunnus', // Swedbank Estonia (archive ID)
+      'viitenumber', // Swedbank Estonia (reference number)
+      'id', // Wise
+      'reference', // Common
       // Partial matches
       'ref',
       'viide',
@@ -273,12 +273,12 @@ export default function CsvImportPage() {
 
     // Direction patterns - D/C or IN/OUT for sign
     const dirPatterns = [
-      'deebet/kreedit (d/c)',    // Swedbank Estonia
-      'deebet/kreedit',          // Swedbank Estonia variant
-      'd/c',                     // Common
-      'direction',               // Wise
-      'type',                    // Common
-      'suund',                   // Estonian
+      'deebet/kreedit (d/c)', // Swedbank Estonia
+      'deebet/kreedit', // Swedbank Estonia variant
+      'd/c', // Common
+      'direction', // Wise
+      'type', // Common
+      'suund', // Estonian
     ];
     const dirIdx = findColumn(dirPatterns);
     if (dirIdx >= 0) detected.direction = csvHeaders[dirIdx];
@@ -405,7 +405,10 @@ export default function CsvImportPage() {
     const previewData: PreviewTransaction[] = rows.slice(0, 10).map((row) => ({
       date: parseDate(row[mapping.date!]),
       description: row[mapping.description!] || '(no description)',
-      amount: parseAmount(row[mapping.amount!], mapping.direction ? row[mapping.direction] : undefined),
+      amount: parseAmount(
+        row[mapping.amount!],
+        mapping.direction ? row[mapping.direction] : undefined
+      ),
       balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
       reference: mapping.reference ? row[mapping.reference] : undefined,
     }));
@@ -424,7 +427,10 @@ export default function CsvImportPage() {
       const transactions = rows.map((row) => ({
         date: parseDate(row[mapping.date!]),
         description: row[mapping.description!] || '(no description)',
-        amount: parseAmount(row[mapping.amount!], mapping.direction ? row[mapping.direction] : undefined),
+        amount: parseAmount(
+          row[mapping.amount!],
+          mapping.direction ? row[mapping.direction] : undefined
+        ),
         balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
         reference: mapping.reference ? row[mapping.reference] : undefined,
       }));

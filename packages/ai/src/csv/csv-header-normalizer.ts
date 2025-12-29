@@ -158,9 +158,7 @@ export class CsvHeaderNormalizer {
 /**
  * Type guard for valid normalized column types
  */
-function isValidNormalizedType(
-  value: unknown
-): value is NormalizedColumnMapping['normalized'] {
+function isValidNormalizedType(value: unknown): value is NormalizedColumnMapping['normalized'] {
   return (
     value === null ||
     value === 'date' ||
