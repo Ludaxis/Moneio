@@ -123,3 +123,14 @@ export async function updateWorkspace(
     data,
   });
 }
+
+/**
+ * Delete a workspace and all its data
+ * Only the owner can delete a workspace
+ */
+export async function deleteWorkspace(workspaceId: string) {
+  // Cascade delete is configured in Prisma schema
+  return prisma.workspace.delete({
+    where: { id: workspaceId },
+  });
+}
