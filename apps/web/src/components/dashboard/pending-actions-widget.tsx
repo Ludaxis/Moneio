@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@moneio/ui';
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import {
   FileText,
@@ -317,12 +316,13 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
       {/* View All Link */}
       {counts.total > items.length && (
         <div className="mt-4 pt-4 border-t border-border">
-          <Button variant="ghost" className="w-full justify-center" asChild>
-            <Link href="/transactions?filter=pending">
-              View all {counts.total} pending items
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <Link
+            href="/transactions?filter=pending"
+            className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            View all {counts.total} pending items
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       )}
     </div>
