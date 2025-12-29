@@ -3,6 +3,8 @@ import IORedis from 'ioredis';
 /**
  * Create Redis connection for BullMQ
  * Supports both Upstash (TLS) and local Redis
+ *
+ * Optimized for Upstash to minimize request count
  */
 export function createRedisConnection() {
   const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL;
@@ -17,6 +19,8 @@ export function createRedisConnection() {
   const connection = new IORedis(redisUrl, {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
+    // Optimize for Upstash - reduce connection overhead
+    lazyConnect: true,
     // Upstash requires TLS
     ...(isUpstash && {
       tls: {

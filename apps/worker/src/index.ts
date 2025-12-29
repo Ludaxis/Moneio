@@ -26,13 +26,26 @@ import { getRedisConnection, closeRedisConnection } from './lib/redis';
 
 const config = {
   concurrency: {
-    docNormalize: parseInt(process.env.DOC_NORMALIZE_CONCURRENCY || '5'),
-    docOcr: parseInt(process.env.DOC_OCR_CONCURRENCY || '10'),
-    docExtract: parseInt(process.env.DOC_EXTRACT_CONCURRENCY || '3'),
-    docPostprocess: parseInt(process.env.DOC_POSTPROCESS_CONCURRENCY || '5'),
-    categorization: parseInt(process.env.CATEGORIZATION_CONCURRENCY || '3'),
+    docNormalize: parseInt(process.env.DOC_NORMALIZE_CONCURRENCY || '2'),
+    docOcr: parseInt(process.env.DOC_OCR_CONCURRENCY || '3'),
+    docExtract: parseInt(process.env.DOC_EXTRACT_CONCURRENCY || '2'),
+    docPostprocess: parseInt(process.env.DOC_POSTPROCESS_CONCURRENCY || '2'),
+    categorization: parseInt(process.env.CATEGORIZATION_CONCURRENCY || '2'),
     fxFetch: parseInt(process.env.FX_FETCH_CONCURRENCY || '1'),
   },
+};
+
+// Upstash-optimized worker settings to minimize Redis requests
+// Default BullMQ polls every 5ms when idle - this is too aggressive for Upstash pricing
+const workerSettings = {
+  // How long to wait between polling when queue is empty (default: 5ms!)
+  drainDelay: 30000, // 30 seconds - drastically reduces idle polling
+  // How often to check for stalled jobs (default: 30000ms)
+  stalledInterval: 300000, // 5 minutes
+  // How long a job can run before considered stalled (default: 30000ms)
+  lockDuration: 300000, // 5 minutes
+  // Max stalled job checks per run
+  maxStalledCount: 1,
 };
 
 // ============================================================
@@ -47,6 +60,7 @@ const workers: Worker[] = [];
 const docNormalizeWorker = new Worker(QUEUE_NAMES.DOC_NORMALIZE, handleDocNormalize, {
   connection,
   concurrency: config.concurrency.docNormalize,
+  ...workerSettings,
 });
 workers.push(docNormalizeWorker);
 
@@ -54,6 +68,7 @@ workers.push(docNormalizeWorker);
 const docOcrWorker = new Worker(QUEUE_NAMES.DOC_OCR, handleDocOcr, {
   connection,
   concurrency: config.concurrency.docOcr,
+  ...workerSettings,
 });
 workers.push(docOcrWorker);
 
@@ -61,6 +76,7 @@ workers.push(docOcrWorker);
 const docExtractWorker = new Worker(QUEUE_NAMES.DOC_EXTRACT, handleDocExtract, {
   connection,
   concurrency: config.concurrency.docExtract,
+  ...workerSettings,
 });
 workers.push(docExtractWorker);
 
@@ -68,6 +84,7 @@ workers.push(docExtractWorker);
 const docPostprocessWorker = new Worker(QUEUE_NAMES.DOC_POSTPROCESS, handleDocPostprocess, {
   connection,
   concurrency: config.concurrency.docPostprocess,
+  ...workerSettings,
 });
 workers.push(docPostprocessWorker);
 
@@ -75,6 +92,7 @@ workers.push(docPostprocessWorker);
 const categorizationWorker = new Worker(QUEUE_NAMES.CATEGORIZATION, handleCategorization, {
   connection,
   concurrency: config.concurrency.categorization,
+  ...workerSettings,
 });
 workers.push(categorizationWorker);
 
@@ -82,6 +100,7 @@ workers.push(categorizationWorker);
 const fxFetchWorker = new Worker(QUEUE_NAMES.FX_FETCH, handleFxFetch, {
   connection,
   concurrency: config.concurrency.fxFetch,
+  ...workerSettings,
 });
 workers.push(fxFetchWorker);
 
@@ -98,25 +117,32 @@ for (const worker of workers) {
 // ============================================================
 
 async function scheduleRecurringJobs() {
+  // Skip recurring jobs if DISABLE_RECURRING_JOBS is set
+  if (process.env.DISABLE_RECURRING_JOBS === 'true') {
+    console.log('[SCHEDULER] Recurring jobs disabled via env');
+    return;
+  }
+
   const { fxFetch } = getQueues();
 
-  // Schedule hourly FX updates for common currencies
+  // Schedule daily FX updates for common currencies (reduced from hourly)
+  // This significantly reduces Redis requests from repeat job polling
   const currencies = ['EUR', 'USD', 'GBP'];
 
   for (const currency of currencies) {
     await fxFetch.add(
-      `fx:${currency}:hourly`,
+      `fx-${currency}-daily`,
       { baseCurrency: currency },
       {
         repeat: {
-          every: 60 * 60 * 1000, // 1 hour
+          every: 24 * 60 * 60 * 1000, // Once per day (was hourly!)
         },
-        jobId: `fx:${currency}:hourly`,
+        jobId: `fx-${currency}-daily`,
       }
     );
   }
 
-  console.log('[SCHEDULER] Recurring jobs scheduled');
+  console.log('[SCHEDULER] Recurring jobs scheduled (daily FX updates)');
 }
 
 // ============================================================
@@ -152,7 +178,8 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 // Periodic Metrics Logging
 // ============================================================
 
-const METRICS_LOG_INTERVAL = 60 * 1000; // 1 minute
+// Reduced from 1 minute to 5 minutes to reduce log noise
+const METRICS_LOG_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 setInterval(() => {
   const metrics = getMetrics();

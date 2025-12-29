@@ -1,7 +1,10 @@
 /**
  * Queue client for enqueueing jobs from the web app
  *
- * Uses Upstash Redis REST API to avoid Redis connection issues in serverless
+ * Optimized for Upstash Redis to minimize request count:
+ * - Lazy connection initialization
+ * - No automatic connection on import
+ * - Single connection reused across all queues
  */
 
 import { Queue } from 'bullmq';
@@ -28,7 +31,7 @@ export interface CategorizationJobData {
   transactionIds: string[];
 }
 
-// Singleton connection
+// Singleton connection - only created when first job is enqueued
 let connection: IORedis | null = null;
 
 function getConnection() {
@@ -45,6 +48,8 @@ function getConnection() {
     connection = new IORedis(redisUrl, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
+      // Optimize for Upstash - minimize connection overhead
+      lazyConnect: true,
       ...(isUpstash && {
         tls: {
           rejectUnauthorized: false,
@@ -55,9 +60,23 @@ function getConnection() {
   return connection;
 }
 
-// Queue instances
+// Queue instances - created lazily
 let docNormalizeQueue: Queue<DocNormalizeJobData> | null = null;
 let categorizationQueue: Queue<CategorizationJobData> | null = null;
+
+// Shared queue options optimized for Upstash
+const queueOptions = {
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: 'exponential' as const,
+      delay: 5000, // Increased from 2s to reduce retry spam
+    },
+    // Clean up completed/failed jobs to reduce Redis storage
+    removeOnComplete: 50,
+    removeOnFail: 100,
+  },
+};
 
 function getDocNormalizeQueue() {
   const conn = getConnection();
@@ -66,13 +85,7 @@ function getDocNormalizeQueue() {
   if (!docNormalizeQueue) {
     docNormalizeQueue = new Queue<DocNormalizeJobData>(QUEUE_NAMES.DOC_NORMALIZE, {
       connection: conn,
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 2000,
-        },
-      },
+      ...queueOptions,
     });
   }
   return docNormalizeQueue;
@@ -85,13 +98,7 @@ function getCategorizationQueue() {
   if (!categorizationQueue) {
     categorizationQueue = new Queue<CategorizationJobData>(QUEUE_NAMES.CATEGORIZATION, {
       connection: conn,
-      defaultJobOptions: {
-        attempts: 2,
-        backoff: {
-          type: 'fixed',
-          delay: 1000,
-        },
-      },
+      ...queueOptions,
     });
   }
   return categorizationQueue;
