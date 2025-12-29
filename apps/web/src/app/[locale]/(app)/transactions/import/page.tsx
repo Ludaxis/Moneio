@@ -75,6 +75,7 @@ export default function CsvImportPage() {
     skipped: number;
     startTime: number;
   } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
     const lines = text.split(/\r?\n/).filter((line) => line.trim());
@@ -390,6 +391,42 @@ export default function CsvImportPage() {
 
   const handleRemoveTransaction = (id: string) => {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === transactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(transactions.map((t) => t.id)));
+    }
+  };
+
+  const handleRemoveSelected = () => {
+    if (selectedIds.size === 0) return;
+    setTransactions((prev) => prev.filter((t) => !selectedIds.has(t.id)));
+    setSelectedIds(new Set());
+  };
+
+  const handleRemoveAll = () => {
+    setTransactions([]);
+    setSelectedIds(new Set());
   };
 
   const handleImport = async () => {
@@ -609,6 +646,7 @@ export default function CsvImportPage() {
               setMapping({});
               setTransactions([]);
               setShowMappingEditor(false);
+              setSelectedIds(new Set());
             }}
             className="flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-sm hover:bg-accent"
           >
@@ -637,11 +675,55 @@ export default function CsvImportPage() {
         </div>
       ) : (
         <>
+          {/* Bulk actions bar */}
+          <div className="flex items-center justify-between gap-4 rounded-lg bg-muted/50 px-4 py-2">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                {selectedIds.size > 0 ? (
+                  <span className="font-medium text-foreground">
+                    {selectedIds.size} of {transactions.length} selected
+                  </span>
+                ) : (
+                  <span>{transactions.length} transactions</span>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={handleRemoveSelected}
+                  className="flex items-center gap-1.5 rounded border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Remove Selected ({selectedIds.size})
+                </button>
+              )}
+              <button
+                onClick={handleRemoveAll}
+                className="flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Remove All
+              </button>
+            </div>
+          </div>
+
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="max-h-[400px] overflow-auto">
               <table className="w-full text-sm">
                 <thead className="border-b border-border bg-muted/50 sticky top-0">
                   <tr>
+                    <th className="w-10 px-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          selectedIds.size === transactions.length && transactions.length > 0
+                        }
+                        onChange={handleSelectAll}
+                        className="h-4 w-4 rounded border-border"
+                        title="Select all"
+                      />
+                    </th>
                     <th className="px-4 py-2 text-left font-medium">Date</th>
                     <th className="px-4 py-2 text-left font-medium">Description</th>
                     <th className="px-4 py-2 text-right font-medium">Amount</th>
@@ -655,8 +737,19 @@ export default function CsvImportPage() {
                   {transactions.map((tx) => (
                     <tr
                       key={tx.id}
-                      className="border-b border-border last:border-0 hover:bg-muted/30"
+                      className={cn(
+                        'border-b border-border last:border-0 hover:bg-muted/30',
+                        selectedIds.has(tx.id) && 'bg-primary/5'
+                      )}
                     >
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(tx.id)}
+                          onChange={() => handleToggleSelect(tx.id)}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                      </td>
                       <td className="px-4 py-2 whitespace-nowrap">{tx.date}</td>
                       <td className="px-4 py-2 max-w-[300px] truncate">{tx.description}</td>
                       <td
@@ -781,6 +874,7 @@ export default function CsvImportPage() {
             setTransactions([]);
             setImportResult(null);
             setShowMappingEditor(false);
+            setSelectedIds(new Set());
           }}
           className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent"
         >
