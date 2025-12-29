@@ -53,6 +53,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@moneio/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@moneio/core-ledger':
         specifier: workspace:*
         version: link:../../packages/core-ledger

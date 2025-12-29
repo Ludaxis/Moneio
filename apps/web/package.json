@@ -17,6 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@moneio/ai": "workspace:*",
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",
     "@moneio/domain": "workspace:*",

@@ -73,6 +73,7 @@ export default function CsvImportPage() {
   const [importResult, setImportResult] = useState<{ imported: number; skipped: number } | null>(
     null
   );
+  const [isNormalizing, setIsNormalizing] = useState(false);
 
   const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
     const lines = text.split(/\r?\n/).filter((line) => line.trim());
@@ -115,6 +116,52 @@ export default function CsvImportPage() {
     });
 
     return { headers: csvHeaders, rows: csvRows };
+  };
+
+  /**
+   * Normalize headers using AI - translates any language to standard column names
+   */
+  const normalizeHeadersWithAI = async (
+    csvHeaders: string[],
+    sampleRows: ParsedRow[]
+  ): Promise<Partial<ColumnMapping> | null> => {
+    try {
+      const response = await fetch('/api/transactions/normalize-headers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          headers: csvHeaders,
+          sampleRows: sampleRows.slice(0, 3).map((row) => csvHeaders.map((h) => row[h] || '')),
+        }),
+      });
+
+      if (!response.ok) return null;
+
+      const result = await response.json();
+      if (!result.mappings || result.mappings.length === 0) return null;
+
+      // Convert AI mappings to ColumnMapping format
+      const detected: Partial<ColumnMapping> = {};
+      for (const m of result.mappings) {
+        if (m.normalized && m.confidence > 0.5) {
+          // Map normalized type to our ColumnMapping keys
+          if (m.normalized === 'date') detected.date = m.original;
+          else if (m.normalized === 'description') detected.description = m.original;
+          else if (m.normalized === 'amount') detected.amount = m.original;
+          else if (m.normalized === 'balance') detected.balance = m.original;
+          else if (m.normalized === 'reference') detected.reference = m.original;
+          else if (m.normalized === 'direction') detected.direction = m.original;
+        }
+      }
+
+      // Return only if we found all required fields
+      if (detected.date && detected.description && detected.amount) {
+        return detected;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   };
 
   const autoDetectMapping = (csvHeaders: string[]): Partial<ColumnMapping> => {
@@ -250,12 +297,20 @@ export default function CsvImportPage() {
       setHeaders(csvHeaders);
       setRows(csvRows);
 
-      // Auto-detect mapping
-      const detected = autoDetectMapping(csvHeaders);
-      setMapping(detected);
+      // Try AI normalization first, then fall back to pattern matching
+      setIsNormalizing(true);
+      let detected = await normalizeHeadersWithAI(csvHeaders, csvRows);
 
+      if (!detected) {
+        // Fall back to pattern-based detection
+        detected = autoDetectMapping(csvHeaders);
+      }
+
+      setMapping(detected);
+      setIsNormalizing(false);
       setStep('mapping');
     } catch (err) {
+      setIsNormalizing(false);
       setError(err instanceof Error ? err.message : 'Failed to parse CSV');
     }
   }, []);
@@ -453,18 +508,32 @@ export default function CsvImportPage() {
     <div
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
-      onClick={() => fileInputRef.current?.click()}
-      className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 transition-colors hover:border-primary/50 hover:bg-accent/50"
+      onClick={() => !isNormalizing && fileInputRef.current?.click()}
+      className={cn(
+        'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 transition-colors',
+        isNormalizing ? 'cursor-wait' : 'hover:border-primary/50 hover:bg-accent/50'
+      )}
     >
-      <Upload className="h-12 w-12 text-muted-foreground" />
-      <p className="mt-4 text-lg font-medium text-foreground">Drop CSV file here</p>
-      <p className="mt-2 text-sm text-muted-foreground">or click to browse</p>
+      {isNormalizing ? (
+        <>
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="mt-4 text-lg font-medium text-foreground">Analyzing columns...</p>
+          <p className="mt-2 text-sm text-muted-foreground">Using AI to detect column types</p>
+        </>
+      ) : (
+        <>
+          <Upload className="h-12 w-12 text-muted-foreground" />
+          <p className="mt-4 text-lg font-medium text-foreground">Drop CSV file here</p>
+          <p className="mt-2 text-sm text-muted-foreground">or click to browse</p>
+        </>
+      )}
       <input
         ref={fileInputRef}
         type="file"
         accept=".csv,text/csv"
         onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
         className="hidden"
+        disabled={isNormalizing}
       />
     </div>
   );

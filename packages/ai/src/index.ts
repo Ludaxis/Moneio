@@ -3,4 +3,5 @@ export * from './clients/index';
 export * from './extraction/index';
 export * from './categorization/index';
 export * from './chat/index';
+export * from './csv/index';
 export * from './types';

@@ -11,6 +11,7 @@
     "./extraction": "./src/extraction/index.ts",
     "./categorization": "./src/categorization/index.ts",
     "./chat": "./src/chat/index.ts",
+    "./csv": "./src/csv/index.ts",
     "./schemas": "./src/schemas/index.ts"
   },
   "scripts": {
