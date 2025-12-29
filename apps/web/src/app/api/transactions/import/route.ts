@@ -14,10 +14,10 @@ const MAX_TRANSACTIONS = 2000;
 
 const transactionSchema = z.object({
   date: z.string().min(1).max(100),
-  description: z.string().min(1).max(512),
+  description: z.string().max(512), // Allow empty descriptions
   amount: z.number().finite(),
-  balance: z.number().finite().optional(),
-  reference: z.string().max(256).optional(),
+  balance: z.number().finite().optional().nullable(),
+  reference: z.string().max(256).optional().nullable(),
 });
 
 const importSchema = z.object({

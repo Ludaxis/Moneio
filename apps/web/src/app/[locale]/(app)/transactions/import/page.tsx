@@ -30,6 +30,7 @@ interface ColumnMapping {
   amount: string;
   balance?: string;
   reference?: string;
+  direction?: string; // D/C or IN/OUT indicator
 }
 
 interface PreviewTransaction {
@@ -120,46 +121,120 @@ export default function CsvImportPage() {
     const normalized = csvHeaders.map((h) => h.toLowerCase().trim());
     const detected: Partial<ColumnMapping> = {};
 
-    // Date patterns
+    // Helper to find first matching column
+    const findColumn = (patterns: string[]): number => {
+      // First try exact matches
+      for (const pattern of patterns) {
+        const idx = normalized.findIndex((h) => h === pattern);
+        if (idx >= 0) return idx;
+      }
+      // Then try partial matches
+      for (const pattern of patterns) {
+        const idx = normalized.findIndex((h) => h.includes(pattern));
+        if (idx >= 0) return idx;
+      }
+      return -1;
+    };
+
+    // Date patterns - support various bank formats
     const datePatterns = [
+      // Exact matches first
+      'makse kuupäev',           // Swedbank Estonia
+      'created on',              // Wise
+      'finished on',             // Wise
+      'booking date',            // Common
+      'value date',              // Common
+      'transaction date',        // Common
+      'posted',                  // Common
+      // Partial matches
       'date',
       'datum',
       'kuupäev',
       'تاريخ',
-      'posted',
-      'value date',
-      'transaction date',
+      'päev',
     ];
-    const dateIdx = normalized.findIndex((h) => datePatterns.some((p) => h.includes(p)));
+    const dateIdx = findColumn(datePatterns);
     if (dateIdx >= 0) detected.date = csvHeaders[dateIdx];
 
-    // Description patterns
+    // Description patterns - merchant/payee info
     const descPatterns = [
+      // Exact matches first
+      'selgitus',                // Swedbank Estonia (explanation)
+      'target name',             // Wise
+      'saaja/maksja nimi',       // Swedbank (recipient/payer name)
+      'merchant',                // Common
+      'payee',                   // Common
+      'narrative',               // Common
+      // Partial matches
       'description',
       'memo',
       'kirjeldus',
       'توضیحات',
       'details',
-      'narrative',
       'text',
+      'nimi',                    // Estonian: name
     ];
-    const descIdx = normalized.findIndex((h) => descPatterns.some((p) => h.includes(p)));
+    const descIdx = findColumn(descPatterns);
     if (descIdx >= 0) detected.description = csvHeaders[descIdx];
 
-    // Amount patterns
-    const amountPatterns = ['amount', 'summa', 'مبلغ', 'value', 'debit', 'credit', 'sum'];
-    const amountIdx = normalized.findIndex((h) => amountPatterns.some((p) => h.includes(p)));
+    // Amount patterns - handle various formats
+    const amountPatterns = [
+      // Exact matches first
+      'summa',                   // Swedbank Estonia
+      'source amount (after fees)', // Wise
+      'target amount (after fees)', // Wise
+      'amount',                  // Common
+      // Partial matches
+      'مبلغ',
+      'value',
+      'debit',
+      'credit',
+      'sum',
+      'betrag',                  // German
+    ];
+    const amountIdx = findColumn(amountPatterns);
     if (amountIdx >= 0) detected.amount = csvHeaders[amountIdx];
 
     // Balance patterns
-    const balancePatterns = ['balance', 'saldo', 'موجودی', 'running balance'];
-    const balanceIdx = normalized.findIndex((h) => balancePatterns.some((p) => h.includes(p)));
+    const balancePatterns = [
+      'balance',
+      'saldo',
+      'موجودی',
+      'running balance',
+      'jääk',                    // Estonian
+    ];
+    const balanceIdx = findColumn(balancePatterns);
     if (balanceIdx >= 0) detected.balance = csvHeaders[balanceIdx];
 
-    // Reference patterns
-    const refPatterns = ['reference', 'ref', 'viide', 'مرجع', 'transaction id'];
-    const refIdx = normalized.findIndex((h) => refPatterns.some((p) => h.includes(p)));
+    // Reference patterns - transaction identifiers
+    const refPatterns = [
+      // Exact matches first
+      'arhiveerimistunnus',      // Swedbank Estonia (archive ID)
+      'viitenumber',             // Swedbank Estonia (reference number)
+      'id',                      // Wise
+      'reference',               // Common
+      // Partial matches
+      'ref',
+      'viide',
+      'مرجع',
+      'transaction id',
+      'doc',
+      'dok',
+    ];
+    const refIdx = findColumn(refPatterns);
     if (refIdx >= 0) detected.reference = csvHeaders[refIdx];
+
+    // Direction patterns - D/C or IN/OUT for sign
+    const dirPatterns = [
+      'deebet/kreedit (d/c)',    // Swedbank Estonia
+      'deebet/kreedit',          // Swedbank Estonia variant
+      'd/c',                     // Common
+      'direction',               // Wise
+      'type',                    // Common
+      'suund',                   // Estonian
+    ];
+    const dirIdx = findColumn(dirPatterns);
+    if (dirIdx >= 0) detected.direction = csvHeaders[dirIdx];
 
     return detected;
   };
@@ -205,9 +280,16 @@ export default function CsvImportPage() {
     }));
   };
 
-  const parseAmount = (value: string): number => {
+  const parseAmount = (value: string, direction?: string): number => {
     // Handle different number formats
     let cleaned = value.replace(/[^\d.,-]/g, '');
+
+    // Check if the value itself indicates negative (starts with -)
+    const hasNegativeSign = value.trim().startsWith('-');
+
+    // Remove negative sign for parsing
+    cleaned = cleaned.replace(/^-/, '');
+
     // Handle European format (1.234,56)
     if (
       cleaned.includes(',') &&
@@ -219,7 +301,27 @@ export default function CsvImportPage() {
       // Handle comma as decimal separator
       cleaned = cleaned.replace(',', '.');
     }
-    return parseFloat(cleaned) || 0;
+
+    let amount = parseFloat(cleaned) || 0;
+
+    // Apply sign from direction column if present
+    if (direction) {
+      const dir = direction.toUpperCase().trim();
+      // D = Debit = money out = negative
+      // C = Credit = money in = positive
+      // OUT = money out = negative
+      // IN = money in = positive
+      if (dir === 'D' || dir === 'OUT' || dir === 'DEBIT') {
+        amount = -Math.abs(amount);
+      } else if (dir === 'C' || dir === 'IN' || dir === 'CREDIT') {
+        amount = Math.abs(amount);
+      }
+    } else if (hasNegativeSign) {
+      // Use original negative sign
+      amount = -Math.abs(amount);
+    }
+
+    return amount;
   };
 
   const parseDate = (value: string): string => {
@@ -247,8 +349,8 @@ export default function CsvImportPage() {
 
     const previewData: PreviewTransaction[] = rows.slice(0, 10).map((row) => ({
       date: parseDate(row[mapping.date!]),
-      description: row[mapping.description!],
-      amount: parseAmount(row[mapping.amount!]),
+      description: row[mapping.description!] || '(no description)',
+      amount: parseAmount(row[mapping.amount!], mapping.direction ? row[mapping.direction] : undefined),
       balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
       reference: mapping.reference ? row[mapping.reference] : undefined,
     }));
@@ -266,8 +368,8 @@ export default function CsvImportPage() {
     try {
       const transactions = rows.map((row) => ({
         date: parseDate(row[mapping.date!]),
-        description: row[mapping.description!],
-        amount: parseAmount(row[mapping.amount!]),
+        description: row[mapping.description!] || '(no description)',
+        amount: parseAmount(row[mapping.amount!], mapping.direction ? row[mapping.direction] : undefined),
         balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
         reference: mapping.reference ? row[mapping.reference] : undefined,
       }));
