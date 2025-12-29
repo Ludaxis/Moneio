@@ -32,6 +32,7 @@ export async function GET(request: Request) {
     const workspaceId = searchParams.get('workspaceId');
     const page = Math.max(parseInt(searchParams.get('page') || '1'), 1);
     const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '20'), 200);
+    const uncategorized = searchParams.get('uncategorized') === 'true';
 
     if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
       return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
@@ -43,10 +44,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     }
 
+    // Build where clause
+    const where = {
+      workspaceId,
+      // Filter for uncategorized transactions (no approved categorization)
+      ...(uncategorized && {
+        categorizations: {
+          none: { approved: true },
+        },
+      }),
+    };
+
     // Get transactions with category info
     const [transactions, total] = await Promise.all([
       prisma.bankTransaction.findMany({
-        where: { workspaceId },
+        where,
         orderBy: { postedAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -66,7 +78,7 @@ export async function GET(request: Request) {
           },
         },
       }),
-      prisma.bankTransaction.count({ where: { workspaceId } }),
+      prisma.bankTransaction.count({ where }),
     ]);
 
     // Transform to response format

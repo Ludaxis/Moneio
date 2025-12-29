@@ -65,8 +65,8 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
     try {
       // Fetch pending items from multiple endpoints
       const [invoicesRes, documentsRes, transactionsRes] = await Promise.all([
-        fetch(`/api/invoices?workspaceId=${workspaceId}&status=pending_approval&pageSize=3`),
-        fetch(`/api/documents?workspaceId=${workspaceId}&status=pending_review&pageSize=3`),
+        fetch(`/api/invoices?workspaceId=${workspaceId}&status=pending&pageSize=3`),
+        fetch(`/api/documents?workspaceId=${workspaceId}&status=ready&pageSize=3`),
         fetch(`/api/transactions?workspaceId=${workspaceId}&uncategorized=true&pageSize=3`),
       ]);
 

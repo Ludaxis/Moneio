@@ -1,3 +1,4 @@
+import type { DocumentStatus } from '@moneio/db';
 import { SUPPORTED_DOCUMENT_MIME_TYPES } from '@moneio/domain';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -44,8 +45,9 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const workspaceId = searchParams.get('workspaceId');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || searchParams.get('pageSize') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
+    const statusParam = searchParams.get('status');
 
     if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
       return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
@@ -57,7 +59,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     }
 
-    const result = await getWorkspaceDocuments(workspaceId, { limit, offset });
+    // Validate status if provided
+    const validStatuses = [
+      'uploaded',
+      'processing',
+      'ocr_complete',
+      'extracting',
+      'ready',
+      'failed',
+    ];
+    const status = statusParam && validStatuses.includes(statusParam) ? statusParam : undefined;
+
+    const result = await getWorkspaceDocuments(workspaceId, {
+      limit,
+      offset,
+      status: status as DocumentStatus | undefined,
+    });
     return NextResponse.json(result);
   } catch (error) {
     console.error('Failed to get documents:', error);
