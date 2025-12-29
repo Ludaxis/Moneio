@@ -38,17 +38,16 @@ export function ChatMessage({
   const isAssistant = role === 'assistant';
 
   // Parse status indicators from content
-  const hasRunwayWarning = content.toLowerCase().includes('runway') &&
+  const hasRunwayWarning =
+    content.toLowerCase().includes('runway') &&
     (content.toLowerCase().includes('critical') || content.toLowerCase().includes('warning'));
-  const isPositive = content.toLowerCase().includes('profitable') ||
+  const isPositive =
+    content.toLowerCase().includes('profitable') ||
     content.toLowerCase().includes('increased') ||
     content.toLowerCase().includes('healthy');
 
   return (
-    <div
-      ref={containerRef}
-      className={`flex gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}
-    >
+    <div ref={containerRef} className={`flex gap-3 ${isAssistant ? '' : 'flex-row-reverse'}`}>
       {/* Avatar */}
       <div
         className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${
@@ -71,9 +70,11 @@ export function ChatMessage({
         >
           {/* Status indicator for assistant messages */}
           {isAssistant && (hasRunwayWarning || isPositive) && (
-            <div className={`flex items-center gap-1.5 mb-2 text-sm ${
-              hasRunwayWarning ? 'text-danger-600' : 'text-success-600'
-            }`}>
+            <div
+              className={`flex items-center gap-1.5 mb-2 text-sm ${
+                hasRunwayWarning ? 'text-danger-600' : 'text-success-600'
+              }`}
+            >
               {hasRunwayWarning ? (
                 <AlertCircle className="h-4 w-4" />
               ) : (

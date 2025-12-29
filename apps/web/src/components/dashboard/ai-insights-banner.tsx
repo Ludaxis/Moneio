@@ -51,7 +51,8 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
             id: 'health-critical',
             type: 'alert',
             title: 'Financial Health Needs Attention',
-            description: health.recommendations[0] || 'Your financial health score is below optimal levels.',
+            description:
+              health.recommendations[0] || 'Your financial health score is below optimal levels.',
             metric: {
               value: `${health.overallScore}/100`,
               direction: 'down',
@@ -76,7 +77,8 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
             id: 'runway-low',
             type: 'alert',
             title: 'Low Cash Runway',
-            description: 'Your current runway is below 6 months. Consider reducing expenses or increasing revenue.',
+            description:
+              'Your current runway is below 6 months. Consider reducing expenses or increasing revenue.',
             metric: {
               value: runwayMetric.value,
               direction: 'down',

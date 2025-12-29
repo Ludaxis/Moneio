@@ -102,19 +102,13 @@ export function withWorkspace(
       }
 
       if (!workspaceId) {
-        return NextResponse.json(
-          { error: 'Workspace ID required' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Workspace ID required' }, { status: 400 });
       }
 
       // Validate UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(workspaceId)) {
-        return NextResponse.json(
-          { error: 'Invalid workspace ID format' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid workspace ID format' }, { status: 400 });
       }
 
       // Check permission

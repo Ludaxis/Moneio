@@ -51,7 +51,12 @@ const typeColors = {
 
 export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps) {
   const [items, setItems] = useState<PendingItem[]>([]);
-  const [counts, setCounts] = useState<PendingCounts>({ invoices: 0, documents: 0, uncategorized: 0, total: 0 });
+  const [counts, setCounts] = useState<PendingCounts>({
+    invoices: 0,
+    documents: 0,
+    uncategorized: 0,
+    total: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   const containerRef = useFadeIn({ duration: 0.5, y: 20 }) as React.RefObject<HTMLDivElement>;
@@ -73,69 +78,76 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
       if (invoicesRes.ok) {
         const data = await invoicesRes.json();
         invoiceCount = data.total || data.invoices?.length || 0;
-        (data.invoices || []).slice(0, 2).forEach((inv: {
-          id: string;
-          vendorName?: string;
-          invoiceNumber?: string;
-          totalAmount?: number;
-          currency?: string;
-          dueDate?: string;
-        }) => {
-          const dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
-          const isOverdue = dueDate ? dueDate < new Date() : false;
-          pendingItems.push({
-            id: inv.id,
-            type: 'invoice',
-            title: inv.vendorName || 'Unknown Vendor',
-            subtitle: `Invoice #${inv.invoiceNumber || 'N/A'}`,
-            amount: inv.totalAmount,
-            currency: inv.currency || 'USD',
-            date: inv.dueDate || '',
-            urgent: isOverdue,
-          });
-        });
+        (data.invoices || [])
+          .slice(0, 2)
+          .forEach(
+            (inv: {
+              id: string;
+              vendorName?: string;
+              invoiceNumber?: string;
+              totalAmount?: number;
+              currency?: string;
+              dueDate?: string;
+            }) => {
+              const dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
+              const isOverdue = dueDate ? dueDate < new Date() : false;
+              pendingItems.push({
+                id: inv.id,
+                type: 'invoice',
+                title: inv.vendorName || 'Unknown Vendor',
+                subtitle: `Invoice #${inv.invoiceNumber || 'N/A'}`,
+                amount: inv.totalAmount,
+                currency: inv.currency || 'USD',
+                date: inv.dueDate || '',
+                urgent: isOverdue,
+              });
+            }
+          );
       }
 
       if (documentsRes.ok) {
         const data = await documentsRes.json();
         documentCount = data.total || data.documents?.length || 0;
-        (data.documents || []).slice(0, 2).forEach((doc: {
-          id: string;
-          fileName?: string;
-          documentType?: string;
-          createdAt?: string;
-        }) => {
-          pendingItems.push({
-            id: doc.id,
-            type: 'document',
-            title: doc.fileName || 'Untitled Document',
-            subtitle: doc.documentType || 'Pending Review',
-            date: doc.createdAt || '',
-          });
-        });
+        (data.documents || [])
+          .slice(0, 2)
+          .forEach(
+            (doc: { id: string; fileName?: string; documentType?: string; createdAt?: string }) => {
+              pendingItems.push({
+                id: doc.id,
+                type: 'document',
+                title: doc.fileName || 'Untitled Document',
+                subtitle: doc.documentType || 'Pending Review',
+                date: doc.createdAt || '',
+              });
+            }
+          );
       }
 
       if (transactionsRes.ok) {
         const data = await transactionsRes.json();
         uncategorizedCount = data.total || data.transactions?.length || 0;
-        (data.transactions || []).slice(0, 2).forEach((tx: {
-          id: string;
-          description?: string;
-          merchantName?: string;
-          amount?: number;
-          currency?: string;
-          postedAt?: string;
-        }) => {
-          pendingItems.push({
-            id: tx.id,
-            type: 'transaction',
-            title: tx.description || tx.merchantName || 'Unknown',
-            subtitle: 'Needs categorization',
-            amount: tx.amount ? Math.abs(tx.amount) : undefined,
-            currency: tx.currency || 'USD',
-            date: tx.postedAt || '',
-          });
-        });
+        (data.transactions || [])
+          .slice(0, 2)
+          .forEach(
+            (tx: {
+              id: string;
+              description?: string;
+              merchantName?: string;
+              amount?: number;
+              currency?: string;
+              postedAt?: string;
+            }) => {
+              pendingItems.push({
+                id: tx.id,
+                type: 'transaction',
+                title: tx.description || tx.merchantName || 'Unknown',
+                subtitle: 'Needs categorization',
+                amount: tx.amount ? Math.abs(tx.amount) : undefined,
+                currency: tx.currency || 'USD',
+                date: tx.postedAt || '',
+              });
+            }
+          );
       }
 
       // Sort by urgency and date
@@ -221,19 +233,25 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
         <div className="mt-4 grid grid-cols-3 gap-2">
           {counts.invoices > 0 && (
             <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-2 text-center">
-              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{counts.invoices}</p>
+              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                {counts.invoices}
+              </p>
               <p className="text-xs text-blue-600/70 dark:text-blue-400/70">Invoices</p>
             </div>
           )}
           {counts.documents > 0 && (
             <div className="rounded-lg bg-purple-50 dark:bg-purple-950 p-2 text-center">
-              <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{counts.documents}</p>
+              <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                {counts.documents}
+              </p>
               <p className="text-xs text-purple-600/70 dark:text-purple-400/70">Documents</p>
             </div>
           )}
           {counts.uncategorized > 0 && (
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-2 text-center">
-              <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{counts.uncategorized}</p>
+              <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                {counts.uncategorized}
+              </p>
               <p className="text-xs text-amber-600/70 dark:text-amber-400/70">Uncategorized</p>
             </div>
           )}
@@ -282,7 +300,9 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
                     </p>
                   )}
                   {item.date && (
-                    <p className={`text-xs ${item.urgent ? 'text-danger-500' : 'text-muted-foreground'}`}>
+                    <p
+                      className={`text-xs ${item.urgent ? 'text-danger-500' : 'text-muted-foreground'}`}
+                    >
                       {formatDate(item.date)}
                     </p>
                   )}

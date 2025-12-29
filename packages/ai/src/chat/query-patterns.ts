@@ -67,7 +67,7 @@ interface QueryPattern {
  * Time period keywords mapping
  */
 const PERIOD_KEYWORDS: Record<string, TimePeriod> = {
-  'today': 'today',
+  today: 'today',
   'this week': 'this_week',
   'this month': 'this_month',
   'last month': 'last_month',
@@ -82,7 +82,7 @@ const PERIOD_KEYWORDS: Record<string, TimePeriod> = {
   'past 30 days': 'last_30_days',
   'past 90 days': 'last_90_days',
   'all time': 'all_time',
-  'ever': 'all_time',
+  ever: 'all_time',
 };
 
 /**

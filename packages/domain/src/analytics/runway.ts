@@ -12,12 +12,7 @@
  * - Excellent: 12+ months
  */
 
-import type {
-  MonthlySummary,
-  RunwayCalculationInput,
-  RunwayMetrics,
-  RunwayStatus,
-} from './types';
+import type { MonthlySummary, RunwayCalculationInput, RunwayMetrics, RunwayStatus } from './types';
 
 /**
  * Status thresholds in months
@@ -42,8 +37,7 @@ export function calculateRunway(input: RunwayCalculationInput): RunwayMetrics {
   // Calculate averages from recent months (use last 3 months or all available)
   const recentMonths = monthlySummaries.slice(-3);
 
-  const avgMonthlyIncome =
-    recentMonths.reduce((sum, m) => sum + m.income, 0) / recentMonths.length;
+  const avgMonthlyIncome = recentMonths.reduce((sum, m) => sum + m.income, 0) / recentMonths.length;
 
   const avgMonthlyExpenses =
     recentMonths.reduce((sum, m) => sum + m.expenses, 0) / recentMonths.length;

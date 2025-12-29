@@ -119,7 +119,9 @@ export async function handleDocPostprocess(
 
     // Log document type - invoice creation deferred until user approval
     if (docKind === 'invoice' || docKind === 'receipt') {
-      console.log(`[DOC_POSTPROCESS] ${docKind} extraction ready for review (document ${documentId})`);
+      console.log(
+        `[DOC_POSTPROCESS] ${docKind} extraction ready for review (document ${documentId})`
+      );
     } else if (docKind === 'statement' || docKind === 'bank_statement') {
       console.log(`[DOC_POSTPROCESS] Statement detected (document ${documentId})`);
     } else {
@@ -161,4 +163,3 @@ export async function handleDocPostprocess(
     };
   }
 }
-

@@ -168,9 +168,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
         </div>
         <div className={`rounded-lg p-3 ${runwayStatusColors[data.summary.cashRunway.status]}`}>
           <p className="text-xs opacity-80">Cash Runway</p>
-          <p className="mt-1 text-lg font-semibold">
-            {data.summary.cashRunway.months}+ months
-          </p>
+          <p className="mt-1 text-lg font-semibold">{data.summary.cashRunway.months}+ months</p>
         </div>
       </div>
 
@@ -200,7 +198,10 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
                   projectedIncome: 'Income',
                   projectedExpenses: 'Expenses',
                 };
-                return [formatCurrency(Number(value) || 0, data.currency), labels[String(name)] || String(name)];
+                return [
+                  formatCurrency(Number(value) || 0, data.currency),
+                  labels[String(name)] || String(name),
+                ];
               }}
             />
             {/* Zero line */}

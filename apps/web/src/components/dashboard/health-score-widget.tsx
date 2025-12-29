@@ -123,14 +123,7 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
         <div className="relative h-32 w-32">
           <svg className="h-full w-full -rotate-90">
             {/* Background circle */}
-            <circle
-              cx="64"
-              cy="64"
-              r="45"
-              fill="none"
-              className="stroke-muted"
-              strokeWidth="10"
-            />
+            <circle cx="64" cy="64" r="45" fill="none" className="stroke-muted" strokeWidth="10" />
             {/* Progress circle */}
             <circle
               cx="64"

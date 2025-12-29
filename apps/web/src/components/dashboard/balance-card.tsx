@@ -1,7 +1,15 @@
 'use client';
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
-import { TrendingDown, TrendingUp, Minus, Wallet, CreditCard, PiggyBank, Landmark } from 'lucide-react';
+import {
+  TrendingDown,
+  TrendingUp,
+  Minus,
+  Wallet,
+  CreditCard,
+  PiggyBank,
+  Landmark,
+} from 'lucide-react';
 import type React from 'react';
 
 type BalanceType = 'cash' | 'card' | 'savings' | 'bank';
@@ -23,17 +31,46 @@ interface BalanceCardProps {
 const illustrations: Record<BalanceType, React.ReactNode> = {
   cash: (
     <svg viewBox="0 0 80 60" className="h-16 w-20">
-      <rect x="5" y="15" width="60" height="35" rx="4" fill="#E8F5E9" stroke="#4CAF50" strokeWidth="2" />
-      <rect x="15" y="10" width="60" height="35" rx="4" fill="#C8E6C9" stroke="#66BB6A" strokeWidth="2" />
+      <rect
+        x="5"
+        y="15"
+        width="60"
+        height="35"
+        rx="4"
+        fill="#E8F5E9"
+        stroke="#4CAF50"
+        strokeWidth="2"
+      />
+      <rect
+        x="15"
+        y="10"
+        width="60"
+        height="35"
+        rx="4"
+        fill="#C8E6C9"
+        stroke="#66BB6A"
+        strokeWidth="2"
+      />
       <circle cx="45" cy="27" r="10" fill="#81C784" />
-      <text x="45" y="31" textAnchor="middle" fontSize="10" fill="#2E7D32" fontWeight="bold">$</text>
+      <text x="45" y="31" textAnchor="middle" fontSize="10" fill="#2E7D32" fontWeight="bold">
+        $
+      </text>
       <path d="M20 20 L25 25 L20 30" stroke="#66BB6A" strokeWidth="2" fill="none" />
       <path d="M70 20 L65 25 L70 30" stroke="#66BB6A" strokeWidth="2" fill="none" />
     </svg>
   ),
   card: (
     <svg viewBox="0 0 80 60" className="h-16 w-20">
-      <rect x="10" y="12" width="60" height="38" rx="4" fill="#E3F2FD" stroke="#2196F3" strokeWidth="2" />
+      <rect
+        x="10"
+        y="12"
+        width="60"
+        height="38"
+        rx="4"
+        fill="#E3F2FD"
+        stroke="#2196F3"
+        strokeWidth="2"
+      />
       <rect x="10" y="22" width="60" height="8" fill="#1976D2" />
       <rect x="16" y="36" width="20" height="6" rx="2" fill="#BBDEFB" />
       <rect x="44" y="36" width="20" height="6" rx="2" fill="#BBDEFB" />
@@ -44,7 +81,12 @@ const illustrations: Record<BalanceType, React.ReactNode> = {
   savings: (
     <svg viewBox="0 0 80 60" className="h-16 w-20">
       <ellipse cx="40" cy="48" rx="25" ry="6" fill="#FCE4EC" />
-      <path d="M20 20 C20 10, 60 10, 60 20 L60 42 C60 48, 20 48, 20 42 Z" fill="#F8BBD9" stroke="#EC407A" strokeWidth="2" />
+      <path
+        d="M20 20 C20 10, 60 10, 60 20 L60 42 C60 48, 20 48, 20 42 Z"
+        fill="#F8BBD9"
+        stroke="#EC407A"
+        strokeWidth="2"
+      />
       <rect x="35" y="8" width="10" height="8" rx="2" fill="#EC407A" />
       <ellipse cx="40" cy="20" rx="20" ry="6" fill="#F48FB1" />
       <circle cx="32" cy="30" r="2" fill="#EC407A" />
@@ -113,9 +155,7 @@ export function BalanceCard({
             <span className="text-sm font-medium">{label}</span>
           </div>
           <p className="text-3xl font-bold tabular-nums text-foreground tracking-tight">{value}</p>
-          {lastUpdated && (
-            <p className="text-xs text-muted-foreground">{lastUpdated}</p>
-          )}
+          {lastUpdated && <p className="text-xs text-muted-foreground">{lastUpdated}</p>}
           {comparison && (
             <div className="flex items-center gap-1.5 pt-2">
               {comparison.direction === 'up' && (

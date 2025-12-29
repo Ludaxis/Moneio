@@ -90,6 +90,7 @@ Job types: `DOC_NORMALIZE` → `DOC_OCR` → `DOC_EXTRACT` → `DOC_POSTPROCESS`
 ### AI Layer Pattern
 
 All AI outputs use the `AiProposal<T>` wrapper with:
+
 - `data: T` - The extracted/suggested data
 - `confidence: number` - 0-100 confidence score
 - `evidence: AiEvidence[]` - Citations and bounding boxes
@@ -100,6 +101,7 @@ AI suggestions remain pending until user approval (human-in-the-loop).
 ### API Routes
 
 API routes are Next.js App Router handlers in `apps/web/src/app/api/`:
+
 - `/api/documents/*` - Document upload, listing, extraction approval
 - `/api/transactions/*` - Bank transaction import and listing
 - `/api/workspaces/*` - Workspace CRUD
@@ -119,6 +121,7 @@ API routes are Next.js App Router handlers in `apps/web/src/app/api/`:
 ## Environment Setup
 
 Two services need environment configuration:
+
 1. `apps/web/.env.local` - Web app (copy from `apps/web/.env.example`)
 2. `apps/worker/.env` - Worker (copy from `apps/worker/.env.example`)
 

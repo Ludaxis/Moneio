@@ -320,10 +320,7 @@ function analyzeGroup(
 /**
  * Detect frequency from average interval
  */
-function detectFrequency(
-  avgInterval: number,
-  tolerance: number
-): RecurringFrequency | null {
+function detectFrequency(avgInterval: number, tolerance: number): RecurringFrequency | null {
   for (const [freq, range] of Object.entries(FREQUENCY_RANGES)) {
     if (avgInterval >= range.min - tolerance && avgInterval <= range.max + tolerance) {
       return freq as RecurringFrequency;

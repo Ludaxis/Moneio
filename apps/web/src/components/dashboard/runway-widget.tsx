@@ -151,9 +151,7 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
           <Clock className="h-5 w-5" />
           <span className="font-medium">Net Burn</span>
         </div>
-        {data.runway.status === 'critical' && (
-          <AlertTriangle className="h-5 w-5 text-danger-500" />
-        )}
+        {data.runway.status === 'critical' && <AlertTriangle className="h-5 w-5 text-danger-500" />}
       </div>
 
       <p className="mt-2 text-4xl font-bold tabular-nums text-foreground tracking-tight">
@@ -163,9 +161,7 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
 
       <div className="mt-6 grid grid-cols-2 gap-4">
         {/* Runway */}
-        <div
-          className={`rounded-lg ${statusStyles.bg} p-4 ring-1 ${statusStyles.ring}`}
-        >
+        <div className={`rounded-lg ${statusStyles.bg} p-4 ring-1 ${statusStyles.ring}`}>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Clock className={`h-4 w-4 ${statusStyles.icon}`} />
             <span>Runway</span>
@@ -181,9 +177,7 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
             <Calendar className="h-4 w-4" />
             <span>Cash Zero</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {data.cashZeroDate || 'N/A'}
-          </p>
+          <p className="mt-1 text-xl font-bold text-foreground">{data.cashZeroDate || 'N/A'}</p>
         </div>
       </div>
 

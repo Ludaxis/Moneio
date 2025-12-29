@@ -96,7 +96,11 @@ export function ConnectedBanksList({
 
   const handleDelete = useCallback(
     async (itemId: string) => {
-      if (!confirm('Are you sure you want to disconnect this bank? This will remove all synced transactions.')) {
+      if (
+        !confirm(
+          'Are you sure you want to disconnect this bank? This will remove all synced transactions.'
+        )
+      ) {
         return;
       }
 
@@ -159,7 +163,15 @@ export function ConnectedBanksList({
     return (
       <div className="rounded-lg border border-destructive bg-destructive/10 p-4">
         <p className="text-sm text-destructive">{error}</p>
-        <Button variant="outline" size="sm" onClick={() => { setError(null); fetchBanks(); }} className="mt-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setError(null);
+            fetchBanks();
+          }}
+          className="mt-2"
+        >
           Retry
         </Button>
       </div>
@@ -181,10 +193,7 @@ export function ConnectedBanksList({
   return (
     <div className="space-y-4">
       {banks.map((bank) => (
-        <div
-          key={bank.id}
-          className="rounded-lg border border-border bg-card overflow-hidden"
-        >
+        <div key={bank.id} className="rounded-lg border border-border bg-card overflow-hidden">
           {/* Bank Header */}
           <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
             <div className="flex items-center gap-3">
@@ -200,7 +209,9 @@ export function ConnectedBanksList({
                   ) : (
                     <>
                       <AlertCircle className="h-3 w-3 text-danger-600" />
-                      <span className="text-danger-600">{bank.errorMessage || 'Connection error'}</span>
+                      <span className="text-danger-600">
+                        {bank.errorMessage || 'Connection error'}
+                      </span>
                     </>
                   )}
                 </div>

@@ -181,10 +181,7 @@ export class FinancialChatService {
   /**
    * Execute query based on parsed type
    */
-  private async executeQuery(
-    parsed: ParsedQuery,
-    context: FinancialContext
-  ): Promise<QueryResult> {
+  private async executeQuery(parsed: ParsedQuery, context: FinancialContext): Promise<QueryResult> {
     const period = parsed.period || 'this_month';
     const { startDate, endDate } = getPeriodDateRange(period);
 
@@ -221,21 +218,13 @@ export class FinancialChatService {
         case 'total_spending':
           return {
             success: true,
-            data: await this.dataProvider.getTotalSpending(
-              context.workspaceId,
-              startDate,
-              endDate
-            ),
+            data: await this.dataProvider.getTotalSpending(context.workspaceId, startDate, endDate),
           };
 
         case 'total_income':
           return {
             success: true,
-            data: await this.dataProvider.getTotalIncome(
-              context.workspaceId,
-              startDate,
-              endDate
-            ),
+            data: await this.dataProvider.getTotalIncome(context.workspaceId, startDate, endDate),
           };
 
         case 'cashflow':
@@ -333,11 +322,11 @@ export class FinancialChatService {
       if (result.error === 'not_understood') {
         return (
           "I'm not sure I understand that question. Here are some things you can ask me:\n\n" +
-          "- How much did I spend this month?\n" +
+          '- How much did I spend this month?\n' +
           "- What's my cash runway?\n" +
-          "- Show my recurring expenses\n" +
-          "- What are my biggest expenses?\n" +
-          "- Am I profitable?"
+          '- Show my recurring expenses\n' +
+          '- What are my biggest expenses?\n' +
+          '- Am I profitable?'
         );
       }
       return `Sorry, I couldn't get that information: ${result.error}`;
@@ -492,8 +481,7 @@ export class FinancialChatService {
       return "I haven't detected any recurring expenses yet. This analysis improves as more transaction data is available.";
     }
 
-    let response =
-      `**Recurring Expenses:** ${this.formatCurrency(monthlyTotal, currency)}/month\n\n`;
+    let response = `**Recurring Expenses:** ${this.formatCurrency(monthlyTotal, currency)}/month\n\n`;
     patterns.slice(0, 10).forEach((p) => {
       response += `- ${p.merchant}: ${this.formatCurrency(p.amount, currency)}/${p.frequency}\n`;
     });
@@ -510,8 +498,8 @@ export class FinancialChatService {
 
     if (runway.monthsRemaining === Infinity) {
       return (
-        "**Great news!** Your business is profitable, which means you have unlimited runway. " +
-        'You\'re earning more than you\'re spending.'
+        '**Great news!** Your business is profitable, which means you have unlimited runway. ' +
+        "You're earning more than you're spending."
       );
     }
 
@@ -538,7 +526,7 @@ export class FinancialChatService {
       return (
         `**Not quite ${period}.**\n\n` +
         `Net loss: ${this.formatCurrency(Math.abs(net), currency)}\n\n` +
-        "Consider reviewing your expenses or increasing revenue."
+        'Consider reviewing your expenses or increasing revenue.'
       );
     }
   }
@@ -628,11 +616,7 @@ export class FinancialChatService {
         'What are my biggest expenses?',
         'Show category breakdown',
       ],
-      runway: [
-        'Am I profitable?',
-        'What are my recurring expenses?',
-        'Show my cashflow',
-      ],
+      runway: ['Am I profitable?', 'What are my recurring expenses?', 'Show my cashflow'],
       profitable: ['What is my runway?', 'Show my cashflow', 'Where is my money going?'],
       pending_invoices: ['What is my income?', 'Am I profitable?', 'What is my cashflow?'],
       category_breakdown: [

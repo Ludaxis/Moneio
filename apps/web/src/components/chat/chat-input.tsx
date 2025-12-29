@@ -66,11 +66,7 @@ export function ChatInput({
           size="icon"
           className="h-10 w-10 rounded-xl flex-shrink-0"
         >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
       <p className="mt-2 text-center text-xs text-muted-foreground">

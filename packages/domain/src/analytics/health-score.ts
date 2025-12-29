@@ -16,22 +16,17 @@
  * F (0-39): Critical - Urgent action required
  */
 
-import type {
-  FinancialHealthScore,
-  HealthMetric,
-  HealthRating,
-  HealthScoreInput,
-} from './types';
+import type { FinancialHealthScore, HealthMetric, HealthRating, HealthScoreInput } from './types';
 
 /**
  * Metric weights (must sum to 1.0)
  */
 const WEIGHTS = {
-  profitability: 0.30,
+  profitability: 0.3,
   runway: 0.25,
-  reserves: 0.20,
+  reserves: 0.2,
   expensePredictability: 0.15,
-  incomeStability: 0.10,
+  incomeStability: 0.1,
 };
 
 /**
@@ -47,9 +42,7 @@ export function calculateHealthScore(input: HealthScoreInput): FinancialHealthSc
   ];
 
   // Calculate weighted overall score
-  const overallScore = Math.round(
-    metrics.reduce((sum, m) => sum + m.score * m.weight, 0)
-  );
+  const overallScore = Math.round(metrics.reduce((sum, m) => sum + m.score * m.weight, 0));
 
   const rating = scoreToRating(overallScore);
   const grade = scoreToGrade(overallScore);
@@ -100,16 +93,16 @@ function calculateProfitabilityMetric(input: HealthScoreInput): HealthMetric {
       description = `Excellent profit margin of ${(margin * 100).toFixed(0)}%`;
     } else if (margin >= 0.15) {
       // 15-30% margin = 80-100
-      score = 80 + (margin - 0.15) / 0.15 * 20;
+      score = 80 + ((margin - 0.15) / 0.15) * 20;
       description = `Healthy profit margin of ${(margin * 100).toFixed(0)}%`;
     } else if (margin >= 0) {
       // 0-15% margin = 50-80
-      score = 50 + margin / 0.15 * 30;
+      score = 50 + (margin / 0.15) * 30;
       description = `Break-even with ${(margin * 100).toFixed(0)}% margin`;
       recommendation = 'Consider ways to increase margins';
     } else if (margin >= -0.2) {
       // -20% to 0 = 20-50
-      score = 20 + (margin + 0.2) / 0.2 * 30;
+      score = 20 + ((margin + 0.2) / 0.2) * 30;
       description = `Operating at a ${(Math.abs(margin) * 100).toFixed(0)}% loss`;
       recommendation = 'Review expenses and pricing to improve profitability';
     } else {
@@ -145,18 +138,18 @@ function calculateRunwayMetric(input: HealthScoreInput): HealthMetric {
     score = 100;
     description = 'Unlimited runway - business is profitable';
   } else if (runwayMonths >= 12) {
-    score = 90 + (runwayMonths - 12) / 12 * 10;
+    score = 90 + ((runwayMonths - 12) / 12) * 10;
     description = `Strong runway of ${Math.floor(runwayMonths)} months`;
   } else if (runwayMonths >= 6) {
-    score = 70 + (runwayMonths - 6) / 6 * 20;
+    score = 70 + ((runwayMonths - 6) / 6) * 20;
     description = `Adequate runway of ${Math.floor(runwayMonths)} months`;
     recommendation = 'Build more cash reserves when possible';
   } else if (runwayMonths >= 3) {
-    score = 40 + (runwayMonths - 3) / 3 * 30;
+    score = 40 + ((runwayMonths - 3) / 3) * 30;
     description = `Limited runway of ${Math.floor(runwayMonths)} months`;
     recommendation = 'Prioritize extending your cash runway';
   } else if (runwayMonths > 0) {
-    score = runwayMonths / 3 * 40;
+    score = (runwayMonths / 3) * 40;
     description = `Critical: Only ${runwayMonths.toFixed(1)} months of runway`;
     recommendation = 'Urgent: Take immediate action to extend runway';
   } else {
@@ -188,7 +181,8 @@ function calculateReservesMetric(input: HealthScoreInput): HealthMetric {
 
   if (avgMonthlyExpenses === 0) {
     score = currentBalance > 0 ? 100 : 50;
-    description = currentBalance > 0 ? 'Cash available, no expenses detected' : 'No activity detected';
+    description =
+      currentBalance > 0 ? 'Cash available, no expenses detected' : 'No activity detected';
   } else {
     const monthsCovered = currentBalance / avgMonthlyExpenses;
 
@@ -196,10 +190,10 @@ function calculateReservesMetric(input: HealthScoreInput): HealthMetric {
       score = 100;
       description = `Strong reserves covering ${monthsCovered.toFixed(1)} months`;
     } else if (monthsCovered >= 3) {
-      score = 70 + (monthsCovered - 3) / 3 * 30;
+      score = 70 + ((monthsCovered - 3) / 3) * 30;
       description = `Good reserves covering ${monthsCovered.toFixed(1)} months`;
     } else if (monthsCovered >= 1) {
-      score = 40 + (monthsCovered - 1) / 2 * 30;
+      score = 40 + ((monthsCovered - 1) / 2) * 30;
       description = `Limited reserves of ${monthsCovered.toFixed(1)} months`;
       recommendation = 'Build an emergency fund of 3-6 months expenses';
     } else if (monthsCovered > 0) {
@@ -342,11 +336,7 @@ function scoreToGrade(score: number): string {
 /**
  * Generate summary description
  */
-function generateSummary(
-  _score: number,
-  rating: HealthRating,
-  metrics: HealthMetric[]
-): string {
+function generateSummary(_score: number, rating: HealthRating, metrics: HealthMetric[]): string {
   const weakest = metrics.reduce((min, m) => (m.score < min.score ? m : min));
   const strongest = metrics.reduce((max, m) => (m.score > max.score ? m : max));
 

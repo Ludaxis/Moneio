@@ -36,10 +36,7 @@ export async function POST(request: Request) {
   try {
     // Check if Plaid is configured
     if (!isPlaidConfigured()) {
-      return NextResponse.json(
-        { error: 'Plaid integration is not configured' },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: 'Plaid integration is not configured' }, { status: 503 });
     }
 
     const supabase = createServerClient();
@@ -74,11 +71,7 @@ export async function POST(request: Request) {
 
     // Exchange token and create accounts
     const plaidService = new PlaidService({ prisma });
-    const result = await plaidService.exchangePublicToken(
-      workspaceId,
-      publicToken,
-      metadata
-    );
+    const result = await plaidService.exchangePublicToken(workspaceId, publicToken, metadata);
 
     // Trigger initial transaction sync
     const plaidItem = await prisma.plaidItem.findUnique({

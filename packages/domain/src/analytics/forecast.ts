@@ -80,11 +80,13 @@ export function generateForecast(input: ForecastInput): CashFlowForecast {
 
     // Project income: recurring + variable (based on historical average)
     const variableIncome = Math.max(0, baseline.avgIncome - totalRecurringIncome);
-    const projectedIncome = totalRecurringIncome + variableIncome * getSeasonalFactor(monthDate, historicalMonths);
+    const projectedIncome =
+      totalRecurringIncome + variableIncome * getSeasonalFactor(monthDate, historicalMonths);
 
     // Project expenses: recurring + variable (based on historical average)
     const variableExpenses = Math.max(0, baseline.avgExpenses - totalRecurringExpenses);
-    const projectedExpenses = totalRecurringExpenses + variableExpenses * getSeasonalFactor(monthDate, historicalMonths);
+    const projectedExpenses =
+      totalRecurringExpenses + variableExpenses * getSeasonalFactor(monthDate, historicalMonths);
 
     const netCashflow = projectedIncome - projectedExpenses;
     runningBalance += netCashflow;
@@ -152,10 +154,12 @@ function calculateBaseline(historicalMonths: MonthlySummary[]): {
     const secondAvgIncome = secondHalf.reduce((sum, m) => sum + m.income, 0) / secondHalf.length;
 
     const firstAvgExpenses = firstHalf.reduce((sum, m) => sum + m.expenses, 0) / firstHalf.length;
-    const secondAvgExpenses = secondHalf.reduce((sum, m) => sum + m.expenses, 0) / secondHalf.length;
+    const secondAvgExpenses =
+      secondHalf.reduce((sum, m) => sum + m.expenses, 0) / secondHalf.length;
 
     incomeGrowth = firstAvgIncome > 0 ? (secondAvgIncome - firstAvgIncome) / firstAvgIncome : 0;
-    expenseGrowth = firstAvgExpenses > 0 ? (secondAvgExpenses - firstAvgExpenses) / firstAvgExpenses : 0;
+    expenseGrowth =
+      firstAvgExpenses > 0 ? (secondAvgExpenses - firstAvgExpenses) / firstAvgExpenses : 0;
   }
 
   return { avgIncome, avgExpenses, incomeGrowth, expenseGrowth };
@@ -188,8 +192,10 @@ function getSeasonalFactor(date: Date, historicalMonths: MonthlySummary[]): numb
     return 1.0;
   }
 
-  const avgAll = historicalMonths.reduce((sum, m) => sum + m.income + m.expenses, 0) / historicalMonths.length;
-  const avgSameMonth = sameMonthData.reduce((sum, m) => sum + m.income + m.expenses, 0) / sameMonthData.length;
+  const avgAll =
+    historicalMonths.reduce((sum, m) => sum + m.income + m.expenses, 0) / historicalMonths.length;
+  const avgSameMonth =
+    sameMonthData.reduce((sum, m) => sum + m.income + m.expenses, 0) / sameMonthData.length;
 
   if (avgAll === 0) return 1.0;
 
@@ -218,7 +224,10 @@ function determineOverallConfidence(
  * Get confidence for a specific forecasted month
  * Confidence decreases as we forecast further out
  */
-function getMonthConfidence(monthIndex: number, baseConfidence: ForecastConfidence): ForecastConfidence {
+function getMonthConfidence(
+  monthIndex: number,
+  baseConfidence: ForecastConfidence
+): ForecastConfidence {
   if (baseConfidence === 'low') return 'low';
 
   if (monthIndex <= 1) {
@@ -276,7 +285,8 @@ function calculateSummary(
   const secondAvgNet = secondHalf.reduce((sum, m) => sum + m.netCashflow, 0) / secondHalf.length;
 
   let trend: 'improving' | 'declining' | 'stable';
-  const changePercent = firstAvgNet !== 0 ? (secondAvgNet - firstAvgNet) / Math.abs(firstAvgNet) : 0;
+  const changePercent =
+    firstAvgNet !== 0 ? (secondAvgNet - firstAvgNet) / Math.abs(firstAvgNet) : 0;
 
   if (changePercent > 0.1) {
     trend = 'improving';
@@ -340,7 +350,9 @@ function generateInsights(
 
   // Cash runway insight
   if (monthsUntilNegative !== null) {
-    insights.push(`Warning: Cash may run out in ${monthsUntilNegative} month${monthsUntilNegative === 1 ? '' : 's'}`);
+    insights.push(
+      `Warning: Cash may run out in ${monthsUntilNegative} month${monthsUntilNegative === 1 ? '' : 's'}`
+    );
   } else if (endingBalance > currentBalance * 1.2) {
     insights.push('Cash position improving over forecast period');
   }
@@ -358,7 +370,10 @@ function generateInsights(
 /**
  * Convert recurring item to monthly amount
  */
-export function toMonthlyAmount(amount: number, frequency: ForecastRecurringItem['frequency']): number {
+export function toMonthlyAmount(
+  amount: number,
+  frequency: ForecastRecurringItem['frequency']
+): number {
   switch (frequency) {
     case 'weekly':
       return amount * 4.33; // Average weeks per month

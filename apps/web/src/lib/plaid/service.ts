@@ -10,11 +10,7 @@
 import crypto from 'crypto';
 
 import type { PrismaClient } from '@prisma/client';
-import {
-  CountryCode,
-  Products,
-  type Transaction as PlaidTransaction,
-} from 'plaid';
+import { CountryCode, Products, type Transaction as PlaidTransaction } from 'plaid';
 
 import { plaidClient, isPlaidConfigured } from './client';
 
@@ -47,7 +43,13 @@ export class PlaidService {
       },
       client_name: 'Moneio',
       products: [Products.Transactions],
-      country_codes: [CountryCode.Us, CountryCode.Ca, CountryCode.Gb, CountryCode.Nl, CountryCode.De],
+      country_codes: [
+        CountryCode.Us,
+        CountryCode.Ca,
+        CountryCode.Gb,
+        CountryCode.Nl,
+        CountryCode.De,
+      ],
       language: 'en',
       redirect_uri: redirectUri,
       // Optional: webhook URL for real-time updates

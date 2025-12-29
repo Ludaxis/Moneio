@@ -10,10 +10,7 @@
  * - "Am I profitable?"
  */
 
-import {
-  FinancialChatService,
-  type FinancialDataProvider,
-} from '@moneio/ai';
+import { FinancialChatService, type FinancialDataProvider } from '@moneio/ai';
 import { prisma } from '@moneio/db';
 import {
   detectRecurringPatterns,

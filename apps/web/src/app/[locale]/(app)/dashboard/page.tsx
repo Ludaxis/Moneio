@@ -258,9 +258,7 @@ export default function DashboardPage() {
           {workspaceId && <HealthScoreWidget workspaceId={workspaceId} />}
 
           {/* Top Expenses */}
-          {workspaceId && (
-            <TopExpensesWidget workspaceId={workspaceId} currency={baseCurrency} />
-          )}
+          {workspaceId && <TopExpensesWidget workspaceId={workspaceId} currency={baseCurrency} />}
 
           {/* Pending Actions */}
           {workspaceId && <PendingActionsWidget workspaceId={workspaceId} />}

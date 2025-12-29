@@ -61,27 +61,25 @@ export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpen
         .slice(0, 5);
 
       // Transform monthly data to include category breakdown
-      const monthlyData = (result.monthlyData || []).map((month: {
-        month: string;
-        monthLabel: string;
-        expenses: number;
-      }) => {
-        const monthData: MonthlyExpense = {
-          month: month.month,
-          monthLabel: month.monthLabel,
-        };
+      const monthlyData = (result.monthlyData || []).map(
+        (month: { month: string; monthLabel: string; expenses: number }) => {
+          const monthData: MonthlyExpense = {
+            month: month.month,
+            monthLabel: month.monthLabel,
+          };
 
-        // Distribute expenses across categories (simplified - in production, get actual breakdown)
-        const totalExpense = Math.abs(month.expenses);
-        const categoryCount = expenseCategories.length || 1;
-        expenseCategories.forEach((cat: string, index: number) => {
-          // Use a slightly random distribution for visual variety
-          const weight = 1 + (index % 3) * 0.2;
-          monthData[cat] = Math.round(totalExpense * (weight / (categoryCount * 1.2)));
-        });
+          // Distribute expenses across categories (simplified - in production, get actual breakdown)
+          const totalExpense = Math.abs(month.expenses);
+          const categoryCount = expenseCategories.length || 1;
+          expenseCategories.forEach((cat: string, index: number) => {
+            // Use a slightly random distribution for visual variety
+            const weight = 1 + (index % 3) * 0.2;
+            monthData[cat] = Math.round(totalExpense * (weight / (categoryCount * 1.2)));
+          });
 
-        return monthData;
-      });
+          return monthData;
+        }
+      );
 
       setCategories(expenseCategories);
       setData(monthlyData);
@@ -179,11 +177,7 @@ export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpen
                 formatter={(value) => formatTooltipValue(Number(value))}
                 labelFormatter={(label) => `Month: ${label}`}
               />
-              <Legend
-                wrapperStyle={{ fontSize: '12px' }}
-                iconType="circle"
-                iconSize={8}
-              />
+              <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" iconSize={8} />
               {categories.map((category, index) => (
                 <Bar
                   key={category}
