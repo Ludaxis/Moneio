@@ -7,6 +7,11 @@ import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
 
+const deleteTransactionsSchema = z.object({
+  workspaceId: z.string().uuid(),
+  transactionIds: z.array(z.string().uuid()).min(1).max(500),
+});
+
 /**
  * GET /api/transactions
  * List bank transactions for a workspace
@@ -83,6 +88,56 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Failed to get transactions:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/transactions
+ * Delete multiple transactions by ID
+ */
+export async function DELETE(request: Request) {
+  try {
+    const supabase = createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const parsed = deleteTransactionsSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { workspaceId, transactionIds } = parsed.data;
+
+    // Check permission
+    const canDelete = await hasPermission(user.id, workspaceId, 'transaction:delete');
+    if (!canDelete) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+    }
+
+    // Delete transactions (only those belonging to this workspace)
+    const result = await prisma.bankTransaction.deleteMany({
+      where: {
+        id: { in: transactionIds },
+        workspaceId,
+      },
+    });
+
+    return NextResponse.json({
+      deleted: result.count,
+    });
+  } catch (error) {
+    console.error('Failed to delete transactions:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

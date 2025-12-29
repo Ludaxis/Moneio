@@ -9,11 +9,14 @@ import {
   CheckCircle2,
   AlertCircle,
   Link as LinkIcon,
+  Trash2,
+  Copy,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useWorkspace } from '@/lib/workspace';
 
@@ -51,6 +54,17 @@ export default function TransactionsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
+  // Duplicates state
+  const [duplicateCount, setDuplicateCount] = useState<number | null>(null);
+  const [duplicateIds, setDuplicateIds] = useState<string[]>([]);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [removingDuplicates, setRemovingDuplicates] = useState(false);
+  const [showDuplicatesBanner, setShowDuplicatesBanner] = useState(false);
+
   useEffect(() => {
     if (!workspaceId) {
       setLoading(false);
@@ -77,6 +91,123 @@ export default function TransactionsPage() {
 
     fetchTransactions();
   }, [workspaceId, page]);
+
+  // Check for duplicates when transactions load
+  const checkDuplicates = useCallback(async () => {
+    if (!workspaceId) return;
+
+    setCheckingDuplicates(true);
+    try {
+      const response = await fetch(`/api/transactions/duplicates?workspaceId=${workspaceId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setDuplicateCount(data.totalDuplicates);
+        setDuplicateIds(data.removeIds);
+        if (data.totalDuplicates > 0) {
+          setShowDuplicatesBanner(true);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check duplicates:', error);
+    } finally {
+      setCheckingDuplicates(false);
+    }
+  }, [workspaceId]);
+
+  // Check duplicates when workspace changes
+  useEffect(() => {
+    if (workspaceId && transactions.length > 0) {
+      checkDuplicates();
+    }
+  }, [workspaceId, transactions.length, checkDuplicates]);
+
+  // Selection handlers
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === transactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(transactions.map((t) => t.id)));
+    }
+  };
+
+  // Delete selected transactions
+  const handleDeleteSelected = async () => {
+    if (!workspaceId || selectedIds.size === 0) return;
+
+    if (!confirm(`Delete ${selectedIds.size} transaction(s)? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId,
+          transactionIds: Array.from(selectedIds),
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Remove deleted from local state
+        setTransactions((prev) => prev.filter((t) => !selectedIds.has(t.id)));
+        setTotal((prev) => prev - data.deleted);
+        setSelectedIds(new Set());
+        // Re-check duplicates
+        checkDuplicates();
+      }
+    } catch (error) {
+      console.error('Failed to delete transactions:', error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Remove all duplicates
+  const handleRemoveDuplicates = async () => {
+    if (!workspaceId || duplicateCount === 0) return;
+
+    if (!confirm(`Remove ${duplicateCount} duplicate transaction(s)? This will keep the first occurrence of each duplicate group.`)) {
+      return;
+    }
+
+    setRemovingDuplicates(true);
+    try {
+      const response = await fetch(`/api/transactions/duplicates?workspaceId=${workspaceId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Remove duplicates from local state
+        const idsToRemove = new Set(duplicateIds);
+        setTransactions((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
+        setTotal((prev) => prev - data.deleted);
+        setDuplicateCount(0);
+        setDuplicateIds([]);
+        setShowDuplicatesBanner(false);
+        setSelectedIds(new Set());
+      }
+    } catch (error) {
+      console.error('Failed to remove duplicates:', error);
+    } finally {
+      setRemovingDuplicates(false);
+    }
+  };
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat(locale, {
@@ -112,6 +243,48 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Duplicates Banner */}
+      {showDuplicatesBanner && duplicateCount !== null && duplicateCount > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-950/30">
+          <div className="flex items-center gap-3">
+            <Copy className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+            <div>
+              <p className="font-medium text-amber-800 dark:text-amber-200">
+                {duplicateCount} duplicate transaction{duplicateCount !== 1 ? 's' : ''} found
+              </p>
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                Transactions with same date, amount, and description
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRemoveDuplicates}
+              disabled={removingDuplicates}
+              className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+            >
+              {removingDuplicates ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Remove Duplicates
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowDuplicatesBanner(false)}
+              className="rounded p-1 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -120,13 +293,28 @@ export default function TransactionsPage() {
             {total} {t('title').toLowerCase()}
           </p>
         </div>
-        <Link
-          href={`/${locale}/transactions/import?workspace=${workspaceId}`}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <Upload className="h-4 w-4" />
-          {tCommon('import')}
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Check Duplicates Button */}
+          <button
+            onClick={checkDuplicates}
+            disabled={checkingDuplicates}
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+          >
+            {checkingDuplicates ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            Find Duplicates
+          </button>
+          <Link
+            href={`/${locale}/transactions/import?workspace=${workspaceId}`}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Upload className="h-4 w-4" />
+            {tCommon('import')}
+          </Link>
+        </div>
       </div>
 
       {/* Table */}
@@ -149,10 +337,52 @@ export default function TransactionsPage() {
           </div>
         ) : (
           <>
+            {/* Bulk Actions Bar */}
+            {transactions.length > 0 && (
+              <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    {selectedIds.size > 0 ? (
+                      <span className="font-medium text-foreground">
+                        {selectedIds.size} of {transactions.length} selected
+                      </span>
+                    ) : (
+                      <span>Select transactions to delete</span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {selectedIds.size > 0 && (
+                    <button
+                      onClick={handleDeleteSelected}
+                      disabled={deleting}
+                      className="flex items-center gap-1.5 rounded border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/20 disabled:opacity-50"
+                    >
+                      {deleting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      Delete Selected ({selectedIds.size})
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b border-border bg-muted/50">
                   <tr>
+                    <th className="w-10 px-3 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === transactions.length && transactions.length > 0}
+                        onChange={handleSelectAll}
+                        className="h-4 w-4 rounded border-border"
+                        title="Select all"
+                      />
+                    </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       {t('date')}
                     </th>
@@ -172,7 +402,22 @@ export default function TransactionsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-accent/50">
+                    <tr
+                      key={tx.id}
+                      className={cn(
+                        'hover:bg-accent/50',
+                        selectedIds.has(tx.id) && 'bg-primary/5',
+                        duplicateIds.includes(tx.id) && 'bg-amber-50/50 dark:bg-amber-950/20'
+                      )}
+                    >
+                      <td className="px-3 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(tx.id)}
+                          onChange={() => handleToggleSelect(tx.id)}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                      </td>
                       <td className="px-4 py-3 text-sm">{formatDate(tx.postedAt)}</td>
                       <td className="px-4 py-3 text-sm max-w-[300px] truncate">
                         {tx.description || '-'}
