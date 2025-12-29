@@ -30,7 +30,7 @@ export const dynamic = 'force-dynamic';
 const requestSchema = z.object({
   workspaceId: z.string().uuid(),
   message: z.string().min(1).max(500),
-  conversationId: z.string().optional(),
+  conversationId: z.string().nullish(), // Allow null or undefined
 });
 
 /**
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
     // Process the message
     const response = await chatService.chat(
-      { workspaceId, message, conversationId },
+      { workspaceId, message, conversationId: conversationId ?? undefined },
       { workspaceId, baseCurrency: workspace.baseCurrency }
     );
 
