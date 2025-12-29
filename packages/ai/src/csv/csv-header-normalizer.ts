@@ -40,47 +40,50 @@ export interface CsvNormalizationResult {
   detectedLanguage?: string;
 }
 
-const NORMALIZATION_PROMPT = `You are analyzing CSV headers from a bank statement or financial document.
+const NORMALIZATION_PROMPT = `You are an expert at analyzing CSV bank statements from ANY country and language.
 
-Your task is to map each header to ONE of these standard column types:
-- "date": Transaction date (any format: DD-MM-YYYY, YYYY-MM-DD, etc.)
-- "description": Transaction description, memo, narrative, explanation, details
-- "amount": Transaction amount (can be positive/negative, or use direction column)
-- "balance": Account balance after transaction
-- "reference": Transaction reference number, ID, archive code, or document number
-- "direction": Debit/Credit indicator (D/C, IN/OUT, DEBIT/CREDIT, +/-)
-- "currency": Currency code (EUR, USD, etc.)
-- "counterpartyName": Payee/payer name, merchant name, beneficiary, sender, recipient
-- "counterpartyAccount": Payee/payer account number, IBAN
-- "fee": Transaction fee, service charge, commission
-- "category": Expense/income category (e.g., "Marketing", "Office expenses")
-- "status": Transaction status (COMPLETED, PENDING, REFUNDED, etc.)
-- null: If the column doesn't match any of these
+CRITICAL: Analyze BOTH the headers AND the sample data values to determine column types. Headers may be corrupted, misspelled, or in any language - USE THE DATA to verify!
 
-Important rules:
-1. Each standard type should only be assigned ONCE (pick the best match)
-2. "amount" takes priority - if there are separate debit/credit columns, map the main amount column
-3. "direction" is for D/C or IN/OUT indicators that determine the sign of the amount
-4. "counterpartyName" is the OTHER party in the transaction (who you paid or received from)
-5. "description" is the transaction narrative/details, NOT the counterparty name
-6. Be language-agnostic - headers may be in Estonian, German, Dutch, Persian, etc.
+Map each column to ONE of these types:
+- "date": Contains dates (look for patterns like DD-MM-YYYY, YYYY-MM-DD, DD.MM.YYYY, timestamps)
+- "description": Transaction narrative, memo, details, explanation text
+- "amount": Contains monetary values (numbers with decimals, may use comma as decimal separator like "224,75")
+- "balance": Running account balance after transaction
+- "reference": Transaction ID, reference number, archive code (long alphanumeric strings)
+- "direction": Debit/Credit indicator (D/C, IN/OUT, DEBIT/CREDIT)
+- "currency": Currency codes (EUR, USD, GBP) or symbols
+- "counterpartyName": Names of people, companies, merchants (Apple Inc, Google, MAKSU- JA TOLLIAMET)
+- "counterpartyAccount": IBAN or account numbers (start with country code like EE, DE, GB, or are long numbers)
+- "fee": Transaction fees (usually small decimal amounts)
+- "category": Expense categories (Marketing, Software, Office expenses)
+- "status": Transaction status (COMPLETED, PENDING, REFUNDED)
+- null: Column doesn't match any type
 
-Common header translations:
-- Estonian: "Makse kuupäev"=date, "Selgitus"=description, "Summa"=amount, "Saaja/maksja nimi"=counterpartyName
-- German: "Buchungstag"=date, "Verwendungszweck"=description, "Betrag"=amount, "Empfänger"=counterpartyName
-- Wise format: "Created on"=date, "Target name"=counterpartyName, "Source amount"=amount, "Direction"=direction, "Category"=category, "Status"=status
+DETECTION STRATEGY:
+1. If header is unclear or corrupted, LOOK AT THE DATA VALUES
+2. Dates: Values like "01-01-2025", "2025-01-01", "01.01.2025"
+3. Amounts: Values like "-224,75", "422.37", "-305,00" (numbers with 2 decimal places)
+4. IBANs: Start with 2 letters + 2 digits (EE72..., GB29..., LT57...)
+5. Names: Mixed case words, company names (Apple Inc, Google Ireland Limited)
+6. Direction: Single letters D/C or words IN/OUT
+7. Currency: 3-letter codes (EUR, USD) usually in their own column
 
-Return a JSON object with this exact structure:
+CRITICAL RULES:
+- Each type should only be assigned ONCE
+- ALWAYS identify date, amount, and at least one text field (description or counterpartyName)
+- If headers look corrupted (strange characters like �), rely MORE on sample data analysis
+- Use high confidence (0.9+) when data clearly matches the pattern
+
+Return JSON:
 {
   "mappings": [
-    { "original": "header1", "normalized": "date", "confidence": 0.95 },
-    { "original": "header2", "normalized": "counterpartyName", "confidence": 0.9 },
+    { "original": "exact header text", "normalized": "date", "confidence": 0.95 },
     ...
   ],
   "detectedLanguage": "Estonian"
 }
 
-CSV Headers to analyze:
+Headers and sample data:
 `;
 
 /**
@@ -100,15 +103,29 @@ export class CsvHeaderNormalizer {
     headers: string[],
     sampleRows?: string[][]
   ): Promise<CsvNormalizationResult> {
-    // Build prompt with headers and sample data
-    let prompt = NORMALIZATION_PROMPT + JSON.stringify(headers);
+    // Build a clear table format for the AI to analyze
+    let prompt = NORMALIZATION_PROMPT;
+
+    // Format as a table so AI can see headers aligned with data
+    prompt += '\nHEADERS: ' + JSON.stringify(headers);
 
     if (sampleRows && sampleRows.length > 0) {
-      prompt += '\n\nSample data rows (for context):\n';
-      prompt += sampleRows
-        .slice(0, 3)
-        .map((row) => JSON.stringify(row))
-        .join('\n');
+      prompt += '\n\nSAMPLE DATA (columns aligned with headers above):';
+      // Show each row with column index for clarity
+      sampleRows.slice(0, 5).forEach((row, rowIdx) => {
+        prompt += `\nRow ${rowIdx + 1}: `;
+        headers.forEach((_header, colIdx) => {
+          const value = row[colIdx] || '(empty)';
+          prompt += `[${colIdx}]${value} | `;
+        });
+      });
+
+      // Also show column-by-column view for better pattern detection
+      prompt += '\n\nCOLUMN-BY-COLUMN VIEW:';
+      headers.forEach((header, colIdx) => {
+        const values = sampleRows.slice(0, 5).map((row) => row[colIdx] || '(empty)');
+        prompt += `\nColumn ${colIdx} "${header}": ${JSON.stringify(values)}`;
+      });
     }
 
     try {

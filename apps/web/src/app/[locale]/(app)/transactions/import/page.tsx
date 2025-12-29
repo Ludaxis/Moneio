@@ -186,6 +186,18 @@ export default function CsvImportPage() {
     const normalized = csvHeaders.map((h) => h.toLowerCase().trim());
     const detected: Partial<ColumnMapping> = {};
 
+    // Remove special characters and diacritics for fuzzy matching
+    const normalize = (str: string): string => {
+      return str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^a-z0-9\s]/g, '') // Remove special chars
+        .trim();
+    };
+
+    const normalizedFuzzy = csvHeaders.map(normalize);
+
     const findColumn = (patterns: string[]): number => {
       // Exact match first
       for (const pattern of patterns) {
@@ -197,12 +209,31 @@ export default function CsvImportPage() {
         const idx = normalized.findIndex((h) => h.includes(pattern));
         if (idx >= 0) return idx;
       }
+      // Fuzzy match third (handles corrupted characters)
+      for (const pattern of patterns) {
+        const normalizedPattern = normalize(pattern);
+        const idx = normalizedFuzzy.findIndex(
+          (h) => h.includes(normalizedPattern) || normalizedPattern.includes(h)
+        );
+        if (idx >= 0) return idx;
+      }
+      // Partial fuzzy match (even more lenient)
+      for (const pattern of patterns) {
+        const words = normalize(pattern)
+          .split(/\s+/)
+          .filter((w) => w.length > 3);
+        for (const word of words) {
+          const idx = normalizedFuzzy.findIndex((h) => h.includes(word));
+          if (idx >= 0) return idx;
+        }
+      }
       return -1;
     };
 
     // Date patterns - common across banks
     const datePatterns = [
       'makse kuupäev', // Estonian: Payment date
+      'makse kuup', // Estonian: partial match for corrupted encoding
       'created on', // Wise
       'finished on', // Wise
       'booking date',
@@ -214,6 +245,7 @@ export default function CsvImportPage() {
       'date',
       'datum', // German
       'kuupäev', // Estonian
+      'kuup', // Estonian: partial (handles encoding issues)
       'تاريخ', // Persian
       'päev', // Estonian: day
       'buchungstag', // German: booking day
@@ -395,6 +427,108 @@ export default function CsvImportPage() {
     return detected;
   };
 
+  // Data-based detection - analyze actual values when header detection fails
+  const detectByDataPatterns = (
+    csvHeaders: string[],
+    csvRows: ParsedRow[]
+  ): Partial<ColumnMapping> => {
+    const detected: Partial<ColumnMapping> = {};
+    const sampleValues = csvRows.slice(0, 10);
+
+    // Check each column's data
+    csvHeaders.forEach((header) => {
+      const values = sampleValues.map((row) => row[header] || '').filter((v) => v);
+      if (values.length === 0) return;
+
+      // Date detection: DD-MM-YYYY, DD.MM.YYYY, YYYY-MM-DD, or datetime
+      const datePattern = /^(\d{1,2}[-./]\d{1,2}[-./]\d{2,4}|\d{4}[-./]\d{1,2}[-./]\d{1,2})/;
+      const dateMatches = values.filter((v) => datePattern.test(v)).length;
+      if (dateMatches >= values.length * 0.8 && !detected.date) {
+        detected.date = header;
+        return;
+      }
+
+      // Amount detection: numbers with decimals (may use comma as decimal)
+      const amountPattern = /^-?[\d\s.,]+$/;
+      const hasDecimal = values.some((v) => /[.,]\d{2}$/.test(v));
+      const amountMatches = values.filter((v) => amountPattern.test(v) && v.length > 1).length;
+      if (amountMatches >= values.length * 0.8 && hasDecimal && !detected.amount) {
+        detected.amount = header;
+        return;
+      }
+
+      // Direction detection: D/C, IN/OUT
+      const dirPattern = /^(D|C|IN|OUT|DEBIT|CREDIT)$/i;
+      const dirMatches = values.filter((v) => dirPattern.test(v.trim())).length;
+      if (dirMatches >= values.length * 0.8 && !detected.direction) {
+        detected.direction = header;
+        return;
+      }
+
+      // Currency detection: 3-letter codes
+      const currPattern = /^[A-Z]{3}$/;
+      const currMatches = values.filter((v) => currPattern.test(v.trim())).length;
+      if (currMatches >= values.length * 0.8 && !detected.currency) {
+        detected.currency = header;
+        return;
+      }
+
+      // IBAN detection: starts with 2 letters + 2 digits
+      const ibanPattern = /^[A-Z]{2}\d{2}/;
+      const ibanMatches = values.filter((v) => ibanPattern.test(v)).length;
+      if (ibanMatches >= values.length * 0.5 && !detected.counterpartyAccount) {
+        detected.counterpartyAccount = header;
+        return;
+      }
+
+      // Status detection: specific keywords
+      const statusPattern = /^(COMPLETED|REFUNDED|PENDING|CANCELLED|FAILED)$/i;
+      const statusMatches = values.filter((v) => statusPattern.test(v.trim())).length;
+      if (statusMatches >= values.length * 0.5 && !detected.status) {
+        detected.status = header;
+        return;
+      }
+    });
+
+    // Find description: longest average text that isn't already mapped
+    const mappedHeaders = new Set(Object.values(detected).filter(Boolean));
+    let bestDescHeader = '';
+    let bestAvgLen = 0;
+
+    csvHeaders.forEach((header) => {
+      if (mappedHeaders.has(header)) return;
+      const values = sampleValues.map((row) => row[header] || '').filter((v) => v);
+      const avgLen = values.reduce((sum, v) => sum + v.length, 0) / (values.length || 1);
+      // Descriptions tend to be longer text with spaces
+      const hasSpaces = values.some((v) => v.includes(' '));
+      if (avgLen > bestAvgLen && avgLen > 10 && hasSpaces) {
+        bestAvgLen = avgLen;
+        bestDescHeader = header;
+      }
+    });
+    if (bestDescHeader && !detected.description) {
+      detected.description = bestDescHeader;
+    }
+
+    // Find counterparty name: text column with names (mixed case, no special patterns)
+    if (!detected.counterpartyName) {
+      csvHeaders.forEach((header) => {
+        if (mappedHeaders.has(header) || header === detected.description) return;
+        const values = sampleValues.map((row) => row[header] || '').filter((v) => v);
+        // Names: mixed case text, not too long, may contain spaces
+        const namePattern = /^[A-Za-z].*[a-z]/;
+        const nameMatches = values.filter(
+          (v) => namePattern.test(v) && v.length > 3 && v.length < 100
+        ).length;
+        if (nameMatches >= values.length * 0.5 && !detected.counterpartyName) {
+          detected.counterpartyName = header;
+        }
+      });
+    }
+
+    return detected;
+  };
+
   const parseAmount = (value: string, direction?: string): number => {
     let cleaned = value.replace(/[^\d.,-]/g, '');
     const hasNegativeSign = value.trim().startsWith('-');
@@ -514,13 +648,67 @@ export default function CsvImportPage() {
       setHeaders(csvHeaders);
       setRows(csvRows);
 
-      // Try AI normalization first
-      let detected = await normalizeHeadersWithAI(csvHeaders, csvRows);
+      // Multi-layer detection strategy for maximum accuracy
+      let detected: Partial<ColumnMapping> = {};
 
-      if (!detected) {
-        detected = autoDetectMapping(csvHeaders);
+      // Layer 1: Try AI normalization (primary - analyzes headers + sample data)
+      console.log('[CSV Import] Attempting AI-based header detection...');
+      const aiDetected = await normalizeHeadersWithAI(csvHeaders, csvRows);
+      if (aiDetected) {
+        console.log('[CSV Import] AI detection successful:', aiDetected);
+        detected = { ...detected, ...aiDetected };
+      } else {
+        console.log('[CSV Import] AI detection failed or returned incomplete results');
       }
 
+      // Layer 2: Pattern-based detection (fills gaps with header pattern matching)
+      const patternDetected = autoDetectMapping(csvHeaders);
+      console.log('[CSV Import] Pattern detection results:', patternDetected);
+
+      // Merge: AI results take priority, pattern fills gaps
+      detected = {
+        date: detected.date || patternDetected.date,
+        description: detected.description || patternDetected.description,
+        amount: detected.amount || patternDetected.amount,
+        balance: detected.balance || patternDetected.balance,
+        reference: detected.reference || patternDetected.reference,
+        direction: detected.direction || patternDetected.direction,
+        currency: detected.currency || patternDetected.currency,
+        counterpartyName: detected.counterpartyName || patternDetected.counterpartyName,
+        counterpartyAccount: detected.counterpartyAccount || patternDetected.counterpartyAccount,
+        fee: detected.fee || patternDetected.fee,
+        category: detected.category || patternDetected.category,
+        status: detected.status || patternDetected.status,
+      };
+
+      // Layer 3: Data-based detection (last resort - analyzes actual cell values)
+      if (!detected.date || !detected.amount) {
+        console.log('[CSV Import] Required fields missing, trying data-based detection...');
+        const dataDetected = detectByDataPatterns(csvHeaders, csvRows);
+        console.log('[CSV Import] Data-based detection results:', dataDetected);
+
+        detected = {
+          date: detected.date || dataDetected.date,
+          description: detected.description || dataDetected.description,
+          amount: detected.amount || dataDetected.amount,
+          balance: detected.balance || dataDetected.balance,
+          reference: detected.reference || dataDetected.reference,
+          direction: detected.direction || dataDetected.direction,
+          currency: detected.currency || dataDetected.currency,
+          counterpartyName: detected.counterpartyName || dataDetected.counterpartyName,
+          counterpartyAccount: detected.counterpartyAccount || dataDetected.counterpartyAccount,
+          fee: detected.fee || dataDetected.fee,
+          category: detected.category || dataDetected.category,
+          status: detected.status || dataDetected.status,
+        };
+      }
+
+      // If no description but have counterparty name, use that
+      if (!detected.description && detected.counterpartyName) {
+        detected.description = detected.counterpartyName;
+      }
+
+      console.log('[CSV Import] Final mapping:', detected);
       setMapping(detected);
 
       // If we have all required fields, generate preview and go straight to preview
