@@ -52,10 +52,12 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(50);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectAllPages, setSelectAllPages] = useState(false);
+  const [loadingAllIds, setLoadingAllIds] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   // Duplicates state
@@ -121,8 +123,51 @@ export default function TransactionsPage() {
     }
   }, [workspaceId, transactions.length, checkDuplicates]);
 
+  // Fetch all transaction IDs for "select all pages"
+  const fetchAllTransactionIds = useCallback(async () => {
+    if (!workspaceId) return [];
+
+    setLoadingAllIds(true);
+    try {
+      const response = await fetch(
+        `/api/transactions?workspaceId=${workspaceId}&page=1&pageSize=${total}`
+      );
+      if (response.ok) {
+        const data: TransactionsResponse = await response.json();
+        return data.transactions.map((t) => t.id);
+      }
+    } catch (error) {
+      console.error('Failed to fetch all transaction IDs:', error);
+    } finally {
+      setLoadingAllIds(false);
+    }
+    return [];
+  }, [workspaceId, total]);
+
+  // Refetch transactions (for use after delete)
+  const refetchTransactions = useCallback(async () => {
+    if (!workspaceId) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/transactions?workspaceId=${workspaceId}&page=${page}&pageSize=${pageSize}`
+      );
+      if (response.ok) {
+        const data: TransactionsResponse = await response.json();
+        setTransactions(data.transactions);
+        setTotal(data.total);
+      }
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [workspaceId, page, pageSize]);
+
   // Selection handlers
   const handleToggleSelect = (id: string) => {
+    setSelectAllPages(false);
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -134,12 +179,31 @@ export default function TransactionsPage() {
     });
   };
 
-  const handleSelectAll = () => {
+  const handleSelectCurrentPage = () => {
+    setSelectAllPages(false);
     if (selectedIds.size === transactions.length) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(transactions.map((t) => t.id)));
     }
+  };
+
+  const handleSelectAllPages = async () => {
+    if (selectAllPages) {
+      // Deselect all
+      setSelectAllPages(false);
+      setSelectedIds(new Set());
+    } else {
+      // Select all from all pages
+      const ids = await fetchAllTransactionIds();
+      setSelectAllPages(true);
+      setSelectedIds(new Set(ids));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectAllPages(false);
+    setSelectedIds(new Set());
   };
 
   // Delete selected transactions
@@ -152,24 +216,33 @@ export default function TransactionsPage() {
 
     setDeleting(true);
     try {
-      const response = await fetch('/api/transactions', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workspaceId,
-          transactionIds: Array.from(selectedIds),
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Remove deleted from local state
-        setTransactions((prev) => prev.filter((t) => !selectedIds.has(t.id)));
-        setTotal((prev) => prev - data.deleted);
-        setSelectedIds(new Set());
-        // Re-check duplicates
-        checkDuplicates();
+      // Delete in batches of 500 (API limit)
+      const idsArray = Array.from(selectedIds);
+      const batches = [];
+      for (let i = 0; i < idsArray.length; i += 500) {
+        batches.push(idsArray.slice(i, i + 500));
       }
+
+      for (const batch of batches) {
+        await fetch('/api/transactions', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            workspaceId,
+            transactionIds: batch,
+          }),
+        });
+      }
+
+      // Clear selection state
+      setSelectedIds(new Set());
+      setSelectAllPages(false);
+
+      // Immediately refetch data from server
+      await refetchTransactions();
+
+      // Re-check duplicates
+      checkDuplicates();
     } catch (error) {
       console.error('Failed to delete transactions:', error);
     } finally {
@@ -181,7 +254,11 @@ export default function TransactionsPage() {
   const handleRemoveDuplicates = async () => {
     if (!workspaceId || duplicateCount === 0) return;
 
-    if (!confirm(`Remove ${duplicateCount} duplicate transaction(s)? This will keep the first occurrence of each duplicate group.`)) {
+    if (
+      !confirm(
+        `Remove ${duplicateCount} duplicate transaction(s)? This will keep the first occurrence of each duplicate group.`
+      )
+    ) {
       return;
     }
 
@@ -192,15 +269,15 @@ export default function TransactionsPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        // Remove duplicates from local state
-        const idsToRemove = new Set(duplicateIds);
-        setTransactions((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
-        setTotal((prev) => prev - data.deleted);
+        // Clear duplicate state
         setDuplicateCount(0);
         setDuplicateIds([]);
         setShowDuplicatesBanner(false);
         setSelectedIds(new Set());
+        setSelectAllPages(false);
+
+        // Immediately refetch data from server
+        await refetchTransactions();
       }
     } catch (error) {
       console.error('Failed to remove duplicates:', error);
@@ -318,7 +395,20 @@ export default function TransactionsPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="relative rounded-lg border border-border bg-card overflow-hidden">
+        {/* Loading overlay for delete/remove operations */}
+        {(deleting || removingDuplicates) && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm font-medium text-foreground">
+                {deleting
+                  ? `Deleting ${selectedIds.size} transaction${selectedIds.size !== 1 ? 's' : ''}...`
+                  : 'Removing duplicates...'}
+              </p>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -344,12 +434,43 @@ export default function TransactionsPage() {
                   <span className="text-sm text-muted-foreground">
                     {selectedIds.size > 0 ? (
                       <span className="font-medium text-foreground">
-                        {selectedIds.size} of {transactions.length} selected
+                        {selectAllPages ? (
+                          <>All {total} transactions selected</>
+                        ) : (
+                          <>{selectedIds.size} selected</>
+                        )}
                       </span>
                     ) : (
                       <span>Select transactions to delete</span>
                     )}
                   </span>
+                  {selectedIds.size > 0 &&
+                    selectedIds.size === transactions.length &&
+                    !selectAllPages &&
+                    total > transactions.length && (
+                      <button
+                        onClick={handleSelectAllPages}
+                        disabled={loadingAllIds}
+                        className="text-sm text-primary hover:underline disabled:opacity-50"
+                      >
+                        {loadingAllIds ? (
+                          <span className="flex items-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Loading...
+                          </span>
+                        ) : (
+                          <>Select all {total} transactions</>
+                        )}
+                      </button>
+                    )}
+                  {selectedIds.size > 0 && (
+                    <button
+                      onClick={handleClearSelection}
+                      className="text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      Clear selection
+                    </button>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   {selectedIds.size > 0 && (
@@ -377,10 +498,13 @@ export default function TransactionsPage() {
                     <th className="w-10 px-3 py-3">
                       <input
                         type="checkbox"
-                        checked={selectedIds.size === transactions.length && transactions.length > 0}
-                        onChange={handleSelectAll}
+                        checked={
+                          (selectedIds.size === transactions.length && transactions.length > 0) ||
+                          selectAllPages
+                        }
+                        onChange={handleSelectCurrentPage}
                         className="h-4 w-4 rounded border-border"
-                        title="Select all"
+                        title="Select all on this page"
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
@@ -453,12 +577,33 @@ export default function TransactionsPage() {
             </div>
 
             {/* Pagination */}
-            {total > pageSize && (
-              <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+              <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of{' '}
-                  {total}
+                  Showing {transactions.length > 0 ? (page - 1) * pageSize + 1 : 0} to{' '}
+                  {Math.min(page * pageSize, total)} of {total}
                 </p>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="pageSize" className="text-sm text-muted-foreground">
+                    Rows:
+                  </label>
+                  <select
+                    id="pageSize"
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={200}>200</option>
+                  </select>
+                </div>
+              </div>
+              {total > pageSize && (
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -475,8 +620,8 @@ export default function TransactionsPage() {
                     Next
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </>
         )}
       </div>
