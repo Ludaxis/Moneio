@@ -39,7 +39,8 @@ const config = {
 // Default BullMQ polls every 5ms when idle - this is too aggressive for Upstash pricing
 const workerSettings = {
   // How long to wait between polling when queue is empty (default: 5ms!)
-  drainDelay: 30000, // 30 seconds - drastically reduces idle polling
+  // Balance between responsiveness and cost - 5 seconds is reasonable
+  drainDelay: 5000, // 5 seconds (was 30s, too slow for user experience)
   // How often to check for stalled jobs (default: 30000ms)
   stalledInterval: 300000, // 5 minutes
   // How long a job can run before considered stalled (default: 30000ms)

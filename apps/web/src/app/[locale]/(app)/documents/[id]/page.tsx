@@ -10,6 +10,8 @@ import {
   Download,
   RefreshCw,
   File,
+  XCircle,
+  RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -108,6 +110,29 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   const [viewUrl, setViewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancel = async (action: 'cancel' | 'retry') => {
+    if (!workspaceId || !document) return;
+
+    setCancelling(true);
+    try {
+      const response = await fetch(`/api/documents/${params.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId, action }),
+      });
+
+      if (response.ok) {
+        // Refresh document to get new status
+        await fetchDocument(true);
+      }
+    } catch (error) {
+      console.error('Failed to cancel document:', error);
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   // Extract locale from pathname
   const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
@@ -247,15 +272,50 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       </div>
 
       {/* Status Banner */}
-      <div className={cn('flex items-center gap-3 rounded-lg p-4', statusConfig.bgColor)}>
-        <StatusIcon className={cn('h-5 w-5', statusConfig.color, isProcessing && 'animate-spin')} />
-        <div>
-          <p className={cn('font-medium', statusConfig.color)}>{t(statusConfig.labelKey)}</p>
-          {document.failReason && (
-            <p className="mt-1 text-sm text-destructive">{document.failReason}</p>
-          )}
+      <div className={cn('flex items-center justify-between rounded-lg p-4', statusConfig.bgColor)}>
+        <div className="flex items-center gap-3">
+          <StatusIcon
+            className={cn('h-5 w-5', statusConfig.color, isProcessing && 'animate-spin')}
+          />
+          <div>
+            <p className={cn('font-medium', statusConfig.color)}>{t(statusConfig.labelKey)}</p>
+            {document.failReason && (
+              <p className="mt-1 text-sm text-destructive">{document.failReason}</p>
+            )}
+            {isProcessing && (
+              <p className="mt-1 text-sm text-muted-foreground">{t('processingNote')}</p>
+            )}
+          </div>
+        </div>
+        {/* Cancel/Retry buttons */}
+        <div className="flex items-center gap-2">
           {isProcessing && (
-            <p className="mt-1 text-sm text-muted-foreground">{t('processingNote')}</p>
+            <button
+              onClick={() => handleCancel('cancel')}
+              disabled={cancelling}
+              className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 disabled:opacity-50"
+            >
+              {cancelling ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <XCircle className="h-4 w-4" />
+              )}
+              {tCommon('cancel')}
+            </button>
+          )}
+          {document.status === 'failed' && (
+            <button
+              onClick={() => handleCancel('retry')}
+              disabled={cancelling}
+              className="flex items-center gap-2 rounded-lg border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/20 disabled:opacity-50"
+            >
+              {cancelling ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="h-4 w-4" />
+              )}
+              {tCommon('retry')}
+            </button>
           )}
         </div>
       </div>
