@@ -161,8 +161,8 @@ export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpen
           <p className="text-sm text-muted-foreground">No expense data available.</p>
         </div>
       ) : (
-        <div className="mt-4 h-64">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-4 h-64 min-h-[256px]">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid {...gridStyle} vertical={false} />
               <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />

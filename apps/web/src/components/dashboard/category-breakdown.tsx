@@ -72,8 +72,8 @@ export function CategoryBreakdown({ data, loading, baseCurrency }: CategoryBreak
   return (
     <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
       <h2 className="text-lg font-semibold text-foreground">Expenses by Category</h2>
-      <div className="mt-4 h-64">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="mt-4 h-64 min-h-[256px]">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart>
             <Pie
               data={chartData}
