@@ -109,7 +109,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
     );
   }
 
-  if (!data || data.forecast.length === 0) {
+  if (!data || !data.forecast || data.forecast.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h2>

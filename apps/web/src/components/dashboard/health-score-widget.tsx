@@ -150,7 +150,7 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
 
       {/* Metrics Breakdown */}
       <div className="mt-6 space-y-3">
-        {data.metrics.map((metric) => (
+        {(data.metrics || []).map((metric) => (
           <div key={metric.name} className="flex items-center gap-3">
             <div className="flex-shrink-0 text-muted-foreground">
               {metricIcons[metric.name] || <BarChart3 className="h-4 w-4" />}
@@ -189,7 +189,7 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
       <p className="mt-4 text-sm text-muted-foreground">{data.summary}</p>
 
       {/* Top Recommendation */}
-      {data.recommendations.length > 0 && (
+      {data.recommendations && data.recommendations.length > 0 && (
         <div className="mt-4 rounded-lg bg-muted/50 p-3">
           <p className="text-xs font-medium text-foreground">Top Recommendation</p>
           <p className="mt-1 text-sm text-muted-foreground">{data.recommendations[0]}</p>
