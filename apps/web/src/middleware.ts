@@ -11,7 +11,7 @@ const publicPages = ['/login', '/signup', '/forgot-password', '/'];
 const intlMiddleware = createIntlMiddleware({
   locales,
   defaultLocale,
-  localePrefix: 'as-needed',
+  localePrefix: 'always',
 });
 
 // Check if Supabase is configured
