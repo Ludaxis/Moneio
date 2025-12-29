@@ -270,7 +270,12 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
 
   const statusConfig = STATUS_CONFIG[document.status];
   const StatusIcon = statusConfig.icon;
-  const isProcessing = ['processing', 'ocr_complete', 'extracting'].includes(document.status);
+  const isProcessing = ['uploaded', 'processing', 'ocr_complete', 'extracting'].includes(
+    document.status
+  );
+  const isActivelyProcessing = ['processing', 'ocr_complete', 'extracting'].includes(
+    document.status
+  );
   const latestExtraction = document.extractions[0];
 
   return (
@@ -319,7 +324,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <StatusIcon
-              className={cn('h-5 w-5', statusConfig.color, isProcessing && 'animate-spin')}
+              className={cn('h-5 w-5', statusConfig.color, isActivelyProcessing && 'animate-spin')}
             />
             <div>
               <p className={cn('font-medium', statusConfig.color)}>{t(statusConfig.labelKey)}</p>
