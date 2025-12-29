@@ -23,7 +23,8 @@
     "upload": "Laadi üles",
     "download": "Laadi alla",
     "viewAll": "Vaata kõiki",
-    "noResults": "Tulemusi ei leitud"
+    "noResults": "Tulemusi ei leitud",
+    "retry": "Proovi uuesti"
   },
   "auth": {
     "signIn": "Logi sisse",

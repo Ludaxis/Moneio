@@ -23,7 +23,8 @@
     "upload": "Upload",
     "download": "Download",
     "viewAll": "View All",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "retry": "Retry"
   },
   "auth": {
     "signIn": "Sign In",
