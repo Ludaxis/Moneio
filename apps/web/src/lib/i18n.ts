@@ -29,7 +29,10 @@ export default getRequestConfig(async ({ locale }) => {
     notFound();
   }
 
+  const resolvedLocale = locales.includes(locale as Locale) ? (locale as Locale) : defaultLocale;
+
   return {
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    locale: resolvedLocale,
+    messages: (await import(`../../messages/${resolvedLocale}.json`)).default,
   };
 });

@@ -91,7 +91,7 @@ export async function handleDocNormalize(
 
       // Upload each page and create blobs
       for (const page of pages) {
-        const pagePath = `${workspaceId}/${documentId}/page-${page.pageNumber}.pdf`;
+        const pagePath = `${workspaceId}/${documentId}/page-${page.pageNumber}.png`;
 
         await uploadFile(pagePath, page.data, page.mimeType);
 
@@ -110,19 +110,34 @@ export async function handleDocNormalize(
           workspaceId,
           pageNumber: page.pageNumber,
           storagePath: pagePath,
+          mimeType: page.mimeType,
         });
       }
     } else if (isPdf) {
       // Single page PDF: Use original file
-      console.log(`[DOC_NORMALIZE] Single page PDF, using original`);
+      console.log(`[DOC_NORMALIZE] Single page PDF, rendering to image`);
 
       await job.updateProgress(70);
+
+      const [page] = await extractPdfPages(fileData);
+
+      const pagePath = `${workspaceId}/${documentId}/page-1.png`;
+      await uploadFile(pagePath, page.data, page.mimeType);
+
+      await prisma.documentBlob.create({
+        data: {
+          documentId,
+          storagePath: pagePath,
+          blobType: 'page-1',
+        },
+      });
 
       await enqueueDocOcr({
         documentId,
         workspaceId,
         pageNumber: 1,
-        storagePath: originalBlob.storagePath,
+        storagePath: pagePath,
+        mimeType: page.mimeType,
       });
     } else {
       // Image: Normalize if needed
@@ -160,6 +175,7 @@ export async function handleDocNormalize(
           workspaceId,
           pageNumber: 1,
           storagePath: normalizedPath,
+          mimeType: normalized.mimeType,
         });
       } else {
         // Use original
@@ -168,6 +184,7 @@ export async function handleDocNormalize(
           workspaceId,
           pageNumber: 1,
           storagePath: originalBlob.storagePath,
+          mimeType: document.mimeType,
         });
       }
     }

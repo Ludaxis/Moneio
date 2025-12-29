@@ -23,7 +23,7 @@ export async function handleDocOcr(job: Job<DocOcrJobData>): Promise<DocOcrResul
   try {
     await job.updateProgress(10);
 
-    // Get document to check mimeType
+    // Get document to check pageCount and fallback mimeType
     const document = await prisma.document.findUnique({
       where: { id: documentId },
       select: { mimeType: true, pageCount: true },
@@ -42,7 +42,7 @@ export async function handleDocOcr(job: Job<DocOcrJobData>): Promise<DocOcrResul
     // Perform OCR
     let ocrResult: OcrResult;
     try {
-      ocrResult = await performOcrWithRetry(fileData, document.mimeType);
+      ocrResult = await performOcrWithRetry(fileData, job.data.mimeType || document.mimeType);
     } catch (error) {
       // If OCR fails, create a stub result instead of failing completely
       console.warn(`[DOC_OCR] OCR failed, using empty result:`, error);

@@ -32,6 +32,7 @@ export interface DocOcrJobData {
   workspaceId: string;
   pageNumber: number;
   storagePath: string;
+  mimeType: string;
 }
 
 export interface DocExtractJobData {

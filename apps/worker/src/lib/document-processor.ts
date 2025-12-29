@@ -86,25 +86,19 @@ export async function extractPdfPages(
   data: Buffer,
   _pageNumbers?: number[]
 ): Promise<ProcessedPage[]> {
-  // For MVP, we'll pass the PDF directly to OCR
-  // Google Vision can handle PDFs natively
   const pdfDoc = await PDFDocument.load(data, { ignoreEncryption: true });
   const pageCount = pdfDoc.getPageCount();
 
   const pages: ProcessedPage[] = [];
 
-  // Create a single-page PDF for each page
+  // Render each page to a PNG for reliable OCR
   for (let i = 0; i < pageCount; i++) {
-    const singlePagePdf = await PDFDocument.create();
-    const [copiedPage] = await singlePagePdf.copyPages(pdfDoc, [i]);
-    singlePagePdf.addPage(copiedPage);
-
-    const pdfBytes = await singlePagePdf.save();
+    const pngBuffer = await sharp(data, { density: 200, page: i }).png().toBuffer();
 
     pages.push({
       pageNumber: i + 1,
-      data: Buffer.from(pdfBytes),
-      mimeType: 'application/pdf',
+      data: pngBuffer,
+      mimeType: 'image/png',
     });
   }
 
