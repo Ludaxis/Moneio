@@ -59,16 +59,12 @@ export async function handleCategorization(
     const context = {
       workspaceId,
       locale: workspace?.locale || 'en',
-      merchantNames: transactions
-        .map((t) => t.merchant?.name)
-        .filter(Boolean) as string[],
+      merchantNames: transactions.map((t) => t.merchant?.name).filter(Boolean) as string[],
     };
 
     // Decide AI vs heuristic
     const llmConfigured = !!process.env.OPENAI_API_KEY;
-    const client = llmConfigured
-      ? createOpenAiClient({ model: 'gpt-4o-mini' })
-      : null;
+    const client = llmConfigured ? createOpenAiClient({ model: 'gpt-4o-mini' }) : null;
     const categorizer = llmConfigured
       ? new TransactionCategorizer(client!)
       : new HeuristicCategorizer();
@@ -89,7 +85,11 @@ export async function handleCategorization(
         postedAt: tx.postedAt.toISOString(),
       };
 
-      const proposal = await categorizer.categorizeTransaction(bankTx as any, categories as any, context as any);
+      const proposal = await categorizer.categorizeTransaction(
+        bankTx as any,
+        categories as any,
+        context as any
+      );
 
       // Clean up existing pending suggestions for this tx to avoid duplicates
       await prisma.aiSuggestion.deleteMany({
