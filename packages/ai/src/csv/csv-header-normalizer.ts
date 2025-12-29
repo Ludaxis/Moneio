@@ -13,7 +13,7 @@ import type { LlmClient } from '../extraction/invoice-extractor';
 export interface NormalizedColumnMapping {
   /** Original header from CSV */
   original: string;
-  /** Normalized English name: date, description, amount, balance, reference, direction, or null if unmapped */
+  /** Normalized English name for bank transaction columns */
   normalized:
     | 'date'
     | 'description'
@@ -22,6 +22,11 @@ export interface NormalizedColumnMapping {
     | 'reference'
     | 'direction'
     | 'currency'
+    | 'counterpartyName'
+    | 'counterpartyAccount'
+    | 'fee'
+    | 'category'
+    | 'status'
     | null;
   /** Confidence score 0-1 */
   confidence: number;
@@ -38,27 +43,38 @@ export interface CsvNormalizationResult {
 const NORMALIZATION_PROMPT = `You are analyzing CSV headers from a bank statement or financial document.
 
 Your task is to map each header to ONE of these standard column types:
-- "date": Transaction date (any format)
-- "description": Transaction description, memo, narrative, payee name, or merchant
+- "date": Transaction date (any format: DD-MM-YYYY, YYYY-MM-DD, etc.)
+- "description": Transaction description, memo, narrative, explanation, details
 - "amount": Transaction amount (can be positive/negative, or use direction column)
 - "balance": Account balance after transaction
-- "reference": Transaction reference number, ID, or code
-- "direction": Debit/Credit indicator (D/C, IN/OUT, +/-)
-- "currency": Currency code or symbol
+- "reference": Transaction reference number, ID, archive code, or document number
+- "direction": Debit/Credit indicator (D/C, IN/OUT, DEBIT/CREDIT, +/-)
+- "currency": Currency code (EUR, USD, etc.)
+- "counterpartyName": Payee/payer name, merchant name, beneficiary, sender, recipient
+- "counterpartyAccount": Payee/payer account number, IBAN
+- "fee": Transaction fee, service charge, commission
+- "category": Expense/income category (e.g., "Marketing", "Office expenses")
+- "status": Transaction status (COMPLETED, PENDING, REFUNDED, etc.)
 - null: If the column doesn't match any of these
 
 Important rules:
 1. Each standard type should only be assigned ONCE (pick the best match)
 2. "amount" takes priority - if there are separate debit/credit columns, map the main amount column
 3. "direction" is for D/C or IN/OUT indicators that determine the sign of the amount
-4. Be language-agnostic - headers may be in any language (Estonian, German, Spanish, etc.)
-5. Consider common banking terms in various languages
+4. "counterpartyName" is the OTHER party in the transaction (who you paid or received from)
+5. "description" is the transaction narrative/details, NOT the counterparty name
+6. Be language-agnostic - headers may be in Estonian, German, Dutch, Persian, etc.
+
+Common header translations:
+- Estonian: "Makse kuupäev"=date, "Selgitus"=description, "Summa"=amount, "Saaja/maksja nimi"=counterpartyName
+- German: "Buchungstag"=date, "Verwendungszweck"=description, "Betrag"=amount, "Empfänger"=counterpartyName
+- Wise format: "Created on"=date, "Target name"=counterpartyName, "Source amount"=amount, "Direction"=direction, "Category"=category, "Status"=status
 
 Return a JSON object with this exact structure:
 {
   "mappings": [
     { "original": "header1", "normalized": "date", "confidence": 0.95 },
-    { "original": "header2", "normalized": "description", "confidence": 0.9 },
+    { "original": "header2", "normalized": "counterpartyName", "confidence": 0.9 },
     ...
   ],
   "detectedLanguage": "Estonian"
@@ -167,6 +183,11 @@ function isValidNormalizedType(value: unknown): value is NormalizedColumnMapping
     value === 'balance' ||
     value === 'reference' ||
     value === 'direction' ||
-    value === 'currency'
+    value === 'currency' ||
+    value === 'counterpartyName' ||
+    value === 'counterpartyAccount' ||
+    value === 'fee' ||
+    value === 'category' ||
+    value === 'status'
   );
 }

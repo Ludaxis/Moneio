@@ -31,6 +31,12 @@ interface ColumnMapping {
   balance?: string;
   reference?: string;
   direction?: string;
+  currency?: string;
+  counterpartyName?: string;
+  counterpartyAccount?: string;
+  fee?: string;
+  category?: string;
+  status?: string;
 }
 
 interface PreviewTransaction {
@@ -40,6 +46,11 @@ interface PreviewTransaction {
   amount: number;
   balance?: number;
   reference?: string;
+  currency?: string;
+  counterpartyName?: string;
+  fee?: number;
+  category?: string;
+  status?: string;
   originalRow: ParsedRow;
 }
 
@@ -147,7 +158,19 @@ export default function CsvImportPage() {
           else if (m.normalized === 'balance') detected.balance = m.original;
           else if (m.normalized === 'reference') detected.reference = m.original;
           else if (m.normalized === 'direction') detected.direction = m.original;
+          else if (m.normalized === 'currency') detected.currency = m.original;
+          else if (m.normalized === 'counterpartyName') detected.counterpartyName = m.original;
+          else if (m.normalized === 'counterpartyAccount')
+            detected.counterpartyAccount = m.original;
+          else if (m.normalized === 'fee') detected.fee = m.original;
+          else if (m.normalized === 'category') detected.category = m.original;
+          else if (m.normalized === 'status') detected.status = m.original;
         }
+      }
+
+      // If no description but we have counterparty name, use that
+      if (!detected.description && detected.counterpartyName) {
+        detected.description = detected.counterpartyName;
       }
 
       if (detected.date && detected.description && detected.amount) {
@@ -164,10 +187,12 @@ export default function CsvImportPage() {
     const detected: Partial<ColumnMapping> = {};
 
     const findColumn = (patterns: string[]): number => {
+      // Exact match first
       for (const pattern of patterns) {
         const idx = normalized.findIndex((h) => h === pattern);
         if (idx >= 0) return idx;
       }
+      // Partial match second
       for (const pattern of patterns) {
         const idx = normalized.findIndex((h) => h.includes(pattern));
         if (idx >= 0) return idx;
@@ -175,85 +200,197 @@ export default function CsvImportPage() {
       return -1;
     };
 
+    // Date patterns - common across banks
     const datePatterns = [
-      'makse kuupäev',
-      'created on',
-      'finished on',
+      'makse kuupäev', // Estonian: Payment date
+      'created on', // Wise
+      'finished on', // Wise
       'booking date',
       'value date',
       'transaction date',
+      'posted date',
+      'posted at',
       'posted',
       'date',
-      'datum',
-      'kuupäev',
-      'تاريخ',
-      'päev',
+      'datum', // German
+      'kuupäev', // Estonian
+      'تاريخ', // Persian
+      'päev', // Estonian: day
+      'buchungstag', // German: booking day
+      'wertstellung', // German: value date
     ];
     const dateIdx = findColumn(datePatterns);
     if (dateIdx >= 0) detected.date = csvHeaders[dateIdx];
 
+    // Description patterns - transaction narrative/details
     const descPatterns = [
-      'selgitus',
-      'target name',
-      'saaja/maksja nimi',
-      'merchant',
-      'payee',
-      'narrative',
+      'selgitus', // Estonian: explanation
       'description',
+      'narrative',
       'memo',
-      'kirjeldus',
-      'توضیحات',
       'details',
       'text',
-      'nimi',
+      'kirjeldus', // Estonian
+      'توضیحات', // Persian
+      'verwendungszweck', // German: purpose
+      'buchungstext', // German: booking text
+      'transaction details',
+      'payment details',
+      'particulars',
     ];
     const descIdx = findColumn(descPatterns);
     if (descIdx >= 0) detected.description = csvHeaders[descIdx];
 
+    // Counterparty name patterns - payee/merchant/sender name
+    const counterpartyPatterns = [
+      'saaja/maksja nimi', // Estonian: payee/payer name
+      'target name', // Wise
+      'source name', // Wise (for incoming)
+      'merchant',
+      'payee',
+      'payer',
+      'beneficiary',
+      'counterparty',
+      'vendor',
+      'sender',
+      'recipient',
+      'nimi', // Estonian: name
+      'empfänger', // German: recipient
+      'auftraggeber', // German: client/sender
+      'begunstigde', // Dutch: beneficiary
+    ];
+    const counterpartyIdx = findColumn(counterpartyPatterns);
+    if (counterpartyIdx >= 0) detected.counterpartyName = csvHeaders[counterpartyIdx];
+
+    // If no description found, use counterparty name as description
+    if (!detected.description && detected.counterpartyName) {
+      detected.description = detected.counterpartyName;
+    }
+
+    // Counterparty account (IBAN) patterns
+    const counterpartyAccountPatterns = [
+      'saaja/maksja konto', // Estonian: payee/payer account
+      'beneficiary account',
+      'counterparty account',
+      'payee account',
+      'iban',
+      'account number',
+      'konto', // Estonian/German: account
+    ];
+    const counterpartyAccountIdx = findColumn(counterpartyAccountPatterns);
+    if (counterpartyAccountIdx >= 0)
+      detected.counterpartyAccount = csvHeaders[counterpartyAccountIdx];
+
+    // Amount patterns
     const amountPatterns = [
-      'summa',
-      'source amount (after fees)',
-      'target amount (after fees)',
+      'summa', // Estonian: sum/amount
+      'source amount (after fees)', // Wise
+      'target amount (after fees)', // Wise
+      'source amount',
+      'target amount',
       'amount',
-      'مبلغ',
+      'مبلغ', // Persian
       'value',
+      'sum',
+      'betrag', // German
+      'bedrag', // Dutch
       'debit',
       'credit',
-      'sum',
-      'betrag',
     ];
     const amountIdx = findColumn(amountPatterns);
     if (amountIdx >= 0) detected.amount = csvHeaders[amountIdx];
 
-    const balancePatterns = ['balance', 'saldo', 'موجودی', 'running balance', 'jääk'];
+    // Balance patterns
+    const balancePatterns = [
+      'balance',
+      'saldo', // German/Estonian
+      'موجودی', // Persian
+      'running balance',
+      'jääk', // Estonian: remainder
+      'kontostand', // German: account balance
+    ];
     const balanceIdx = findColumn(balancePatterns);
     if (balanceIdx >= 0) detected.balance = csvHeaders[balanceIdx];
 
+    // Reference/ID patterns
     const refPatterns = [
-      'arhiveerimistunnus',
-      'viitenumber',
-      'id',
+      'arhiveerimistunnus', // Estonian: archive ID
+      'viitenumber', // Estonian: reference number
       'reference',
       'ref',
-      'viide',
-      'مرجع',
+      'viide', // Estonian: reference
+      'مرجع', // Persian
       'transaction id',
+      'trans id',
+      'id',
       'doc',
-      'dok',
+      'dok nr', // Estonian: document number
+      'buchungsnummer', // German: booking number
     ];
     const refIdx = findColumn(refPatterns);
     if (refIdx >= 0) detected.reference = csvHeaders[refIdx];
 
+    // Direction patterns (debit/credit indicator)
     const dirPatterns = [
-      'deebet/kreedit (d/c)',
+      'deebet/kreedit (d/c)', // Estonian
       'deebet/kreedit',
       'd/c',
-      'direction',
+      'direction', // Wise: IN/OUT
       'type',
-      'suund',
+      'suund', // Estonian: direction
+      'soll/haben', // German: debit/credit
     ];
     const dirIdx = findColumn(dirPatterns);
     if (dirIdx >= 0) detected.direction = csvHeaders[dirIdx];
+
+    // Currency patterns
+    const currencyPatterns = [
+      'valuuta tähis', // Estonian: currency code
+      'source currency', // Wise
+      'target currency', // Wise
+      'currency',
+      'ccy',
+      'währung', // German
+      'valuta', // Estonian
+    ];
+    const currencyIdx = findColumn(currencyPatterns);
+    if (currencyIdx >= 0) detected.currency = csvHeaders[currencyIdx];
+
+    // Fee patterns
+    const feePatterns = [
+      'teenustasu', // Estonian: service fee
+      'source fee amount', // Wise
+      'target fee amount',
+      'fee',
+      'fees',
+      'charge',
+      'commission',
+      'gebühr', // German
+      'tasu', // Estonian: fee
+    ];
+    const feeIdx = findColumn(feePatterns);
+    if (feeIdx >= 0) detected.fee = csvHeaders[feeIdx];
+
+    // Category patterns (Wise has built-in categories)
+    const categoryPatterns = [
+      'category',
+      'kategooria', // Estonian
+      'kategorie', // German
+      'type',
+      'expense type',
+    ];
+    const categoryIdx = findColumn(categoryPatterns);
+    if (categoryIdx >= 0) detected.category = csvHeaders[categoryIdx];
+
+    // Status patterns (for filtering completed vs refunded)
+    const statusPatterns = [
+      'status',
+      'state',
+      'olek', // Estonian
+      'zustand', // German
+    ];
+    const statusIdx = findColumn(statusPatterns);
+    if (statusIdx >= 0) detected.status = csvHeaders[statusIdx];
 
     return detected;
   };
@@ -312,18 +449,57 @@ export default function CsvImportPage() {
       return [];
     }
 
-    return csvRows.map((row, index) => ({
-      id: `row-${index}`,
-      date: parseDate(row[columnMapping.date!]),
-      description: row[columnMapping.description!] || '(no description)',
-      amount: parseAmount(
-        row[columnMapping.amount!],
-        columnMapping.direction ? row[columnMapping.direction] : undefined
-      ),
-      balance: columnMapping.balance ? parseAmount(row[columnMapping.balance]) : undefined,
-      reference: columnMapping.reference ? row[columnMapping.reference] : undefined,
-      originalRow: row,
-    }));
+    return csvRows
+      .map((row, index) => {
+        // Get status if available
+        const status = columnMapping.status ? row[columnMapping.status]?.toUpperCase() : undefined;
+
+        // Skip refunded/cancelled transactions
+        if (status === 'REFUNDED' || status === 'CANCELLED' || status === 'FAILED') {
+          return null;
+        }
+
+        // Build description from multiple sources for better context
+        let description = row[columnMapping.description!] || '';
+
+        // For Wise: if description is empty but we have counterparty, use that
+        if (!description && columnMapping.counterpartyName) {
+          description = row[columnMapping.counterpartyName] || '';
+        }
+
+        // If still empty, try to build from counterparty name
+        if (!description) {
+          description = '(no description)';
+        }
+
+        // Get currency - prefer source currency for Wise
+        let currency = columnMapping.currency ? row[columnMapping.currency] : undefined;
+        if (!currency) {
+          // Default based on common patterns
+          currency = 'EUR';
+        }
+
+        return {
+          id: `row-${index}`,
+          date: parseDate(row[columnMapping.date!]),
+          description,
+          amount: parseAmount(
+            row[columnMapping.amount!],
+            columnMapping.direction ? row[columnMapping.direction] : undefined
+          ),
+          balance: columnMapping.balance ? parseAmount(row[columnMapping.balance]) : undefined,
+          reference: columnMapping.reference ? row[columnMapping.reference] : undefined,
+          currency,
+          counterpartyName: columnMapping.counterpartyName
+            ? row[columnMapping.counterpartyName]
+            : undefined,
+          fee: columnMapping.fee ? parseAmount(row[columnMapping.fee]) : undefined,
+          category: columnMapping.category ? row[columnMapping.category] : undefined,
+          status,
+          originalRow: row,
+        };
+      })
+      .filter((tx): tx is NonNullable<typeof tx> => tx !== null);
   };
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {

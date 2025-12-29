@@ -91,15 +91,30 @@ export async function extractPdfPages(
 
   const pages: ProcessedPage[] = [];
 
-  // Render each page to a PNG for reliable OCR
+  // Try rendering to PNG (best OCR). If sharp PDF rendering is not supported in the runtime, fall back to single-page PDFs.
   for (let i = 0; i < pageCount; i++) {
-    const pngBuffer = await sharp(data, { density: 200, page: i }).png().toBuffer();
+    try {
+      const pngBuffer = await sharp(data, { density: 200, page: i }).png().toBuffer();
 
-    pages.push({
-      pageNumber: i + 1,
-      data: pngBuffer,
-      mimeType: 'image/png',
-    });
+      pages.push({
+        pageNumber: i + 1,
+        data: pngBuffer,
+        mimeType: 'image/png',
+      });
+    } catch (error) {
+      console.warn(`[PDF] Failed to render page ${i + 1} to PNG, falling back to PDF:`, error);
+
+      const singlePagePdf = await PDFDocument.create();
+      const [copiedPage] = await singlePagePdf.copyPages(pdfDoc, [i]);
+      singlePagePdf.addPage(copiedPage);
+      const pdfBytes = await singlePagePdf.save();
+
+      pages.push({
+        pageNumber: i + 1,
+        data: Buffer.from(pdfBytes),
+        mimeType: 'application/pdf',
+      });
+    }
   }
 
   return pages;

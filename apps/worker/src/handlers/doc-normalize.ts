@@ -91,7 +91,7 @@ export async function handleDocNormalize(
 
       // Upload each page and create blobs
       for (const page of pages) {
-        const pagePath = `${workspaceId}/${documentId}/page-${page.pageNumber}.png`;
+        const pagePath = `${workspaceId}/${documentId}/page-${page.pageNumber}.${getExtension(page.mimeType)}`;
 
         await uploadFile(pagePath, page.data, page.mimeType);
 
@@ -121,7 +121,7 @@ export async function handleDocNormalize(
 
       const [page] = await extractPdfPages(fileData);
 
-      const pagePath = `${workspaceId}/${documentId}/page-1.png`;
+      const pagePath = `${workspaceId}/${documentId}/page-1.${getExtension(page.mimeType)}`;
       await uploadFile(pagePath, page.data, page.mimeType);
 
       await prisma.documentBlob.create({
