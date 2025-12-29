@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -35,11 +35,15 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const t = useTranslations('navigation');
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [collapsed, setCollapsed] = useState(false);
 
   // Extract locale from pathname
   const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
   const locale = localeMatch?.[1] ?? 'en';
+
+  // Get workspace ID from URL
+  const workspaceId = searchParams.get('workspace');
 
   return (
     <aside
@@ -95,9 +99,11 @@ export function Sidebar() {
       {/* Settings */}
       <div className="border-t border-sidebar-border p-2">
         <Link
-          href={`/${locale}/settings`}
+          href={`/${locale}/workspace/settings${workspaceId ? `?workspace=${workspaceId}` : ''}`}
           className={cn(
             'flex items-center rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+            pathname.includes('/workspace/settings') &&
+              'bg-sidebar-accent text-sidebar-accent-foreground',
             collapsed && 'justify-center px-2'
           )}
         >
