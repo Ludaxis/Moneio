@@ -108,8 +108,8 @@ export async function enqueueDocNormalize(data: DocNormalizeJobData): Promise<st
     return null;
   }
 
-  const job = await queue.add(`normalize:${data.documentId}`, data, {
-    jobId: `normalize:${data.documentId}`,
+  const job = await queue.add(`normalize-${data.documentId}`, data, {
+    jobId: `normalize-${data.documentId}`,
   });
 
   console.log(`[QUEUE] DOC_NORMALIZE job ${job.id} queued for document: ${data.documentId}`);
@@ -129,7 +129,7 @@ export async function enqueueCategorization(data: CategorizationJobData): Promis
     return null;
   }
 
-  const job = await queue.add(`categorize:${data.workspaceId}`, data);
+  const job = await queue.add(`categorize-${data.workspaceId}`, data);
 
   console.log(
     `[QUEUE] CATEGORIZATION job ${job.id} queued for ${data.transactionIds.length} transactions`
