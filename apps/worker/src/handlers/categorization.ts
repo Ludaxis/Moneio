@@ -30,11 +30,6 @@ export async function handleCategorization(
         id: { in: transactionIds },
         workspaceId,
       },
-      include: {
-        merchant: {
-          select: { name: true },
-        },
-      },
     });
 
     if (transactions.length === 0) {
@@ -59,7 +54,7 @@ export async function handleCategorization(
     const context = {
       workspaceId,
       locale: workspace?.locale || 'en',
-      merchantNames: transactions.map((t) => t.merchant?.name).filter(Boolean) as string[],
+      merchantNames: [] as string[],
     };
 
     // Decide AI vs heuristic
@@ -73,15 +68,19 @@ export async function handleCategorization(
 
     // Process sequentially to avoid hammering rate limits
     for (const tx of transactions) {
+      // Extract reference from rawData if available
+      const rawData = tx.rawData as { reference?: string } | null;
+      const reference = rawData?.reference;
+
       const bankTx = {
         id: tx.id,
-        descriptionRaw: tx.description || tx.reference || '',
+        descriptionRaw: tx.description || reference || '',
         amount: {
-          amount: Math.round(tx.amount * 100),
+          amount: Math.round(Number(tx.amount) * 100),
           currency: tx.currency,
         },
-        counterparty: tx.merchant?.name || undefined,
-        reference: tx.reference || undefined,
+        counterparty: undefined as string | undefined,
+        reference: reference || undefined,
         postedAt: tx.postedAt.toISOString(),
       };
 
@@ -100,18 +99,20 @@ export async function handleCategorization(
         },
       });
 
-      const created = await prisma.aiSuggestion.create({
+      await prisma.aiSuggestion.create({
         data: {
           workspaceId,
           suggestionType: 'categorization',
           targetId: tx.id,
-          payloadJson: {
-            categoryId: proposal.data.categoryId,
-            categoryName: proposal.data.categoryName,
-            targetType: 'bank_transaction',
-            reason: proposal.data.reasoning,
-            modelInfo: proposal.modelInfo,
-          },
+          payloadJson: JSON.parse(
+            JSON.stringify({
+              categoryId: proposal.data.categoryId,
+              categoryName: proposal.data.categoryName,
+              targetType: 'bank_transaction',
+              reason: proposal.data.reasoning,
+              modelInfo: proposal.modelInfo,
+            })
+          ),
           confidence: proposal.confidence / 100,
           status: 'pending',
         },
@@ -119,7 +120,7 @@ export async function handleCategorization(
 
       suggestions.push({
         transactionId: tx.id,
-        categoryId: created.payloadJson.categoryId as string,
+        categoryId: proposal.data.categoryId,
         confidence: proposal.confidence / 100,
       });
     }
