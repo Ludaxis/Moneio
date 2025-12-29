@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 import { StatCard, CashflowChart, CategoryBreakdown, RecentActivity } from '@/components/dashboard';
 import { useWorkspace } from '@/hooks/use-workspace';
@@ -51,10 +51,54 @@ export default function DashboardPage() {
   const tReports = useTranslations('reports');
   const { workspaceId, baseCurrency, loading: workspaceLoading } = useWorkspace();
 
+  const [preset, setPreset] = useState<'last7' | 'mtd' | 'qtd' | 'ytd' | 'custom'>('last7');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const rangeLabel = useMemo(() => {
+    if (preset === 'custom' && startDate && endDate) {
+      return `${startDate} → ${endDate}`;
+    }
+    const labels: Record<typeof preset, string> = {
+      last7: 'Last 7 days',
+      mtd: 'Month to date',
+      qtd: 'Quarter to date',
+      ytd: 'Year to date',
+      custom: 'Custom',
+    };
+    return labels[preset];
+  }, [preset, startDate, endDate]);
+
+  useEffect(() => {
+    if (preset !== 'custom') {
+      const now = new Date();
+      const today = now.toISOString().slice(0, 10);
+      let from = today;
+
+      if (preset === 'last7') {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 6);
+        from = d.toISOString().slice(0, 10);
+      } else if (preset === 'mtd') {
+        const d = new Date(now.getFullYear(), now.getMonth(), 1);
+        from = d.toISOString().slice(0, 10);
+      } else if (preset === 'qtd') {
+        const quarterStart = Math.floor(now.getMonth() / 3) * 3;
+        const d = new Date(now.getFullYear(), quarterStart, 1);
+        from = d.toISOString().slice(0, 10);
+      } else if (preset === 'ytd') {
+        const d = new Date(now.getFullYear(), 0, 1);
+        from = d.toISOString().slice(0, 10);
+      }
+
+      setStartDate(from);
+      setEndDate(today);
+    }
+  }, [preset]);
 
   const fetchDashboardData = useCallback(async () => {
     if (!workspaceId) return;
@@ -64,8 +108,16 @@ export default function DashboardPage() {
 
     try {
       // Fetch metrics and transactions in parallel
+      const params = new URLSearchParams({
+        workspaceId,
+        period: preset,
+      });
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate);
+      if (baseCurrency) params.set('baseCurrency', baseCurrency);
+
       const [metricsRes, transactionsRes] = await Promise.all([
-        fetch(`/api/dashboard/metrics?workspaceId=${workspaceId}&period=month`),
+        fetch(`/api/dashboard/metrics?${params.toString()}`),
         fetch(`/api/transactions?workspaceId=${workspaceId}&pageSize=5`),
       ]);
 
@@ -92,7 +144,7 @@ export default function DashboardPage() {
     if (workspaceId) {
       fetchDashboardData();
     }
-  }, [workspaceId, fetchDashboardData]);
+  }, [workspaceId, fetchDashboardData, startDate, endDate, preset]);
 
   const isLoading = workspaceLoading || loading;
 
@@ -130,7 +182,40 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={preset}
+            onChange={(e) => setPreset(e.target.value as typeof preset)}
+            className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="last7">Last 7 days</option>
+            <option value="mtd">Month to date</option>
+            <option value="qtd">Quarter to date</option>
+            <option value="ytd">Year to date</option>
+            <option value="custom">Custom</option>
+          </select>
+          {preset === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <span className="text-muted-foreground">→</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          )}
+          <span className="text-xs text-muted-foreground">Range: {rangeLabel}</span>
+        </div>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -161,6 +246,7 @@ export default function DashboardPage() {
           label="Burn Rate"
           value={metrics?.burnRate.formatted || '€0'}
           loading={isLoading}
+          hint={rangeLabel}
         />
       </div>
 

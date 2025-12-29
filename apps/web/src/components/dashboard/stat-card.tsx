@@ -13,9 +13,10 @@ interface StatCardProps {
   };
   loading?: boolean;
   delay?: number;
+  hint?: string;
 }
 
-export function StatCard({ label, value, trend, loading, delay = 0 }: StatCardProps) {
+export function StatCard({ label, value, trend, loading, delay = 0, hint }: StatCardProps) {
   const containerRef = useFadeIn({
     duration: 0.4,
     delay,
@@ -35,6 +36,7 @@ export function StatCard({ label, value, trend, loading, delay = 0 }: StatCardPr
     <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">{value}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
       {trend && (
         <div className="mt-2 flex items-center gap-1 text-sm">
           {trend.direction === 'up' && (

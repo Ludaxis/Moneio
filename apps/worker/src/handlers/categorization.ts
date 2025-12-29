@@ -1,3 +1,5 @@
+import { TransactionCategorizer, HeuristicCategorizer } from '@moneio/ai';
+import { createOpenAiClient } from '@moneio/ai';
 import { prisma } from '@moneio/db';
 import { Job } from 'bullmq';
 
@@ -9,8 +11,8 @@ import type { CategorizationJobData, CategorizationResult } from '../lib/queues'
  * Suggest categories for bank transactions using AI
  * - Fetch transaction details
  * - Get workspace categories
- * - Call LLM for categorization suggestions
- * - Store as AI suggestions (not auto-applied)
+ * - Call LLM (with heuristic fallback) for categorization
+ * - Store as AI suggestions (pending, reviewable)
  */
 export async function handleCategorization(
   job: Job<CategorizationJobData>
@@ -22,70 +24,104 @@ export async function handleCategorization(
   try {
     await job.updateProgress(10);
 
-    // Get transactions
+    // Get transactions with minimal fields
     const transactions = await prisma.bankTransaction.findMany({
       where: {
         id: { in: transactionIds },
         workspaceId,
       },
+      include: {
+        merchant: {
+          select: { name: true },
+        },
+      },
     });
 
     if (transactions.length === 0) {
-      return {
-        success: true,
-        categorized: 0,
-        suggestions: [],
-      };
+      return { success: true, categorized: 0, suggestions: [] };
     }
 
-    await job.updateProgress(30);
+    await job.updateProgress(25);
 
     // Get categories for the workspace
     const categories = await prisma.category.findMany({
       where: { workspaceId },
     });
 
-    await job.updateProgress(50);
+    await job.updateProgress(40);
 
-    // TODO: Implement actual categorization in T18
-    // - Build prompt with transaction details
-    // - Call OpenAI for categorization
-    // - Create AI suggestions
+    // Build context
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { locale: true },
+    });
+
+    const context = {
+      workspaceId,
+      locale: workspace?.locale || 'en',
+      merchantNames: transactions
+        .map((t) => t.merchant?.name)
+        .filter(Boolean) as string[],
+    };
+
+    // Decide AI vs heuristic
+    const llmConfigured = !!process.env.OPENAI_API_KEY;
+    const client = llmConfigured
+      ? createOpenAiClient({ model: 'gpt-4o-mini' })
+      : null;
+    const categorizer = llmConfigured
+      ? new TransactionCategorizer(client!)
+      : new HeuristicCategorizer();
 
     const suggestions: CategorizationResult['suggestions'] = [];
 
-    // For now, create stub suggestions
+    // Process sequentially to avoid hammering rate limits
     for (const tx of transactions) {
-      // Simple heuristic for demo
-      const suggestedCategory = categories.find((c) => {
-        const desc = (tx.description || '').toLowerCase();
-        const name = c.name.toLowerCase();
-        return desc.includes(name) || name.includes('general');
+      const bankTx = {
+        id: tx.id,
+        descriptionRaw: tx.description || tx.reference || '',
+        amount: {
+          amount: Math.round(tx.amount * 100),
+          currency: tx.currency,
+        },
+        counterparty: tx.merchant?.name || undefined,
+        reference: tx.reference || undefined,
+        postedAt: tx.postedAt.toISOString(),
+      };
+
+      const proposal = await categorizer.categorizeTransaction(bankTx as any, categories as any, context as any);
+
+      // Clean up existing pending suggestions for this tx to avoid duplicates
+      await prisma.aiSuggestion.deleteMany({
+        where: {
+          workspaceId,
+          targetId: tx.id,
+          suggestionType: 'categorization',
+        },
       });
 
-      if (suggestedCategory) {
-        await prisma.aiSuggestion.create({
-          data: {
-            workspaceId,
-            suggestionType: 'categorization',
-            targetId: tx.id,
-            payloadJson: {
-              categoryId: suggestedCategory.id,
-              categoryName: suggestedCategory.name,
-              targetType: 'bank_transaction',
-              reason: 'Heuristic match (AI categorization pending)',
-            },
-            confidence: 0.5,
-            status: 'pending',
+      const created = await prisma.aiSuggestion.create({
+        data: {
+          workspaceId,
+          suggestionType: 'categorization',
+          targetId: tx.id,
+          payloadJson: {
+            categoryId: proposal.data.categoryId,
+            categoryName: proposal.data.categoryName,
+            targetType: 'bank_transaction',
+            reason: proposal.data.reasoning,
+            modelInfo: proposal.modelInfo,
           },
-        });
+          confidence: proposal.confidence / 100,
+          status: 'pending',
+        },
+      });
 
-        suggestions.push({
-          transactionId: tx.id,
-          categoryId: suggestedCategory.id,
-          confidence: 0.5,
-        });
-      }
+      suggestions.push({
+        transactionId: tx.id,
+        categoryId: created.payloadJson.categoryId as string,
+        confidence: proposal.confidence / 100,
+      });
     }
 
     await job.updateProgress(100);
