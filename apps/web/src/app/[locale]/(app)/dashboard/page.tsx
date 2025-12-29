@@ -3,7 +3,18 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
-import { StatCard, CashflowChart, CategoryBreakdown, RecentActivity } from '@/components/dashboard';
+import {
+  AIInsightsBanner,
+  BalanceCard,
+  RunwayWidget,
+  CashflowChart,
+  TopExpensesWidget,
+  PendingActionsWidget,
+  OperatingExpensesChart,
+  HealthScoreWidget,
+  ForecastChart,
+  RecentActivity,
+} from '@/components/dashboard';
 import { useWorkspace } from '@/hooks/use-workspace';
 
 interface DashboardMetrics {
@@ -48,70 +59,32 @@ interface Transaction {
 
 export default function DashboardPage() {
   const t = useTranslations('navigation');
-  const tReports = useTranslations('reports');
   const { workspaceId, baseCurrency, loading: workspaceLoading } = useWorkspace();
 
-  const [preset, setPreset] = useState<'last7' | 'mtd' | 'qtd' | 'ytd' | 'custom'>('last7');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const rangeLabel = useMemo(() => {
-    if (preset === 'custom' && startDate && endDate) {
-      return `${startDate} → ${endDate}`;
-    }
-    const labels: Record<typeof preset, string> = {
-      last7: 'Last 7 days',
-      mtd: 'Month to date',
-      qtd: 'Quarter to date',
-      ytd: 'Year to date',
-      custom: 'Custom',
-    };
-    return labels[preset];
-  }, [preset, startDate, endDate]);
-
-  useEffect(() => {
-    if (preset !== 'custom') {
-      const now = new Date();
-      const today = now.toISOString().slice(0, 10);
-      let from = today;
-
-      if (preset === 'last7') {
-        const d = new Date(now);
-        d.setDate(d.getDate() - 6);
-        from = d.toISOString().slice(0, 10);
-      } else if (preset === 'mtd') {
-        const d = new Date(now.getFullYear(), now.getMonth(), 1);
-        from = d.toISOString().slice(0, 10);
-      } else if (preset === 'qtd') {
-        const quarterStart = Math.floor(now.getMonth() / 3) * 3;
-        const d = new Date(now.getFullYear(), quarterStart, 1);
-        from = d.toISOString().slice(0, 10);
-      } else if (preset === 'ytd') {
-        const d = new Date(now.getFullYear(), 0, 1);
-        from = d.toISOString().slice(0, 10);
-      }
-
-      setStartDate(from);
-      setEndDate(today);
-    }
-  }, [preset]);
+  // Calculate date range for current month
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const endDate = now.toISOString().slice(0, 10);
+    return { startDate, endDate };
+  }, []);
 
   const fetchDashboardData = useCallback(async () => {
-    if (!workspaceId || !startDate || !endDate) return;
+    if (!workspaceId) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      // Fetch metrics and transactions in parallel
       const params = new URLSearchParams({
         workspaceId,
-        startDate,
-        endDate,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
       });
       if (baseCurrency) params.set('baseCurrency', baseCurrency);
 
@@ -137,24 +110,44 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, startDate, endDate, baseCurrency]);
+  }, [workspaceId, dateRange, baseCurrency]);
 
   useEffect(() => {
-    if (workspaceId && startDate && endDate) {
+    if (workspaceId) {
       fetchDashboardData();
     }
-  }, [workspaceId, fetchDashboardData, startDate, endDate]);
+  }, [workspaceId, fetchDashboardData]);
 
   const isLoading = workspaceLoading || loading;
+
+  // Format currency helper
+  const formatCurrency = (amount: number, currency: string = baseCurrency) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Calculate comparison for balance cards
+  const getComparison = () => {
+    if (!metrics?.trend) return undefined;
+    return {
+      period: 'compared to last month',
+      percentage: Math.abs(metrics.trend.changePercentage),
+      direction: metrics.trend.direction,
+    };
+  };
 
   // Show message if no workspace
   if (!workspaceLoading && !workspaceId) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
-        <div className="rounded-lg border border-border bg-card p-12 text-center">
+        <div className="rounded-xl border border-border bg-card p-12 text-center shadow-sm">
           <p className="text-muted-foreground">
-            Create a workspace to get started with your accounting dashboard.
+            Create a workspace to get started with your AI-powered financial dashboard.
           </p>
         </div>
       </div>
@@ -166,7 +159,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
-        <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
+        <div className="rounded-xl border border-destructive bg-destructive/10 p-6 shadow-sm">
           <p className="text-sm text-destructive">{error}</p>
           <button
             onClick={fetchDashboardData}
@@ -181,86 +174,97 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={preset}
-            onChange={(e) => setPreset(e.target.value as typeof preset)}
-            className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="last7">Last 7 days</option>
-            <option value="mtd">Month to date</option>
-            <option value="qtd">Quarter to date</option>
-            <option value="ytd">Year to date</option>
-            <option value="custom">Custom</option>
-          </select>
-          {preset === 'custom' && (
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-              <span className="text-muted-foreground">→</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          )}
-          <span className="text-xs text-muted-foreground">Range: {rangeLabel}</span>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
+          <p className="text-sm text-muted-foreground">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* AI Insights Banner */}
+      {workspaceId && <AIInsightsBanner workspaceId={workspaceId} />}
+
+      {/* Balance Cards Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label={tReports('income')}
-          value={metrics?.totalIncome.formatted || '€0'}
+        <BalanceCard
+          type="cash"
+          label="Cash Balance"
+          value={metrics?.netCashflow.formatted || formatCurrency(0, baseCurrency)}
+          lastUpdated="Updated just now"
+          comparison={getComparison()}
           loading={isLoading}
+          delay={0}
         />
-        <StatCard
-          label={tReports('expenses')}
-          value={metrics?.totalExpenses.formatted || '€0'}
+        <BalanceCard
+          type="bank"
+          label="Total Income"
+          value={metrics?.totalIncome.formatted || formatCurrency(0, baseCurrency)}
+          lastUpdated="This month"
           loading={isLoading}
+          delay={0.1}
         />
-        <StatCard
-          label={tReports('profit')}
-          value={metrics?.netCashflow.formatted || '€0'}
-          trend={
-            metrics?.trend
-              ? {
-                  direction: metrics.trend.direction,
-                  percentage: metrics.trend.changePercentage,
-                }
-              : undefined
-          }
+        <BalanceCard
+          type="card"
+          label="Total Expenses"
+          value={metrics?.totalExpenses.formatted || formatCurrency(0, baseCurrency)}
+          lastUpdated="This month"
           loading={isLoading}
+          delay={0.2}
         />
-        <StatCard
+        <BalanceCard
+          type="savings"
           label="Burn Rate"
-          value={metrics?.burnRate.formatted || '€0'}
+          value={metrics?.burnRate.formatted || formatCurrency(0, baseCurrency)}
+          lastUpdated="Monthly average"
           loading={isLoading}
-          hint={rangeLabel}
+          delay={0.3}
         />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <CashflowChart
-          data={metrics?.monthlyData || []}
-          loading={isLoading}
-          baseCurrency={baseCurrency}
-        />
-        <CategoryBreakdown
-          data={metrics?.categoryBreakdown || []}
-          loading={isLoading}
-          baseCurrency={baseCurrency}
-        />
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left Column - 2/3 width */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Cash Flow Chart */}
+          <CashflowChart
+            data={metrics?.monthlyData || []}
+            loading={isLoading}
+            baseCurrency={baseCurrency}
+          />
+
+          {/* Operating Expenses */}
+          {workspaceId && (
+            <OperatingExpensesChart workspaceId={workspaceId} currency={baseCurrency} />
+          )}
+
+          {/* Forecast Chart */}
+          {workspaceId && <ForecastChart workspaceId={workspaceId} months={6} />}
+        </div>
+
+        {/* Right Column - 1/3 width */}
+        <div className="space-y-6">
+          {/* Runway Widget */}
+          {workspaceId && <RunwayWidget workspaceId={workspaceId} />}
+
+          {/* Health Score */}
+          {workspaceId && <HealthScoreWidget workspaceId={workspaceId} />}
+
+          {/* Top Expenses */}
+          {workspaceId && (
+            <TopExpensesWidget workspaceId={workspaceId} currency={baseCurrency} />
+          )}
+
+          {/* Pending Actions */}
+          {workspaceId && <PendingActionsWidget workspaceId={workspaceId} />}
+        </div>
       </div>
 
       {/* Recent Activity */}

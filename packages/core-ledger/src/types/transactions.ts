@@ -13,53 +13,49 @@ export interface TransactionCategorization {
   createdAt: string;
 }
 
-// Rules
-export type RuleKind = 'merchant_match' | 'contains_text' | 'amount_range' | 'iban_match';
-
+// Rules - matches Prisma Rule model
 export interface Rule extends EntityBase {
-  kind: RuleKind;
+  categoryId: UUID;
   name: string;
-  conditionJson: RuleCondition;
-  actionJson: RuleAction;
-  enabled: boolean;
+  conditions: RuleConditions;
   priority: number;
+  isActive: boolean;
 }
 
-export type RuleCondition =
-  | MerchantMatchCondition
-  | ContainsTextCondition
-  | AmountRangeCondition
-  | IbanMatchCondition;
+/**
+ * Rule condition field - the transaction field to match against
+ */
+export type RuleConditionField = 'description' | 'amount' | 'merchant';
 
-export interface MerchantMatchCondition {
-  kind: 'merchant_match';
-  merchantPattern: string;
+/**
+ * Rule condition operator - how to compare the field value
+ */
+export type RuleConditionOperator =
+  | 'contains'
+  | 'equals'
+  | 'startsWith'
+  | 'endsWith'
+  | 'regex'
+  | 'gt'
+  | 'lt'
+  | 'between';
+
+/**
+ * A single rule condition
+ */
+export interface RuleCondition {
+  field: RuleConditionField;
+  operator: RuleConditionOperator;
+  value: string | number | [number, number];
   caseSensitive?: boolean;
 }
 
-export interface ContainsTextCondition {
-  kind: 'contains_text';
-  pattern: string;
-  field: 'description' | 'counterparty' | 'reference';
-  caseSensitive?: boolean;
-}
-
-export interface AmountRangeCondition {
-  kind: 'amount_range';
-  minAmount?: number;
-  maxAmount?: number;
-  currency?: string;
-}
-
-export interface IbanMatchCondition {
-  kind: 'iban_match';
-  ibanPattern: string;
-}
-
-export interface RuleAction {
-  setCategoryId?: string;
-  setMerchantId?: string;
-  addTags?: string[];
+/**
+ * Rule conditions container with match mode
+ */
+export interface RuleConditions {
+  match: 'all' | 'any'; // AND vs OR
+  conditions: RuleCondition[];
 }
 
 // Matching (Invoice to Transaction)

@@ -10,6 +10,7 @@ import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { serializeDecimal, serializeDecimalRequired } from '@/lib/api';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -70,10 +71,11 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Match not found' }, { status: 404 });
     }
 
+    // Note: monetary values use strings to preserve precision
     return NextResponse.json({
       id: match.id,
       status: match.status,
-      confidence: match.confidence?.toNumber() || null,
+      confidence: serializeDecimal(match.confidence),
       rationale: match.rationale,
       createdAt: match.createdAt.toISOString(),
       approvedAt: match.approvedAt?.toISOString() || null,
@@ -84,9 +86,9 @@ export async function GET(request: Request, { params }: RouteParams) {
         issueDate: match.invoice.issueDate?.toISOString().split('T')[0] || null,
         dueDate: match.invoice.dueDate?.toISOString().split('T')[0] || null,
         currency: match.invoice.currency,
-        subtotal: match.invoice.subtotal.toNumber(),
-        vatAmount: match.invoice.vatAmount.toNumber(),
-        total: match.invoice.total.toNumber(),
+        subtotal: serializeDecimalRequired(match.invoice.subtotal),
+        vatAmount: serializeDecimalRequired(match.invoice.vatAmount),
+        total: serializeDecimalRequired(match.invoice.total),
         status: match.invoice.status,
         merchant: match.invoice.merchant
           ? { id: match.invoice.merchant.id, name: match.invoice.merchant.name }
@@ -94,18 +96,18 @@ export async function GET(request: Request, { params }: RouteParams) {
         lineItems: match.invoice.lineItems.map((li) => ({
           id: li.id,
           description: li.description,
-          quantity: li.quantity.toNumber(),
-          unitPrice: li.unitPrice.toNumber(),
-          amount: li.amount.toNumber(),
+          quantity: serializeDecimalRequired(li.quantity),
+          unitPrice: serializeDecimalRequired(li.unitPrice),
+          amount: serializeDecimalRequired(li.amount),
         })),
       },
       transaction: {
         id: match.transaction.id,
         postedAt: match.transaction.postedAt.toISOString(),
         description: match.transaction.description,
-        amount: match.transaction.amount.toNumber(),
+        amount: serializeDecimalRequired(match.transaction.amount),
         currency: match.transaction.currency,
-        balance: match.transaction.balance?.toNumber() || null,
+        balance: serializeDecimal(match.transaction.balance),
       },
     });
   } catch (error) {

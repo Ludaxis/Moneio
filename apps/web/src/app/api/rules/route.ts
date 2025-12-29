@@ -6,10 +6,10 @@
  */
 
 import { prisma } from '@moneio/db';
+import { createRuleSchema, ruleConditionsSchema } from '@moneio/domain';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { createRuleSchema, ruleConditionsSchema } from '@/lib/rules';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 

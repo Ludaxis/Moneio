@@ -6,6 +6,7 @@ import {
 } from '@moneio/ai';
 import type { OcrPayload, OcrPage, OcrBlock } from '@moneio/core-ledger';
 import { prisma, DocumentStatus } from '@moneio/db';
+import { getDocumentType } from '@moneio/domain';
 import { Job } from 'bullmq';
 
 import type { DocExtractJobData, DocExtractResult } from '../lib/queues';
@@ -68,8 +69,8 @@ export async function handleDocExtract(job: Job<DocExtractJobData>): Promise<Doc
 
     await job.updateProgress(30);
 
-    // Detect document type
-    const docType = detectDocumentType(ocrPayload);
+    // Detect document type using domain service
+    const docType = getDocumentType(ocrPayload);
     console.log(`[DOC_EXTRACT] Detected document type: ${docType}`);
 
     await job.updateProgress(40);
@@ -107,7 +108,7 @@ export async function handleDocExtract(job: Job<DocExtractJobData>): Promise<Doc
         _modelInfo: extraction.modelInfo,
         _evidence: extraction.evidence,
       };
-    } else if (docType === 'statement') {
+    } else if (docType === 'bank_statement') {
       const extractor = new StatementExtractor(llmClient);
       extraction = await extractor.extractStatement(ocrPayload, context);
       extractionPayload = {
@@ -252,63 +253,3 @@ function buildOcrPayload(
   return { pages };
 }
 
-/**
- * Detect document type based on OCR content
- */
-function detectDocumentType(payload: OcrPayload): string {
-  const fullText = payload.pages
-    .map((p) => p.text)
-    .join(' ')
-    .toLowerCase();
-
-  // Invoice indicators
-  const invoicePatterns = [
-    /invoice/i,
-    /bill\s+to/i,
-    /due\s+date/i,
-    /invoice\s+number/i,
-    /payment\s+terms/i,
-    /amount\s+due/i,
-    /vat|value\s+added\s+tax/i,
-  ];
-
-  // Receipt indicators
-  const receiptPatterns = [
-    /receipt/i,
-    /cash|credit\s+card/i,
-    /change\s+due/i,
-    /thank\s+you\s+for\s+your\s+purchase/i,
-    /subtotal/i,
-    /total\s*:/i,
-  ];
-
-  // Bank statement indicators
-  const statementPatterns = [
-    /statement/i,
-    /account\s+number/i,
-    /opening\s+balance/i,
-    /closing\s+balance/i,
-    /transaction\s+history/i,
-    /iban/i,
-    /bic|swift/i,
-  ];
-
-  // Count matches for each type
-  const invoiceScore = invoicePatterns.filter((p) => p.test(fullText)).length;
-  const receiptScore = receiptPatterns.filter((p) => p.test(fullText)).length;
-  const statementScore = statementPatterns.filter((p) => p.test(fullText)).length;
-
-  // Determine type based on highest score
-  if (invoiceScore >= receiptScore && invoiceScore >= statementScore && invoiceScore > 0) {
-    return 'invoice';
-  }
-  if (receiptScore > invoiceScore && receiptScore >= statementScore && receiptScore > 0) {
-    return 'receipt';
-  }
-  if (statementScore > invoiceScore && statementScore > receiptScore && statementScore > 0) {
-    return 'bank_statement';
-  }
-
-  // Default to invoice if no clear match
-  return 'invoice';
-}

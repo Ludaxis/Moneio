@@ -10,6 +10,7 @@ import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { serializeDecimal, serializeDecimalRequired } from '@/lib/api';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -119,37 +120,38 @@ export async function GET(request: Request, { params }: RouteParams) {
       }>;
     };
 
+    // Note: monetary values use strings to preserve precision
     return NextResponse.json({
       id: inv.id,
       invoiceNumber: inv.invoiceNumber,
       issueDate: inv.issueDate?.toISOString().split('T')[0] || null,
       dueDate: inv.dueDate?.toISOString().split('T')[0] || null,
       currency: inv.currency,
-      subtotal: inv.subtotal.toNumber(),
-      vatAmount: inv.vatAmount.toNumber(),
-      total: inv.total.toNumber(),
-      vatRate: inv.vatRate?.toNumber() || null,
+      subtotal: serializeDecimalRequired(inv.subtotal),
+      vatAmount: serializeDecimalRequired(inv.vatAmount),
+      total: serializeDecimalRequired(inv.total),
+      vatRate: serializeDecimal(inv.vatRate),
       status: inv.status,
       merchant: inv.merchant ? { id: inv.merchant.id, name: inv.merchant.name } : null,
       document: inv.document ? { id: inv.document.id, fileName: inv.document.fileName } : null,
       lineItems: inv.lineItems.map((li) => ({
         id: li.id,
         description: li.description,
-        quantity: li.quantity.toNumber(),
-        unitPrice: li.unitPrice.toNumber(),
-        amount: li.amount.toNumber(),
-        vatRate: li.vatRate?.toNumber() || null,
+        quantity: serializeDecimalRequired(li.quantity),
+        unitPrice: serializeDecimalRequired(li.unitPrice),
+        amount: serializeDecimalRequired(li.amount),
+        vatRate: serializeDecimal(li.vatRate),
       })),
       matches: inv.matches.map((m) => ({
         id: m.id,
         status: m.status,
-        confidence: m.confidence?.toNumber() || null,
+        confidence: serializeDecimal(m.confidence),
         rationale: m.rationale,
         transaction: {
           id: m.transaction.id,
           postedAt: m.transaction.postedAt.toISOString(),
           description: m.transaction.description,
-          amount: m.transaction.amount.toNumber(),
+          amount: serializeDecimalRequired(m.transaction.amount),
           currency: m.transaction.currency,
         },
       })),

@@ -1,249 +1,292 @@
-// Rules engine for automatic categorization
+/**
+ * Rules Engine for automatic transaction categorization
+ *
+ * This is the single source of truth for rule evaluation logic.
+ * API routes and services should import from this module.
+ */
+
 import type {
-  AmountRangeCondition,
   BankTransaction,
-  ContainsTextCondition,
-  IbanMatchCondition,
-  MerchantMatchCondition,
   Rule,
-  RuleAction,
   RuleCondition,
+  RuleConditionField,
+  RuleConditions,
   UUID,
 } from '@moneio/core-ledger';
 
-export interface RuleRepository {
-  findByWorkspace(workspaceId: UUID): Promise<Rule[]>;
-  create(data: CreateRuleData): Promise<Rule>;
-  update(id: UUID, data: UpdateRuleData): Promise<Rule>;
-  delete(id: UUID): Promise<void>;
+/**
+ * Transaction data structure for rule evaluation
+ * Handles both domain BankTransaction and plain objects
+ */
+export interface TransactionData {
+  description?: string | null;
+  amount: number | { toNumber: () => number };
+  rawData?: Record<string, unknown> | null;
 }
 
-export interface CreateRuleData {
-  workspaceId: UUID;
-  kind: Rule['kind'];
-  name: string;
-  conditionJson: RuleCondition;
-  actionJson: RuleAction;
-  priority?: number;
-}
-
-export interface UpdateRuleData {
-  name?: string;
-  conditionJson?: RuleCondition;
-  actionJson?: RuleAction;
-  enabled?: boolean;
-  priority?: number;
-}
-
+/**
+ * Result of evaluating rules against a transaction
+ */
 export interface RuleMatchResult {
-  matched: boolean;
-  rule?: Rule;
-  action?: RuleAction;
+  transactionId: UUID;
+  ruleId: UUID;
+  categoryId: UUID;
 }
 
-export class RulesEngine {
-  constructor(private readonly repository: RuleRepository) {}
-
-  async getRules(workspaceId: UUID): Promise<Rule[]> {
-    return this.repository.findByWorkspace(workspaceId);
-  }
-
-  async createRule(data: CreateRuleData): Promise<Rule> {
-    return this.repository.create(data);
-  }
-
-  async updateRule(id: UUID, data: UpdateRuleData): Promise<Rule> {
-    return this.repository.update(id, data);
-  }
-
-  async deleteRule(id: UUID): Promise<void> {
-    return this.repository.delete(id);
-  }
-
-  async evaluateTransaction(
-    workspaceId: UUID,
-    transaction: BankTransaction
-  ): Promise<RuleMatchResult> {
-    const rules = await this.repository.findByWorkspace(workspaceId);
-
-    // Sort by priority (higher priority first) and filter enabled rules
-    const activeRules = rules.filter((r) => r.enabled).sort((a, b) => b.priority - a.priority);
-
-    for (const rule of activeRules) {
-      if (this.matchesCondition(rule.conditionJson, transaction)) {
-        return {
-          matched: true,
-          rule,
-          action: rule.actionJson,
-        };
+/**
+ * Get the value of a field from a transaction for comparison
+ */
+function getFieldValue(transaction: TransactionData, field: RuleConditionField): string | number {
+  switch (field) {
+    case 'description':
+      return transaction.description || '';
+    case 'amount':
+      // Handle Decimal type from Prisma or Money type
+      if (
+        typeof transaction.amount === 'object' &&
+        transaction.amount !== null &&
+        'toNumber' in transaction.amount
+      ) {
+        return transaction.amount.toNumber();
       }
-    }
-
-    return { matched: false };
+      return Number(transaction.amount);
+    case 'merchant':
+      // Extract merchant from rawData if available
+      if (transaction.rawData && typeof transaction.rawData === 'object') {
+        const rawObj = transaction.rawData;
+        return typeof rawObj.merchant === 'string' ? rawObj.merchant : '';
+      }
+      return '';
+    default:
+      return '';
   }
+}
 
-  async evaluateTransactions(
-    workspaceId: UUID,
-    transactions: BankTransaction[]
-  ): Promise<Map<UUID, RuleMatchResult>> {
-    const results = new Map<UUID, RuleMatchResult>();
-    const rules = await this.repository.findByWorkspace(workspaceId);
+/**
+ * Evaluate a single condition against a transaction
+ */
+export function evaluateCondition(condition: RuleCondition, transaction: TransactionData): boolean {
+  const fieldValue = getFieldValue(transaction, condition.field);
+  const { operator, value, caseSensitive } = condition;
 
-    const activeRules = rules.filter((r) => r.enabled).sort((a, b) => b.priority - a.priority);
+  // Handle string comparisons
+  if (typeof fieldValue === 'string') {
+    const compareValue = String(value);
+    const fieldStr = caseSensitive ? fieldValue : fieldValue.toLowerCase();
+    const valueStr = caseSensitive ? compareValue : compareValue.toLowerCase();
 
-    for (const transaction of transactions) {
-      for (const rule of activeRules) {
-        if (this.matchesCondition(rule.conditionJson, transaction)) {
-          results.set(transaction.id, {
-            matched: true,
-            rule,
-            action: rule.actionJson,
-          });
-          break;
+    switch (operator) {
+      case 'contains':
+        return fieldStr.includes(valueStr);
+      case 'equals':
+        return fieldStr === valueStr;
+      case 'startsWith':
+        return fieldStr.startsWith(valueStr);
+      case 'endsWith':
+        return fieldStr.endsWith(valueStr);
+      case 'regex':
+        try {
+          const flags = caseSensitive ? '' : 'i';
+          const regex = new RegExp(compareValue, flags);
+          return regex.test(fieldValue);
+        } catch {
+          // Invalid regex pattern
+          return false;
         }
-      }
-
-      if (!results.has(transaction.id)) {
-        results.set(transaction.id, { matched: false });
-      }
-    }
-
-    return results;
-  }
-
-  private matchesCondition(condition: RuleCondition, transaction: BankTransaction): boolean {
-    switch (condition.kind) {
-      case 'merchant_match':
-        return this.matchesMerchant(condition, transaction);
-      case 'contains_text':
-        return this.matchesText(condition, transaction);
-      case 'amount_range':
-        return this.matchesAmount(condition, transaction);
-      case 'iban_match':
-        return this.matchesIban(condition, transaction);
       default:
         return false;
     }
   }
 
-  private matchesMerchant(
-    condition: MerchantMatchCondition,
-    transaction: BankTransaction
-  ): boolean {
-    const counterparty = transaction.counterparty || '';
-    const pattern = condition.merchantPattern;
-
-    if (condition.caseSensitive) {
-      return counterparty.includes(pattern);
-    }
-    return counterparty.toLowerCase().includes(pattern.toLowerCase());
-  }
-
-  private matchesText(condition: ContainsTextCondition, transaction: BankTransaction): boolean {
-    let text: string;
-
-    switch (condition.field) {
-      case 'description':
-        text = transaction.descriptionRaw;
-        break;
-      case 'counterparty':
-        text = transaction.counterparty || '';
-        break;
-      case 'reference':
-        text = transaction.reference || '';
-        break;
+  // Handle numeric comparisons
+  if (typeof fieldValue === 'number') {
+    switch (operator) {
+      case 'equals':
+        return fieldValue === Number(value);
+      case 'gt':
+        return fieldValue > Number(value);
+      case 'lt':
+        return fieldValue < Number(value);
+      case 'between':
+        if (Array.isArray(value) && value.length === 2) {
+          return fieldValue >= value[0] && fieldValue <= value[1];
+        }
+        return false;
       default:
         return false;
     }
-
-    if (condition.caseSensitive) {
-      return text.includes(condition.pattern);
-    }
-    return text.toLowerCase().includes(condition.pattern.toLowerCase());
   }
 
-  private matchesAmount(condition: AmountRangeCondition, transaction: BankTransaction): boolean {
-    const amount = transaction.amount.amount;
-
-    // Check currency if specified
-    if (condition.currency && transaction.amount.currency !== condition.currency) {
-      return false;
-    }
-
-    // Check range
-    if (condition.minAmount !== undefined && amount < condition.minAmount) {
-      return false;
-    }
-    if (condition.maxAmount !== undefined && amount > condition.maxAmount) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private matchesIban(condition: IbanMatchCondition, _transaction: BankTransaction): boolean {
-    // IBAN matching would require access to bank account data
-    // For now, this is a placeholder
-    // In production, we'd look up the transaction's bank account IBAN
-    return condition.ibanPattern.length > 0;
-  }
+  return false;
 }
 
-// Helper to create common rule conditions
-export const RuleConditionBuilder = {
-  merchantMatch(pattern: string, caseSensitive = false): MerchantMatchCondition {
-    return {
-      kind: 'merchant_match',
-      merchantPattern: pattern,
-      caseSensitive,
+/**
+ * Parse rule conditions from a JSON value
+ */
+function parseConditions(conditions: unknown): RuleConditions | null {
+  if (!conditions || typeof conditions !== 'object' || Array.isArray(conditions)) {
+    return null;
+  }
+
+  const obj = conditions as Record<string, unknown>;
+  if (
+    typeof obj.match === 'string' &&
+    (obj.match === 'all' || obj.match === 'any') &&
+    Array.isArray(obj.conditions)
+  ) {
+    return obj as unknown as RuleConditions;
+  }
+
+  return null;
+}
+
+/**
+ * Evaluate all conditions for a rule against a transaction
+ */
+export function evaluateRule(
+  rule: { conditions: unknown; isActive?: boolean },
+  transaction: TransactionData
+): boolean {
+  const conditions = parseConditions(rule.conditions);
+
+  if (!conditions || conditions.conditions.length === 0) {
+    return false;
+  }
+
+  const results = conditions.conditions.map((condition) =>
+    evaluateCondition(condition as RuleCondition, transaction)
+  );
+
+  // 'all' = AND (every condition must match), 'any' = OR (at least one must match)
+  return conditions.match === 'all' ? results.every(Boolean) : results.some(Boolean);
+}
+
+/**
+ * Find the first matching rule for a transaction from a list of rules
+ * Rules should be sorted by priority (highest first)
+ */
+export function findMatchingRule<T extends { isActive?: boolean; conditions: unknown }>(
+  rules: T[],
+  transaction: TransactionData
+): T | null {
+  for (const rule of rules) {
+    // Check isActive if the property exists
+    if ('isActive' in rule && !rule.isActive) {
+      continue;
+    }
+    if (evaluateRule(rule, transaction)) {
+      return rule;
+    }
+  }
+  return null;
+}
+
+/**
+ * Convert BankTransaction to TransactionData for rule evaluation
+ */
+function toTransactionData(tx: BankTransaction): TransactionData {
+  return {
+    description: tx.descriptionRaw,
+    amount: tx.amount.amount,
+    rawData: tx.metadata as Record<string, unknown> | null,
+  };
+}
+
+/**
+ * Apply rules to multiple transactions and return categorization results
+ */
+export function applyRulesToTransactions(
+  rules: Rule[],
+  transactions: BankTransaction[]
+): RuleMatchResult[] {
+  const results: RuleMatchResult[] = [];
+
+  // Sort rules by priority (highest first)
+  const sortedRules = [...rules].sort((a, b) => b.priority - a.priority);
+
+  for (const transaction of transactions) {
+    const matchingRule = findMatchingRule(sortedRules, toTransactionData(transaction));
+    if (matchingRule) {
+      results.push({
+        transactionId: transaction.id,
+        ruleId: matchingRule.id,
+        categoryId: matchingRule.categoryId,
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Test a single rule against a list of transactions
+ * Returns which transactions would match
+ */
+export function testRuleAgainstTransactions(
+  rule: { conditions: unknown; isActive?: boolean },
+  transactions: BankTransaction[]
+): BankTransaction[] {
+  return transactions.filter((transaction) => evaluateRule(rule, toTransactionData(transaction)));
+}
+
+/**
+ * Evaluate a rule against Prisma BankTransaction format
+ * This is a convenience function for API routes using Prisma types
+ */
+export function evaluateRuleForPrismaTransaction(
+  rule: { conditions: unknown; isActive?: boolean },
+  transaction: {
+    description?: string | null;
+    amount: { toNumber: () => number } | number;
+    rawData?: unknown;
+  }
+): boolean {
+  const txData: TransactionData = {
+    description: transaction.description,
+    amount: transaction.amount,
+    rawData: transaction.rawData as Record<string, unknown> | null,
+  };
+  return evaluateRule(rule, txData);
+}
+
+/**
+ * Find matching rule for Prisma BankTransaction format
+ */
+export function findMatchingRuleForPrismaTransaction<
+  T extends { isActive?: boolean; conditions: unknown },
+>(
+  rules: T[],
+  transaction: {
+    description?: string | null;
+    amount: { toNumber: () => number } | number;
+    rawData?: unknown;
+  }
+): T | null {
+  const txData: TransactionData = {
+    description: transaction.description,
+    amount: transaction.amount,
+    rawData: transaction.rawData as Record<string, unknown> | null,
+  };
+  return findMatchingRule(rules, txData);
+}
+
+/**
+ * Test rule against Prisma BankTransaction array
+ */
+export function testRuleAgainstPrismaTransactions<
+  T extends {
+    id: string;
+    description?: string | null;
+    amount: { toNumber: () => number };
+    rawData?: unknown;
+  },
+>(rule: { conditions: unknown; isActive?: boolean }, transactions: T[]): T[] {
+  return transactions.filter((transaction) => {
+    const txData: TransactionData = {
+      description: transaction.description,
+      amount: transaction.amount,
+      rawData: transaction.rawData as Record<string, unknown> | null,
     };
-  },
-
-  containsText(
-    pattern: string,
-    field: 'description' | 'counterparty' | 'reference' = 'description',
-    caseSensitive = false
-  ): ContainsTextCondition {
-    return {
-      kind: 'contains_text',
-      pattern,
-      field,
-      caseSensitive,
-    };
-  },
-
-  amountRange(minAmount?: number, maxAmount?: number, currency?: string): AmountRangeCondition {
-    return {
-      kind: 'amount_range',
-      minAmount,
-      maxAmount,
-      currency,
-    };
-  },
-
-  ibanMatch(pattern: string): IbanMatchCondition {
-    return {
-      kind: 'iban_match',
-      ibanPattern: pattern,
-    };
-  },
-};
-
-// Helper to create rule actions
-export const RuleActionBuilder = {
-  setCategory(categoryId: string): RuleAction {
-    return { setCategoryId: categoryId };
-  },
-
-  setMerchant(merchantId: string): RuleAction {
-    return { setMerchantId: merchantId };
-  },
-
-  addTags(tags: string[]): RuleAction {
-    return { addTags: tags };
-  },
-
-  combined(actions: RuleAction): RuleAction {
-    return actions;
-  },
-};
+    return evaluateRule(rule, txData);
+  });
+}

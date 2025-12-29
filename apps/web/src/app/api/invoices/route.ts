@@ -10,6 +10,7 @@ import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { serializeDecimal, serializeDecimalRequired } from '@/lib/api';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -93,26 +94,27 @@ export async function GET(request: Request) {
     ]);
 
     // Transform to response format
+    // Note: monetary values use strings to preserve precision
     const formatted = invoices.map((inv) => ({
       id: inv.id,
       invoiceNumber: inv.invoiceNumber,
       issueDate: inv.issueDate?.toISOString().split('T')[0] || null,
       dueDate: inv.dueDate?.toISOString().split('T')[0] || null,
       currency: inv.currency,
-      subtotal: inv.subtotal.toNumber(),
-      vatAmount: inv.vatAmount.toNumber(),
-      total: inv.total.toNumber(),
-      vatRate: inv.vatRate?.toNumber() || null,
+      subtotal: serializeDecimalRequired(inv.subtotal),
+      vatAmount: serializeDecimalRequired(inv.vatAmount),
+      total: serializeDecimalRequired(inv.total),
+      vatRate: serializeDecimal(inv.vatRate),
       status: inv.status,
       merchant: inv.merchant ? { id: inv.merchant.id, name: inv.merchant.name } : null,
       document: inv.document ? { id: inv.document.id, fileName: inv.document.fileName } : null,
       lineItems: inv.lineItems.map((li: InvoiceLineItem) => ({
         id: li.id,
         description: li.description,
-        quantity: li.quantity.toNumber(),
-        unitPrice: li.unitPrice.toNumber(),
-        amount: li.amount.toNumber(),
-        vatRate: li.vatRate?.toNumber() || null,
+        quantity: serializeDecimalRequired(li.quantity),
+        unitPrice: serializeDecimalRequired(li.unitPrice),
+        amount: serializeDecimalRequired(li.amount),
+        vatRate: serializeDecimal(li.vatRate),
       })),
       hasMatch: inv.matches.length > 0,
       createdAt: inv.createdAt.toISOString(),

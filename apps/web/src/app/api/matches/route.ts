@@ -9,6 +9,7 @@ import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { serializeDecimal, serializeDecimalRequired } from '@/lib/api';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -111,17 +112,18 @@ export async function GET(request: Request) {
     ]);
 
     // Transform to response format
+    // Note: monetary values use strings to preserve precision
     const formatted = matches.map((m) => ({
       id: m.id,
       status: m.status,
-      confidence: m.confidence?.toNumber() || null,
+      confidence: serializeDecimal(m.confidence),
       rationale: m.rationale,
       createdAt: m.createdAt.toISOString(),
       approvedAt: m.approvedAt?.toISOString() || null,
       invoice: {
         id: m.invoice.id,
         invoiceNumber: m.invoice.invoiceNumber,
-        total: m.invoice.total.toNumber(),
+        total: serializeDecimalRequired(m.invoice.total),
         currency: m.invoice.currency,
         issueDate: m.invoice.issueDate?.toISOString().split('T')[0] || null,
         status: m.invoice.status,
@@ -130,7 +132,7 @@ export async function GET(request: Request) {
         id: m.transaction.id,
         postedAt: m.transaction.postedAt.toISOString(),
         description: m.transaction.description,
-        amount: m.transaction.amount.toNumber(),
+        amount: serializeDecimalRequired(m.transaction.amount),
         currency: m.transaction.currency,
       },
     }));

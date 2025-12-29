@@ -56,6 +56,7 @@ model Workspace {
   journalEntries             JournalEntry[]
   accountingPeriods          AccountingPeriod[]
   glBalances                 GLBalance[]
+  plaidItems                 PlaidItem[]
 
   @@map("workspaces")
 }
@@ -228,19 +229,57 @@ model InvoiceLineItem {
   @@map("invoice_line_items")
 }
 
+// ============================================================
+// Plaid Integration
+// ============================================================
+
+model PlaidItem {
+  id            String    @id @default(uuid()) @db.Uuid
+  workspaceId   String    @map("workspace_id") @db.Uuid
+  itemId        String    @unique @map("item_id") // Plaid item_id
+  accessToken   String    @map("access_token") // Encrypted in production
+  institutionId String?   @map("institution_id")
+  institutionName String? @map("institution_name")
+  status        String    @default("active") @db.VarChar(20) // active, error, pending_expiration
+  errorCode     String?   @map("error_code")
+  errorMessage  String?   @map("error_message")
+  consentExpiresAt DateTime? @map("consent_expires_at")
+  cursor        String?   // For incremental transaction sync
+  lastSyncedAt  DateTime? @map("last_synced_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  bankAccounts  BankAccount[]
+
+  @@index([workspaceId])
+  @@map("plaid_items")
+}
+
 model BankAccount {
-  id          String   @id @default(uuid()) @db.Uuid
-  workspaceId String   @map("workspace_id") @db.Uuid
-  name        String
-  accountNumber String? @map("account_number")
-  iban        String?
-  currency    String   @default("EUR") @db.VarChar(3)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  workspaceId   String   @map("workspace_id") @db.Uuid
+  plaidItemId   String?  @map("plaid_item_id") @db.Uuid
+  plaidAccountId String? @map("plaid_account_id") // Plaid account_id
+  name          String
+  officialName  String?  @map("official_name")
+  accountNumber String?  @map("account_number")
+  mask          String?  // Last 4 digits
+  iban          String?
+  type          String?  @db.VarChar(20) // depository, credit, loan, investment
+  subtype       String?  @db.VarChar(30) // checking, savings, credit card, etc.
+  currency      String   @default("EUR") @db.VarChar(3)
+  currentBalance Decimal? @map("current_balance") @db.Decimal(15, 2)
+  availableBalance Decimal? @map("available_balance") @db.Decimal(15, 2)
+  isManual      Boolean  @default(true) @map("is_manual") // false if from Plaid
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   workspace    Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  plaidItem    PlaidItem?        @relation(fields: [plaidItemId], references: [id], onDelete: SetNull)
   transactions BankTransaction[]
 
+  @@unique([plaidItemId, plaidAccountId])
   @@map("bank_accounts")
 }
 
@@ -248,9 +287,12 @@ model BankTransaction {
   id            String    @id @default(uuid()) @db.Uuid
   workspaceId   String    @map("workspace_id") @db.Uuid
   bankAccountId String    @map("bank_account_id") @db.Uuid
+  plaidTransactionId String? @unique @map("plaid_transaction_id") // Plaid transaction_id
   txHash        String    @map("tx_hash") // For idempotent imports
   postedAt      DateTime  @map("posted_at") @db.Date
   description   String?
+  merchantName  String?   @map("merchant_name") // From Plaid
+  pending       Boolean   @default(false) // Plaid pending status
   amount        Decimal   @db.Decimal(15, 2)
   currency      String    @default("EUR") @db.VarChar(3)
   balance       Decimal?  @db.Decimal(15, 2)

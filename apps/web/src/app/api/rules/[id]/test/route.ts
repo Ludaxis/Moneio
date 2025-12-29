@@ -5,10 +5,11 @@
  */
 
 import { prisma } from '@moneio/db';
+import { testRuleAgainstPrismaTransactions } from '@moneio/domain';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { testRuleAgainstTransactions } from '@/lib/rules';
+import { serializeDecimalRequired } from '@/lib/api';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -80,13 +81,14 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
 
     // Test rule against transactions
-    const matches = testRuleAgainstTransactions(rule, transactions);
+    const matches = testRuleAgainstPrismaTransactions(rule, transactions);
 
     // Format response
+    // Note: monetary values use strings to preserve precision
     const formattedMatches = matches.map((tx) => ({
       id: tx.id,
       description: tx.description,
-      amount: tx.amount.toNumber(),
+      amount: serializeDecimalRequired(tx.amount),
       postedAt: tx.postedAt.toISOString().split('T')[0],
       currency: tx.currency,
     }));

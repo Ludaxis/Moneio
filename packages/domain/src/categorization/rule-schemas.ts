@@ -1,40 +1,11 @@
+/**
+ * Zod schemas for rule validation
+ *
+ * These schemas validate the JSON structure of rule conditions
+ * and are used by API routes for request validation.
+ */
+
 import { z } from 'zod';
-
-/**
- * Rule condition field - the transaction field to match against
- */
-export type RuleConditionField = 'description' | 'amount' | 'merchant';
-
-/**
- * Rule condition operator - how to compare the field value
- */
-export type RuleConditionOperator =
-  | 'contains'
-  | 'equals'
-  | 'startsWith'
-  | 'endsWith'
-  | 'regex'
-  | 'gt'
-  | 'lt'
-  | 'between';
-
-/**
- * A single rule condition
- */
-export interface RuleCondition {
-  field: RuleConditionField;
-  operator: RuleConditionOperator;
-  value: string | number | [number, number];
-  caseSensitive?: boolean;
-}
-
-/**
- * Rule conditions container with match mode
- */
-export interface RuleConditions {
-  match: 'all' | 'any'; // AND vs OR
-  conditions: RuleCondition[];
-}
 
 /**
  * Zod schema for a single rule condition

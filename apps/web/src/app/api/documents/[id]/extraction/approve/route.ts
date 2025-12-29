@@ -13,11 +13,234 @@ const approveExtractionSchema = z.object({
 });
 
 /**
- * POST /api/documents/[id]/extraction/approve
- * Approve an extraction
+ * Extraction payload types (from LLM output)
  */
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+interface InvoicePayload {
+  kind: 'invoice';
+  invoiceNumber?: string;
+  issueDate?: string;
+  dueDate?: string;
+  vendorName?: string;
+  vendorAddress?: string;
+  vendorVatId?: string;
+  currency?: string;
+  subtotal?: number;
+  vatTotal?: number;
+  total?: number;
+  lineItems?: Array<{
+    description?: string;
+    quantity?: number;
+    unitPrice?: number;
+    vatRate?: number;
+    lineTotal?: number;
+  }>;
+}
+
+interface ReceiptPayload {
+  kind: 'receipt';
+  merchantName?: string;
+  merchantAddress?: string;
+  date?: string;
+  currency?: string;
+  subtotal?: number;
+  vatTotal?: number;
+  total?: number;
+  items?: Array<{
+    description?: string;
+    quantity?: number;
+    unitPrice?: number;
+    total?: number;
+  }>;
+}
+
+type ExtractionPayload = InvoicePayload | ReceiptPayload | { kind?: string };
+
+/**
+ * Normalize merchant name for matching
+ */
+function normalizeMerchantName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+}
+
+/**
+ * Parse date string to Date object
+ */
+function parseDate(dateStr: string | undefined): Date | null {
+  if (!dateStr) return null;
+
+  const isoDate = new Date(dateStr);
+  if (!isNaN(isoDate.getTime())) {
+    return isoDate;
+  }
+
+  const formats = [
+    /^(\d{2})\/(\d{2})\/(\d{4})$/,
+    /^(\d{2})-(\d{2})-(\d{4})$/,
+    /^(\d{2})\.(\d{2})\.(\d{4})$/,
+  ];
+
+  for (const format of formats) {
+    const match = dateStr.match(format);
+    if (match) {
+      const [, day, month, year] = match;
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find or create merchant from vendor name
+ */
+async function findOrCreateMerchant(
+  workspaceId: string,
+  vendorName: string,
+  vatNumber?: string
+): Promise<string> {
+  const normalizedName = normalizeMerchantName(vendorName);
+
+  const existing = await prisma.merchant.findFirst({
+    where: { workspaceId, normalizedName },
+  });
+
+  if (existing) {
+    return existing.id;
+  }
+
+  let country: string | undefined;
+  if (vatNumber && vatNumber.length >= 2) {
+    const countryPrefix = vatNumber.substring(0, 2).toUpperCase();
+    if (/^[A-Z]{2}$/.test(countryPrefix)) {
+      country = countryPrefix;
+    }
+  }
+
+  const merchant = await prisma.merchant.create({
+    data: {
+      workspaceId,
+      name: vendorName,
+      normalizedName,
+      vatNumber: vatNumber || null,
+      country: country || null,
+    },
+  });
+
+  return merchant.id;
+}
+
+/**
+ * Create invoice from extraction payload
+ */
+async function createInvoiceFromExtraction(
+  workspaceId: string,
+  documentId: string,
+  payload: ExtractionPayload
+): Promise<string | null> {
+  if (payload.kind === 'invoice') {
+    const invoicePayload = payload as InvoicePayload;
+
+    let merchantId: string | null = null;
+    if (invoicePayload.vendorName) {
+      merchantId = await findOrCreateMerchant(
+        workspaceId,
+        invoicePayload.vendorName,
+        invoicePayload.vendorVatId
+      );
+    }
+
+    const invoice = await prisma.invoice.create({
+      data: {
+        workspaceId,
+        documentId,
+        merchantId,
+        invoiceNumber: invoicePayload.invoiceNumber || null,
+        issueDate: parseDate(invoicePayload.issueDate),
+        dueDate: parseDate(invoicePayload.dueDate),
+        currency: invoicePayload.currency || 'EUR',
+        subtotal: invoicePayload.subtotal || 0,
+        vatAmount: invoicePayload.vatTotal || 0,
+        total: invoicePayload.total || 0,
+        status: 'approved',
+      },
+    });
+
+    if (invoicePayload.lineItems && invoicePayload.lineItems.length > 0) {
+      await prisma.invoiceLineItem.createMany({
+        data: invoicePayload.lineItems.map((item, index) => ({
+          invoiceId: invoice.id,
+          description: item.description || null,
+          quantity: item.quantity || 1,
+          unitPrice: item.unitPrice || 0,
+          amount: item.lineTotal || 0,
+          vatRate: item.vatRate || null,
+          sortOrder: index,
+        })),
+      });
+    }
+
+    return invoice.id;
+  }
+
+  if (payload.kind === 'receipt') {
+    const receiptPayload = payload as ReceiptPayload;
+
+    let merchantId: string | null = null;
+    if (receiptPayload.merchantName) {
+      merchantId = await findOrCreateMerchant(workspaceId, receiptPayload.merchantName);
+    }
+
+    const invoice = await prisma.invoice.create({
+      data: {
+        workspaceId,
+        documentId,
+        merchantId,
+        invoiceNumber: null,
+        issueDate: parseDate(receiptPayload.date),
+        dueDate: null,
+        currency: receiptPayload.currency || 'EUR',
+        subtotal: receiptPayload.subtotal || 0,
+        vatAmount: receiptPayload.vatTotal || 0,
+        total: receiptPayload.total || 0,
+        status: 'approved',
+      },
+    });
+
+    if (receiptPayload.items && receiptPayload.items.length > 0) {
+      await prisma.invoiceLineItem.createMany({
+        data: receiptPayload.items.map((item, index) => ({
+          invoiceId: invoice.id,
+          description: item.description || null,
+          quantity: item.quantity || 1,
+          unitPrice: item.unitPrice || 0,
+          amount: item.total || 0,
+          vatRate: null,
+          sortOrder: index,
+        })),
+      });
+    }
+
+    return invoice.id;
+  }
+
+  return null;
+}
+
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+/**
+ * POST /api/documents/[id]/extraction/approve
+ * Approve an extraction and create invoice from extracted data
+ */
+export async function POST(request: Request, { params }: RouteParams) {
   try {
+    const { id: documentId } = await params;
+
     const contentLength = request.headers.get('content-length');
     if (contentLength && parseInt(contentLength, 10) > 64 * 1024) {
       return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
@@ -52,7 +275,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const extraction = await prisma.extraction.findFirst({
       where: {
         id: extractionId,
-        documentId: params.id,
+        documentId,
         document: { workspaceId },
       },
     });
@@ -75,21 +298,26 @@ export async function POST(request: Request, { params }: { params: { id: string 
       },
     });
 
-    // Also update the linked invoice status if exists
-    const invoice = await prisma.invoice.findFirst({
+    // Check if invoice already exists (backward compatibility)
+    let invoiceId: string | null = null;
+    const existingInvoice = await prisma.invoice.findFirst({
       where: {
-        documentId: params.id,
+        documentId,
         workspaceId,
       },
     });
 
-    if (invoice) {
+    if (existingInvoice) {
+      // Update existing invoice status
       await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          status: 'approved',
-        },
+        where: { id: existingInvoice.id },
+        data: { status: 'approved' },
       });
+      invoiceId = existingInvoice.id;
+    } else {
+      // Create invoice from extraction payload (new flow)
+      const payload = extraction.payloadJson as ExtractionPayload;
+      invoiceId = await createInvoiceFromExtraction(workspaceId, documentId, payload);
     }
 
     // Create audit log entry
@@ -103,14 +331,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
         oldValue: { approved: false },
         newValue: { approved: true },
         metadata: {
-          documentId: params.id,
+          documentId,
           version: extraction.version,
-          invoiceId: invoice?.id,
+          invoiceId,
         },
       },
     });
 
-    return NextResponse.json({ extraction: updated });
+    return NextResponse.json({ extraction: updated, invoiceId });
   } catch (error) {
     console.error('Failed to approve extraction:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

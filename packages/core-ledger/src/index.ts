@@ -11,3 +11,4 @@ export * from './types/gl';
 export * from './utils/money';
 export * from './utils/dates';
 export * from './utils/csv';
+export * from './utils/merchant';

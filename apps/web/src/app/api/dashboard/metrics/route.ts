@@ -12,7 +12,12 @@
 
 import type { CurrencyCode } from '@moneio/core-ledger';
 import { prisma } from '@moneio/db';
-import { ReportingService } from '@moneio/domain';
+import {
+  calculateRunway,
+  getRunwayDescription,
+  ReportingService,
+  type MonthlySummary,
+} from '@moneio/domain';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -148,6 +153,30 @@ export async function GET(request: Request) {
       workspace.baseCurrency as CurrencyCode
     );
 
+    // Get monthly chart data (also used for runway calculation)
+    const monthlyData = await getMonthlyChartData(
+      service,
+      workspaceId,
+      startDate,
+      endDate,
+      workspace.baseCurrency as CurrencyCode
+    );
+
+    // Calculate runway using monthly data
+    const currentBalance = await getCurrentBalance(workspaceId);
+    const monthlySummaries: MonthlySummary[] = monthlyData.map((m) => ({
+      month: m.month,
+      income: m.income,
+      expenses: m.expenses,
+      netCashflow: m.netCashflow,
+    }));
+
+    const runway = calculateRunway({
+      currentBalance,
+      monthlySummaries,
+      currency: workspace.baseCurrency,
+    });
+
     // Transform Money types to plain numbers for JSON response
     return NextResponse.json({
       period: metrics.period,
@@ -175,6 +204,17 @@ export async function GET(request: Request) {
         currency: metrics.burnRate.currency,
         formatted: formatCurrency(metrics.burnRate.amount / 100, metrics.burnRate.currency),
       },
+      // Cash runway metrics
+      runway: {
+        monthsRemaining: runway.monthsRemaining,
+        currentCash: runway.currentCash,
+        monthlyBurnRate: runway.monthlyBurnRate,
+        avgMonthlyExpenses: runway.avgMonthlyExpenses,
+        avgMonthlyIncome: runway.avgMonthlyIncome,
+        status: runway.status,
+        projectedZeroDate: runway.projectedZeroDate?.toISOString().split('T')[0] || null,
+        description: getRunwayDescription(runway),
+      },
       trend: {
         ...metrics.trend,
         currentMonth: {
@@ -196,13 +236,7 @@ export async function GET(request: Request) {
         transactionCount: cat.transactionCount,
       })),
       // For charts: monthly data formatted for Recharts
-      monthlyData: await getMonthlyChartData(
-        service,
-        workspaceId,
-        startDate,
-        endDate,
-        workspace.baseCurrency as CurrencyCode
-      ),
+      monthlyData,
     });
   } catch (error) {
     console.error('Failed to get dashboard metrics:', error);
@@ -241,4 +275,26 @@ function formatCurrency(amount: number, currency: string): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+/**
+ * Get current total balance from most recent transaction balances
+ * across all bank accounts in the workspace
+ */
+async function getCurrentBalance(workspaceId: string): Promise<number> {
+  // Get the most recent transaction with a balance for each bank account
+  const accountBalances = await prisma.$queryRaw<Array<{ balance: number | null }>>`
+    SELECT DISTINCT ON (bank_account_id) balance
+    FROM bank_transactions
+    WHERE workspace_id = ${workspaceId}::uuid
+      AND balance IS NOT NULL
+    ORDER BY bank_account_id, posted_at DESC
+  `;
+
+  // Sum all account balances
+  const totalBalance = accountBalances.reduce((sum, row) => {
+    return sum + (row.balance ? Number(row.balance) : 0);
+  }, 0);
+
+  return totalBalance;
 }

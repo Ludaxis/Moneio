@@ -2,6 +2,7 @@ import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { serializeDecimal, serializeDecimalRequired } from '@/lib/api';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -69,13 +70,14 @@ export async function GET(request: Request) {
     ]);
 
     // Transform to response format
+    // Note: amount/balance use strings to preserve precision for large values
     const formatted = transactions.map((tx) => ({
       id: tx.id,
       postedAt: tx.postedAt.toISOString(),
       description: tx.description,
-      amount: tx.amount.toNumber(),
+      amount: serializeDecimalRequired(tx.amount),
       currency: tx.currency,
-      balance: tx.balance?.toNumber() ?? null,
+      balance: serializeDecimal(tx.balance),
       hasMatch: tx.matches.length > 0,
       categoryName: tx.categorizations[0]?.category.name ?? null,
     }));
