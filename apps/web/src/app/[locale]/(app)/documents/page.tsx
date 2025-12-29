@@ -11,6 +11,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -120,6 +121,30 @@ export default function DocumentsPage() {
   const handleUploadComplete = () => {
     fetchDocuments();
     setShowUploader(false);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, docId: string) => {
+    e.stopPropagation(); // Prevent row click navigation
+
+    if (!confirm(tCommon('delete') + '?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/documents/${docId}?workspaceId=${workspace?.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove from local state immediately
+        setDocuments((prev) => prev.filter((d) => d.id !== docId));
+        setTotal((prev) => prev - 1);
+      } else {
+        console.error('Failed to delete document');
+      }
+    } catch (error) {
+      console.error('Failed to delete document:', error);
+    }
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -245,6 +270,7 @@ export default function DocumentsPage() {
                 <th className="px-4 py-3 text-start text-sm font-medium text-muted-foreground">
                   {t('createdAt')}
                 </th>
+                <th className="w-12 px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -280,6 +306,15 @@ export default function DocumentsPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {formatDate(doc.createdAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={(e) => handleDelete(e, doc.id)}
+                        className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title={tCommon('delete')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 );

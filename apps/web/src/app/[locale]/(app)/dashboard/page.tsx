@@ -101,7 +101,7 @@ export default function DashboardPage() {
   }, [preset]);
 
   const fetchDashboardData = useCallback(async () => {
-    if (!workspaceId) return;
+    if (!workspaceId || !startDate || !endDate) return;
 
     setLoading(true);
     setError(null);
@@ -110,10 +110,9 @@ export default function DashboardPage() {
       // Fetch metrics and transactions in parallel
       const params = new URLSearchParams({
         workspaceId,
-        period: preset,
+        startDate,
+        endDate,
       });
-      if (startDate) params.set('startDate', startDate);
-      if (endDate) params.set('endDate', endDate);
       if (baseCurrency) params.set('baseCurrency', baseCurrency);
 
       const [metricsRes, transactionsRes] = await Promise.all([
@@ -138,13 +137,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, startDate, endDate, baseCurrency]);
 
   useEffect(() => {
-    if (workspaceId) {
+    if (workspaceId && startDate && endDate) {
       fetchDashboardData();
     }
-  }, [workspaceId, fetchDashboardData, startDate, endDate, preset]);
+  }, [workspaceId, fetchDashboardData, startDate, endDate]);
 
   const isLoading = workspaceLoading || loading;
 

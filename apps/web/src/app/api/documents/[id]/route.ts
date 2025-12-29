@@ -1,7 +1,9 @@
+import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getDocument, getDocumentViewUrl } from '@/lib/documents';
+import { deleteFromStorage } from '@/lib/storage';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -46,6 +48,66 @@ export async function GET(request: Request, { params }: { params: { id: string }
     });
   } catch (error) {
     console.error('Failed to get document:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const supabase = createServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const workspaceId = searchParams.get('workspaceId');
+
+    if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
+      return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
+    }
+
+    // Check permission
+    const canDelete = await hasPermission(user.id, workspaceId, 'document:delete');
+    if (!canDelete) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+    }
+
+    // Get document with blobs to delete from storage
+    const document = await prisma.document.findFirst({
+      where: {
+        id: params.id,
+        workspaceId,
+      },
+      include: {
+        blobs: true,
+      },
+    });
+
+    if (!document) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    }
+
+    // Delete files from storage
+    for (const blob of document.blobs) {
+      try {
+        await deleteFromStorage(blob.storagePath);
+      } catch (error) {
+        console.warn(`Failed to delete storage file ${blob.storagePath}:`, error);
+      }
+    }
+
+    // Delete document (cascades to blobs, extractions, etc.)
+    await prisma.document.delete({
+      where: { id: params.id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete document:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
