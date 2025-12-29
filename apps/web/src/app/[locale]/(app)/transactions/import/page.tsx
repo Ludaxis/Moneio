@@ -74,6 +74,13 @@ export default function CsvImportPage() {
     null
   );
   const [isNormalizing, setIsNormalizing] = useState(false);
+  const [importProgress, setImportProgress] = useState<{
+    current: number;
+    total: number;
+    imported: number;
+    skipped: number;
+    startTime: number;
+  } | null>(null);
 
   const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
     const lines = text.split(/\r?\n/).filter((line) => line.trim());
@@ -423,40 +430,77 @@ export default function CsvImportPage() {
     setImporting(true);
     setStep('importing');
 
+    const transactions = rows.map((row) => ({
+      date: parseDate(row[mapping.date!]),
+      description: row[mapping.description!] || '(no description)',
+      amount: parseAmount(
+        row[mapping.amount!],
+        mapping.direction ? row[mapping.direction] : undefined
+      ),
+      balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
+      reference: mapping.reference ? row[mapping.reference] : undefined,
+    }));
+
+    // Import in batches for progress tracking
+    const BATCH_SIZE = 50;
+    const batches: typeof transactions[] = [];
+    for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
+      batches.push(transactions.slice(i, i + BATCH_SIZE));
+    }
+
+    setImportProgress({
+      current: 0,
+      total: transactions.length,
+      imported: 0,
+      skipped: 0,
+      startTime: Date.now(),
+    });
+
+    let totalImported = 0;
+    let totalSkipped = 0;
+
     try {
-      const transactions = rows.map((row) => ({
-        date: parseDate(row[mapping.date!]),
-        description: row[mapping.description!] || '(no description)',
-        amount: parseAmount(
-          row[mapping.amount!],
-          mapping.direction ? row[mapping.direction] : undefined
-        ),
-        balance: mapping.balance ? parseAmount(row[mapping.balance]) : undefined,
-        reference: mapping.reference ? row[mapping.reference] : undefined,
-      }));
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
 
-      const response = await fetch('/api/transactions/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workspaceId,
-          transactions,
-          fileName: file?.name,
-        }),
-      });
+        const response = await fetch('/api/transactions/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            workspaceId,
+            transactions: batch,
+            fileName: file?.name,
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Import failed');
+        if (!response.ok) {
+          throw new Error('Import failed');
+        }
+
+        const result = await response.json();
+        totalImported += result.imported;
+        totalSkipped += result.skipped;
+
+        setImportProgress((prev) =>
+          prev
+            ? {
+                ...prev,
+                current: Math.min((i + 1) * BATCH_SIZE, transactions.length),
+                imported: totalImported,
+                skipped: totalSkipped,
+              }
+            : null
+        );
       }
 
-      const result = await response.json();
-      setImportResult(result);
+      setImportResult({ imported: totalImported, skipped: totalSkipped });
       setStep('complete');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import failed');
       setStep('preview');
     } finally {
       setImporting(false);
+      setImportProgress(null);
     }
   };
 
@@ -708,13 +752,66 @@ export default function CsvImportPage() {
     </div>
   );
 
-  const renderImportingStep = () => (
-    <div className="flex flex-col items-center justify-center py-12">
-      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      <p className="mt-4 text-lg font-medium">Importing transactions...</p>
-      <p className="mt-2 text-sm text-muted-foreground">Please wait while we process your file</p>
-    </div>
-  );
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}m ${secs}s`;
+  };
+
+  const renderImportingStep = () => {
+    const progress = importProgress;
+    const percentage = progress ? Math.round((progress.current / progress.total) * 100) : 0;
+    const elapsedSeconds = progress ? (Date.now() - progress.startTime) / 1000 : 0;
+
+    // Estimate remaining time based on progress
+    const estimatedTotalSeconds =
+      progress && progress.current > 0 ? (elapsedSeconds / progress.current) * progress.total : 0;
+    const estimatedRemainingSeconds = Math.max(0, estimatedTotalSeconds - elapsedSeconds);
+
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-lg font-medium">Importing transactions...</p>
+
+        {progress && (
+          <div className="mt-6 w-full max-w-md space-y-3">
+            {/* Progress bar */}
+            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+
+            {/* Progress stats */}
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>
+                {progress.current} / {progress.total} transactions
+              </span>
+              <span>{percentage}%</span>
+            </div>
+
+            {/* Time info */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Elapsed: {formatTime(elapsedSeconds)}</span>
+              {progress.current > 0 && (
+                <span>Est. remaining: {formatTime(estimatedRemainingSeconds)}</span>
+              )}
+            </div>
+
+            {/* Import stats */}
+            <div className="mt-4 flex items-center justify-center gap-4 text-sm">
+              <span className="text-success">{progress.imported} imported</span>
+              {progress.skipped > 0 && (
+                <span className="text-muted-foreground">{progress.skipped} skipped</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderCompleteStep = () => (
     <div className="flex flex-col items-center justify-center py-12">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -20,6 +20,9 @@ export default function NewWorkspacePage() {
   const t = useTranslations('workspace');
   const tCommon = useTranslations('common');
   const router = useRouter();
+  const pathname = usePathname();
+  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
+  const locale = localeMatch?.[1] ?? 'en';
 
   const [name, setName] = useState('');
   const [baseCurrency, setBaseCurrency] = useState('EUR');
@@ -44,7 +47,7 @@ export default function NewWorkspacePage() {
       }
 
       const workspace = await response.json();
-      router.push(`/dashboard?workspace=${workspace.id}`);
+      router.push(`/${locale}/dashboard?workspace=${workspace.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
