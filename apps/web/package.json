@@ -17,6 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@11labs/react": "^0.2.0",
     "@moneio/ai": "workspace:*",
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",
@@ -28,6 +29,7 @@
     "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.43.0",
     "bullmq": "^5.7.0",
+    "elevenlabs": "^1.59.0",
     "gsap": "^3.12.5",
     "ioredis": "^5.4.0",
     "lucide-react": "^0.378.0",

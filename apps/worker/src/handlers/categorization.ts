@@ -1,5 +1,4 @@
-import { TransactionCategorizer, HeuristicCategorizer } from '@moneio/ai';
-import { createOpenAiClient } from '@moneio/ai';
+import { TransactionCategorizer, HeuristicCategorizer, createLlmClient } from '@moneio/ai';
 import { prisma } from '@moneio/db';
 import { Job } from 'bullmq';
 
@@ -57,9 +56,12 @@ export async function handleCategorization(
       merchantNames: [] as string[],
     };
 
-    // Decide AI vs heuristic
-    const llmConfigured = !!process.env.OPENAI_API_KEY;
-    const client = llmConfigured ? createOpenAiClient({ model: 'gpt-4o-mini' }) : null;
+    // Decide AI vs heuristic - check for either Gemini or OpenAI
+    const llmConfigured =
+      !!process.env.GEMINI_API_KEY ||
+      !!process.env.GOOGLE_AI_API_KEY ||
+      !!process.env.OPENAI_API_KEY;
+    const client = llmConfigured ? createLlmClient() : null;
     const categorizer = llmConfigured
       ? new TransactionCategorizer(client!)
       : new HeuristicCategorizer();

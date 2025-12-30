@@ -1,5 +1,5 @@
 import {
-  createOpenAiClient,
+  createLlmClient,
   InvoiceExtractor,
   ReceiptExtractor,
   StatementExtractor,
@@ -76,7 +76,7 @@ export async function handleDocExtract(job: Job<DocExtractJobData>): Promise<Doc
     await job.updateProgress(40);
 
     // Create OpenAI client
-    const llmClient = createOpenAiClient();
+    const llmClient = createLlmClient();
 
     // Build workspace context
     const context = {

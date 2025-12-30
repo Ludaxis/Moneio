@@ -3,7 +3,9 @@
 import { cn } from '@moneio/ui';
 import { useState, useCallback } from 'react';
 
+import { VoiceAssistant } from '@/components/voice';
 import { useResponsive } from '@/hooks/use-media-query';
+import { useWorkspace } from '@/lib/workspace';
 
 import { MobileDrawer } from './mobile-drawer';
 import { MobileNav } from './mobile-nav';
@@ -45,6 +47,7 @@ function SkipLinks() {
  */
 export function AppShell({ children }: AppShellProps) {
   const { isMobile, isDesktop } = useResponsive();
+  const { workspace } = useWorkspace();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleOpenDrawer = useCallback(() => {
@@ -89,6 +92,9 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Mobile Bottom Navigation */}
         <MobileNav onFabClick={handleFabClick} />
+
+        {/* Voice Assistant */}
+        {workspace && <VoiceAssistant workspaceId={workspace.id} className="bottom-32" />}
       </div>
     );
   }
@@ -117,6 +123,9 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </div>
+
+      {/* Voice Assistant */}
+      {workspace && <VoiceAssistant workspaceId={workspace.id} />}
     </div>
   );
 }

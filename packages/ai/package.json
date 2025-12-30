@@ -25,6 +25,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@moneio/core-ledger": "workspace:*",
     "@moneio/domain": "workspace:*",
     "openai": "^4.47.0",
