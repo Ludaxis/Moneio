@@ -2,110 +2,159 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import design tokens */
+@import '../styles/tokens.css';
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 199 89% 48%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 199 89% 48%;
+    /* ============================================
+     * CALM CLARITY LIGHT THEME
+     * Inspired by Mercury, Linear, Stripe
+     * ============================================ */
+
+    /* Core backgrounds */
+    --background: 0 0% 98%;           /* #FAFAFA */
+    --foreground: 0 0% 9%;            /* #171717 */
+    --card: 0 0% 100%;                /* #FFFFFF */
+    --card-foreground: 0 0% 9%;       /* #171717 */
+    --popover: 0 0% 100%;             /* #FFFFFF */
+    --popover-foreground: 0 0% 9%;    /* #171717 */
+
+    /* Primary - Trust Blue */
+    --primary: 216 100% 50%;          /* #0066FF */
+    --primary-foreground: 0 0% 100%;  /* #FFFFFF */
+
+    /* Secondary - Subtle gray */
+    --secondary: 0 0% 96%;            /* #F5F5F5 */
+    --secondary-foreground: 0 0% 9%;  /* #171717 */
+
+    /* Muted */
+    --muted: 0 0% 96%;                /* #F5F5F5 */
+    --muted-foreground: 0 0% 45%;     /* #737373 */
+
+    /* Accent */
+    --accent: 0 0% 96%;               /* #F5F5F5 */
+    --accent-foreground: 0 0% 9%;     /* #171717 */
+
+    /* Destructive */
+    --destructive: 0 84% 60%;         /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 0 0% 90%;               /* #E5E5E5 */
+    --input: 0 0% 90%;                /* #E5E5E5 */
+    --ring: 216 100% 50%;             /* #0066FF */
     --radius: 0.5rem;
 
     /* Status colors */
-    --success: 142 76% 36%;
-    --warning: 38 92% 50%;
-    --info: 199 89% 48%;
+    --success: 160 84% 39%;           /* #10B981 - Income green */
+    --warning: 38 92% 50%;            /* #F59E0B - Attention orange */
+    --danger: 0 84% 60%;              /* #EF4444 - Expense red */
+    --info: 216 100% 50%;             /* #0066FF - Primary blue */
+
+    /* AI Accent - Purple glow */
+    --ai-accent: 258 90% 66%;         /* #8B5CF6 */
+    --ai-accent-foreground: 0 0% 100%;
 
     /* Chart colors - semantic */
-    --chart-income: 142 71% 45%;
-    --chart-expense: 0 84% 60%;
-    --chart-neutral: 215 16% 47%;
-    --chart-grid: 214 32% 91%;
+    --chart-income: 160 84% 39%;      /* #10B981 */
+    --chart-expense: 0 84% 60%;       /* #EF4444 */
+    --chart-neutral: 0 0% 45%;        /* #737373 */
+    --chart-grid: 0 0% 90%;           /* #E5E5E5 */
 
     /* Chart palette - categorical */
-    --chart-1: 217 91% 60%;
-    --chart-2: 0 84% 60%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 38 92% 50%;
-    --chart-5: 262 83% 58%;
-    --chart-6: 330 81% 60%;
-    --chart-7: 187 92% 41%;
-    --chart-8: 24 95% 53%;
+    --chart-1: 216 100% 50%;          /* Primary blue */
+    --chart-2: 160 84% 39%;           /* Success green */
+    --chart-3: 0 84% 60%;             /* Danger red */
+    --chart-4: 38 92% 50%;            /* Warning orange */
+    --chart-5: 258 90% 66%;           /* AI purple */
+    --chart-6: 330 81% 60%;           /* Pink */
+    --chart-7: 187 92% 41%;           /* Cyan */
+    --chart-8: 24 95% 53%;            /* Orange */
 
     /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 199 89% 48%;
+    --sidebar-background: 0 0% 100%;   /* #FFFFFF */
+    --sidebar-foreground: 0 0% 25%;    /* Slightly muted text */
+    --sidebar-primary: 216 100% 50%;   /* #0066FF */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent: 0 0% 96%;        /* #F5F5F5 */
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 92%;        /* Subtle border */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 199 89% 48%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 199 89% 48%;
+    /* ============================================
+     * CALM CLARITY DARK THEME
+     * Deep, restful dark with high contrast
+     * ============================================ */
+
+    /* Core backgrounds */
+    --background: 240 6% 4%;          /* #0A0A0B */
+    --foreground: 0 0% 98%;           /* #FAFAFA */
+    --card: 240 5% 8%;                /* #141416 */
+    --card-foreground: 0 0% 98%;      /* #FAFAFA */
+    --popover: 240 5% 8%;             /* #141416 */
+    --popover-foreground: 0 0% 98%;   /* #FAFAFA */
+
+    /* Primary - Trust Blue (slightly brighter for dark) */
+    --primary: 216 100% 55%;          /* Brighter blue */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 240 4% 16%;          /* #27272A */
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted */
+    --muted: 240 4% 16%;              /* #27272A */
+    --muted-foreground: 240 5% 65%;   /* #A1A1AA */
+
+    /* Accent */
+    --accent: 240 4% 16%;             /* #27272A */
+    --accent-foreground: 0 0% 98%;
+
+    /* Destructive */
+    --destructive: 0 72% 51%;         /* Slightly muted red for dark */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 240 4% 16%;             /* #27272A */
+    --input: 240 4% 16%;              /* #27272A */
+    --ring: 216 100% 55%;
 
     /* Status colors */
-    --success: 142 70% 45%;
+    --success: 160 84% 39%;           /* Keep same for consistency */
     --warning: 38 92% 50%;
-    --info: 199 89% 60%;
+    --danger: 0 72% 51%;
+    --info: 216 100% 55%;
+
+    /* AI Accent */
+    --ai-accent: 258 90% 70%;         /* Slightly brighter purple */
+    --ai-accent-foreground: 0 0% 100%;
 
     /* Chart colors - semantic (dark) */
-    --chart-income: 142 71% 45%;
-    --chart-expense: 0 72% 51%;
-    --chart-neutral: 215 20% 65%;
-    --chart-grid: 217 33% 18%;
+    --chart-income: 160 84% 45%;      /* Slightly brighter for visibility */
+    --chart-expense: 0 72% 55%;
+    --chart-neutral: 240 5% 65%;
+    --chart-grid: 240 4% 20%;
 
     /* Chart palette - categorical (dark) */
-    --chart-1: 217 91% 60%;
-    --chart-2: 0 72% 51%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 45 93% 47%;
-    --chart-5: 262 83% 58%;
-    --chart-6: 330 81% 60%;
-    --chart-7: 187 92% 41%;
-    --chart-8: 24 95% 53%;
+    --chart-1: 216 100% 60%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 0 72% 55%;
+    --chart-4: 45 93% 50%;
+    --chart-5: 258 90% 70%;
+    --chart-6: 330 81% 65%;
+    --chart-7: 187 92% 45%;
+    --chart-8: 24 95% 58%;
 
     /* Sidebar */
-    --sidebar-background: 222.2 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 199 89% 55%;
+    --sidebar-background: 240 5% 6%;   /* Slightly lighter than bg */
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 216 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent: 240 4% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 4% 16%;
   }
 }
 
@@ -191,4 +240,86 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Skip links for accessibility */
+.skip-link {
+  @apply absolute -top-full left-4 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm;
+  @apply focus:top-4 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  transition: top 0.15s ease-in-out;
+}
+
+/* Touch target helper - ensures minimum 44x44px touch area */
+.touch-target {
+  position: relative;
+}
+
+.touch-target::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus within for container focus indication */
+.focus-within-ring:focus-within {
+  @apply ring-2 ring-ring ring-offset-2;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 0 0% 20%;
+    --muted-foreground: 0 0% 35%;
+  }
+
+  .dark {
+    --border: 0 0% 60%;
+    --muted-foreground: 0 0% 75%;
+  }
+}
+
+/* Content visibility for performance */
+.content-visibility-auto {
+  content-visibility: auto;
+}
+
+/* Optimize long lists */
+.virtualized-list {
+  contain: strict;
+  overflow: auto;
+}
+
+/* GPU-accelerated animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Prevent flash of unstyled content */
+.hydrating {
+  visibility: hidden;
+}
+
+.hydrated {
+  visibility: visible;
 }

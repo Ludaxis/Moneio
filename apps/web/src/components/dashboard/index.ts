@@ -13,3 +13,7 @@ export { PendingActionsWidget } from './pending-actions-widget';
 export { OperatingExpensesChart } from './operating-expenses-chart';
 export { HealthScoreWidget } from './health-score-widget';
 export { ForecastChart } from './forecast-chart';
+
+// Mobile-optimized components
+export { KPICard } from './kpi-card';
+export { KPISwiper, KPISwiperItem } from './kpi-swiper';

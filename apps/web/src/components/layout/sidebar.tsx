@@ -32,11 +32,16 @@ const navItems: NavItem[] = [
   { href: '/chat', icon: MessageSquare, labelKey: 'chat' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  /** Start in collapsed state (useful for tablet view) */
+  defaultCollapsed?: boolean;
+}
+
+export function Sidebar({ defaultCollapsed = false }: SidebarProps) {
   const t = useTranslations('navigation');
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   // Extract locale from pathname
   const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
@@ -72,7 +77,11 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-2">
+      <nav
+        id="main-navigation"
+        className="flex-1 space-y-1 p-2"
+        aria-label="Main navigation"
+      >
         {navItems.map((item) => {
           const isActive = pathname.includes(item.href);
           const Icon = item.icon;

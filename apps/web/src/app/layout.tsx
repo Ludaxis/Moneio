@@ -1,13 +1,33 @@
 import type { Metadata } from 'next';
-import { Inter, Noto_Sans_Arabic, Vazirmatn } from 'next/font/google';
+import {
+  Inter,
+  JetBrains_Mono,
+  Noto_Sans_Arabic,
+  Plus_Jakarta_Sans,
+  Vazirmatn,
+} from 'next/font/google';
 
 import './globals.css';
 
-// Latin font (default)
+// Display font - for headings and important text
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+});
+
+// Body font - for general text
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+});
+
+// Monospace font - for financial numbers and code
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-mono',
 });
 
 // Arabic font
@@ -33,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${notoSansArabic.variable} ${vazirmatn.variable} min-h-screen bg-background font-sans antialiased`}
+        className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable} ${notoSansArabic.variable} ${vazirmatn.variable} min-h-screen bg-background font-body antialiased`}
       >
         {children}
       </body>
