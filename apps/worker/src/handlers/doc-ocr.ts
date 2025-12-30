@@ -1,7 +1,7 @@
 import { prisma, DocumentStatus } from '@moneio/db';
 import { Job } from 'bullmq';
 
-import { performOcrWithRetry, type OcrResult } from '../lib/ocr';
+import { performOcrWithRetry } from '../lib/ocr';
 import type { DocOcrJobData, DocOcrResult } from '../lib/queues';
 import { enqueueDocExtract } from '../lib/queues';
 import { downloadFile } from '../lib/storage';
@@ -40,19 +40,14 @@ export async function handleDocOcr(job: Job<DocOcrJobData>): Promise<DocOcrResul
     await job.updateProgress(30);
 
     // Perform OCR
-    let ocrResult: OcrResult;
-    try {
-      ocrResult = await performOcrWithRetry(fileData, job.data.mimeType || document.mimeType);
-    } catch (error) {
-      // If OCR fails, create a stub result instead of failing completely
-      console.warn(`[DOC_OCR] OCR failed, using empty result:`, error);
-      ocrResult = {
-        fullText: '',
-        blocks: [],
-        confidence: 0,
-        language: null,
-      };
+    const ocrResult = await performOcrWithRetry(fileData, job.data.mimeType || document.mimeType);
+
+    // Fail if OCR returns empty text - don't silently continue
+    if (!ocrResult.fullText || ocrResult.fullText.trim().length === 0) {
+      throw new Error('OCR returned no text - document may be unreadable or corrupted');
     }
+
+    console.log(`[DOC_OCR] Extracted ${ocrResult.fullText.length} chars from page ${pageNumber}`);
 
     await job.updateProgress(70);
 

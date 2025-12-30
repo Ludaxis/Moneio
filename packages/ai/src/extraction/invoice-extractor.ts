@@ -43,38 +43,58 @@ export class InvoiceExtractor implements InvoiceExtractorAdapter {
   private buildPrompt(ocrPayload: OcrPayload, context: WorkspaceContext): string {
     const fullText = ocrPayload.pages.map((p) => p.text).join('\n\n');
 
-    return `You are an expert invoice data extractor. Extract structured data from the following invoice document.
+    // Check for empty OCR text
+    if (!fullText || fullText.trim().length < 10) {
+      throw new Error('Cannot extract invoice: OCR text is empty or too short');
+    }
 
-Document Text:
+    console.log(`[InvoiceExtractor] OCR text length: ${fullText.length} chars`);
+    console.log(`[InvoiceExtractor] OCR text preview: ${fullText.substring(0, 500)}...`);
+
+    return `You are an expert invoice data extractor. Extract structured data ONLY from the document text provided below.
+
+CRITICAL INSTRUCTIONS:
+- ONLY extract data that is EXPLICITLY present in the document text below
+- DO NOT make up, guess, or hallucinate any data
+- If a field is not found in the text, use null
+- Numbers should be extracted exactly as they appear (e.g., if the document says "€5000.00", extract 5000)
+- Dates should be converted to YYYY-MM-DD format
+
+=== DOCUMENT TEXT START ===
 ${fullText}
+=== DOCUMENT TEXT END ===
 
 Context:
 - Locale: ${context.locale}
 - Expected Currency: ${context.baseCurrency}
-- Known VAT Rates: ${context.vatRates?.join(', ') || 'standard rates'}
 
-Extract the following fields as JSON:
-- invoiceNumber: The invoice number/reference
-- issueDate: Date in YYYY-MM-DD format
-- dueDate: Due date in YYYY-MM-DD format (if present)
-- vendorName: Name of the vendor/seller
-- vendorAddress: Full address of the vendor
-- vendorVatId: VAT/Tax ID of the vendor
-- buyerName: Name of the buyer
-- buyerAddress: Full address of the buyer
-- buyerVatId: VAT/Tax ID of the buyer
-- currency: ISO 4217 currency code (e.g., EUR, USD)
-- subtotal: Subtotal amount before tax (as number)
-- vatTotal: Total VAT/tax amount (as number)
-- total: Total amount including tax (as number)
-- lineItems: Array of line items with:
-  - description: Item description
-  - quantity: Quantity (as number)
-  - unitPrice: Unit price (as number)
-  - vatRate: VAT rate as decimal (e.g., 0.20 for 20%)
-  - lineTotal: Line total (as number)
+Extract these fields as JSON (use null if not found in the text):
+{
+  "invoiceNumber": "string or null - the invoice/reference number",
+  "issueDate": "YYYY-MM-DD or null - when the invoice was issued",
+  "dueDate": "YYYY-MM-DD or null - payment due date",
+  "vendorName": "string or null - company/person who issued the invoice",
+  "vendorAddress": "string or null - vendor's full address",
+  "vendorVatId": "string or null - vendor's VAT/tax ID",
+  "buyerName": "string or null - company/person being billed",
+  "buyerAddress": "string or null - buyer's full address",
+  "buyerVatId": "string or null - buyer's VAT/tax ID",
+  "currency": "EUR/USD/GBP etc - currency code",
+  "subtotal": "number or null - amount before tax",
+  "vatTotal": "number or null - total tax amount",
+  "total": "number - total amount due",
+  "lineItems": [
+    {
+      "description": "string - item/service description",
+      "quantity": "number",
+      "unitPrice": "number",
+      "vatRate": "number as decimal (0.20 for 20%)",
+      "lineTotal": "number"
+    }
+  ]
+}
 
-Return only valid JSON. Use null for fields that cannot be determined.`;
+Return ONLY valid JSON, no explanations.`;
   }
 
   private parseResponse(response: string): unknown {
