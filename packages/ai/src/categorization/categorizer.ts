@@ -206,15 +206,50 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
     /\b(company|enterprise|services|solutions|consulting)\b/i,
   ];
 
+  // Categories that indicate income (not expenses)
+  private readonly incomeCategories: string[] = [
+    'sales revenue',
+    'revenue',
+    'income',
+    'sales',
+    'other income',
+    'interest income',
+    'service revenue',
+  ];
+
+  // Categories that indicate expenses
+  private readonly expenseCategories: string[] = [
+    'operating expenses',
+    'professional services',
+    'software & subscriptions',
+    'subscriptions',
+    'office expenses',
+    'utilities',
+    'rent',
+    'marketing',
+    'travel',
+    'meals',
+    'entertainment',
+    'bank fees',
+  ];
+
   private readonly patterns: Map<RegExp, string[]> = new Map([
+    // AI & Tech Services (EXPENSES) - expanded list
+    [
+      /openai|chatgpt|anthropic|claude|supabase|bluehost|hostinger|godaddy|digitalocean|cloudflare|stripe|twilio|sendgrid|mailchimp|reloadly|namecheap|stackblitz|linear\.app|posthog|sentry|datadog|newrelic|mongodb|planetscale|neon\.tech|upstash|railway|render|fly\.io|vercel|netlify|heroku/i,
+      ['Software & Subscriptions', 'Subscriptions', 'Operating Expenses', 'Professional Services'],
+    ],
     // Shopping & E-commerce
     [/amazon|amzn|ebay|aliexpress|shopify/i, ['Shopping', 'Office Expenses', 'Operating Expenses']],
-    // Transportation
-    [/uber|lyft|taxi|grab|bolt/i, ['Transportation', 'Travel', 'Operating Expenses']],
-    // Subscriptions & Software
+    // Transportation (ride-sharing) - "bolt" without "stackblitz" context
     [
-      /netflix|spotify|hulu|disney|youtube|apple|google|microsoft|adobe|slack|notion|figma|github|aws|azure|vercel|heroku/i,
-      ['Subscriptions', 'Software & Subscriptions', 'Operating Expenses'],
+      /\buber\b|\blyft\b|\btaxi\b|\bgrab\b|bolt\.eu|bolt\s+technology/i,
+      ['Transportation', 'Travel', 'Operating Expenses'],
+    ],
+    // Subscriptions & Software (general)
+    [
+      /netflix|spotify|hulu|disney|youtube|apple|google|microsoft|adobe|slack|notion|figma|github|aws|azure|firebase|1password|lastpass|dropbox|zoom|calendly/i,
+      ['Software & Subscriptions', 'Subscriptions', 'Operating Expenses'],
     ],
     // Food & Dining
     [
@@ -237,8 +272,8 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
     [/insurance|geico|allstate|if\s+kindlustus/i, ['Insurance', 'Operating Expenses']],
     // Housing & Rent
     [/rent|mortgage|housing|lease/i, ['Housing', 'Rent', 'Operating Expenses']],
-    // Income
-    [/salary|payroll|income|deposit|payment\s+received/i, ['Income', 'Revenue', 'Sales']],
+    // Income patterns (for POSITIVE amounts only)
+    [/salary|payroll|income|deposit|payment\s+received/i, ['Income', 'Revenue', 'Sales Revenue']],
     // Transfers
     [/transfer|zelle|venmo|paypal|wise|revolut/i, ['Transfers', 'Internal Transfer', 'Bank Fees']],
     // Bank fees
@@ -268,7 +303,29 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
     const description = transaction.descriptionRaw;
     const descLower = description.toLowerCase();
 
-    // Helper to find category from candidate names
+    // Determine if this is an expense (negative) or income (positive)
+    const amount = transaction.amount.amount; // Already in cents
+    const isExpense = amount < 0;
+    const isIncome = amount > 0;
+
+    // Helper to check if a category is an income category
+    const isIncomeCategory = (categoryName: string): boolean => {
+      const nameLower = categoryName.toLowerCase();
+      return this.incomeCategories.some(
+        (inc) => nameLower.includes(inc) || inc.includes(nameLower)
+      );
+    };
+
+    // Helper to check if a category is an expense category
+    const isExpenseCategory = (categoryName: string): boolean => {
+      const nameLower = categoryName.toLowerCase();
+      return (
+        this.expenseCategories.some((exp) => nameLower.includes(exp) || exp.includes(nameLower)) ||
+        !isIncomeCategory(categoryName)
+      );
+    };
+
+    // Helper to find category from candidate names, respecting income/expense type
     const findCategory = (candidateNames: string[]): Category | undefined => {
       for (const name of candidateNames) {
         const found = categories.find(
@@ -277,18 +334,31 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
             c.name.toLowerCase().includes(name.toLowerCase())
         );
         if (found && found.name.toLowerCase() !== 'uncategorized') {
+          // If it's an expense, don't return income categories
+          if (isExpense && isIncomeCategory(found.name)) {
+            continue;
+          }
+          // If it's income, don't return expense categories (unless no income categories exist)
+          if (isIncome && !isIncomeCategory(found.name)) {
+            // Check if there are any income categories available
+            const hasIncomeCats = categories.some((c) => isIncomeCategory(c.name));
+            if (hasIncomeCats) {
+              continue;
+            }
+          }
           return found;
         }
       }
       return undefined;
     };
 
-    // Check if it's a business entity (OÜ, Ltd, etc.)
+    // Check if it's a business entity (OÜ, Ltd, etc.) - these are typically expenses
     const isBusinessEntity = this.businessPatterns.some((p) => p.test(description));
-    if (isBusinessEntity) {
+    if (isBusinessEntity && isExpense) {
       const businessCategory = findCategory([
         'Operating Expenses',
         'Professional Services',
+        'Software & Subscriptions',
         'Office Expenses',
         'Business Expenses',
         'General Expenses',
@@ -303,6 +373,29 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
           },
           confidence: 65,
           evidence: [{ sourceText: description, reasoning: 'Business entity detected' }],
+          modelInfo: { provider: 'heuristic', model: 'pattern-matcher', version: '2.0' },
+        };
+      }
+    }
+
+    // For business entities with positive amounts, it's likely client payment
+    if (isBusinessEntity && isIncome) {
+      const incomeCategory = findCategory([
+        'Sales Revenue',
+        'Revenue',
+        'Income',
+        'Service Revenue',
+      ]);
+      if (incomeCategory) {
+        return {
+          data: {
+            categoryId: incomeCategory.id,
+            categoryName: incomeCategory.name,
+            confidence: 70,
+            reasoning: 'Payment received from business entity',
+          },
+          confidence: 70,
+          evidence: [{ sourceText: description, reasoning: 'Business entity income detected' }],
           modelInfo: { provider: 'heuristic', model: 'pattern-matcher', version: '2.0' },
         };
       }
@@ -330,18 +423,40 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
       }
     }
 
-    // Smart fallback: pick first non-Uncategorized expense category
-    const fallbackCategory =
-      categories.find((c) => c.type === 'expense' && c.name.toLowerCase() !== 'uncategorized') ||
-      categories.find((c) => c.name.toLowerCase() !== 'uncategorized') ||
-      categories[0];
+    // Smart fallback based on transaction type (expense vs income)
+    let fallbackCategory: Category | undefined;
+
+    if (isExpense) {
+      // For expenses, find an expense category (not income/revenue)
+      fallbackCategory = categories.find(
+        (c) =>
+          c.name.toLowerCase() !== 'uncategorized' &&
+          !isIncomeCategory(c.name) &&
+          (c.type === 'expense' || isExpenseCategory(c.name))
+      );
+    } else if (isIncome) {
+      // For income, find an income/revenue category
+      fallbackCategory = categories.find(
+        (c) => c.name.toLowerCase() !== 'uncategorized' && isIncomeCategory(c.name)
+      );
+    }
+
+    // Ultimate fallback
+    if (!fallbackCategory) {
+      fallbackCategory =
+        categories.find((c) => c.name.toLowerCase() !== 'uncategorized') || categories[0];
+    }
 
     return {
       data: {
         categoryId: fallbackCategory.id,
         categoryName: fallbackCategory.name,
         confidence: 40,
-        reasoning: 'No specific pattern matched - best guess based on expense type',
+        reasoning: isExpense
+          ? 'No specific pattern matched - categorized as expense'
+          : isIncome
+            ? 'No specific pattern matched - categorized as income'
+            : 'No specific pattern matched',
       },
       confidence: 40,
       evidence: [],

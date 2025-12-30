@@ -18,6 +18,7 @@ const transactionSchema = z.object({
   amount: z.number().finite(),
   balance: z.number().finite().optional().nullable(),
   reference: z.string().max(256).optional().nullable(),
+  categoryId: z.string().uuid().optional().nullable(), // Pre-assigned category from import
 });
 
 const importSchema = z.object({
@@ -140,6 +141,7 @@ export async function POST(request: Request) {
         amount: tx.amount,
         currency: bankAccount.currency,
         balance: tx.balance ?? null,
+        categoryId: tx.categoryId ?? null, // Include pre-assigned category
         rawData: {
           imported: true,
           fileName,

@@ -18,9 +18,15 @@ import {
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 type ImportStep = 'upload' | 'preview' | 'importing' | 'complete';
+
+interface WorkspaceCategory {
+  id: string;
+  name: string;
+  type?: string;
+}
 
 interface ParsedRow {
   [key: string]: string;
@@ -101,6 +107,45 @@ export default function CsvImportPage() {
   } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [predictingCategories, setPredictingCategories] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<WorkspaceCategory[]>([]);
+
+  // Fetch available categories when workspace changes
+  useEffect(() => {
+    if (!workspaceId) return;
+
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`/api/categories?workspaceId=${workspaceId}&pageSize=100`);
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableCategories(data.categories || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+
+    fetchCategories();
+  }, [workspaceId]);
+
+  // Handler to change a transaction's category
+  const handleCategoryChange = (txId: string, categoryId: string) => {
+    const category = availableCategories.find((c) => c.id === categoryId);
+    if (!category) return;
+
+    setTransactions((prev) =>
+      prev.map((tx) =>
+        tx.id === txId
+          ? {
+              ...tx,
+              predictedCategoryId: categoryId,
+              predictedCategoryName: category.name,
+              predictedConfidence: 100, // User selected = 100% confidence
+            }
+          : tx
+      )
+    );
+  };
 
   const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
     const lines = text.split(/\r?\n/).filter((line) => line.trim());
@@ -544,18 +589,38 @@ export default function CsvImportPage() {
   };
 
   const parseAmount = (value: string, direction?: string): number => {
-    let cleaned = value.replace(/[^\d.,-]/g, '');
-    const hasNegativeSign = value.trim().startsWith('-');
-    cleaned = cleaned.replace(/^-/, '');
+    const hasNegativeSign = value.trim().startsWith('-') || value.includes('−'); // Handle both - and −
 
-    if (
-      cleaned.includes(',') &&
-      cleaned.includes('.') &&
-      cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')
-    ) {
-      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-    } else if (cleaned.includes(',') && !cleaned.includes('.')) {
-      cleaned = cleaned.replace(',', '.');
+    // Detect European format: "1 234,56" or "1.234,56" (comma as decimal)
+    // vs American format: "1,234.56" (dot as decimal)
+    const commaPos = value.lastIndexOf(',');
+    const dotPos = value.lastIndexOf('.');
+
+    let cleaned = value;
+
+    if (commaPos > dotPos && commaPos !== -1) {
+      // European format: comma is decimal separator
+      // Remove everything except digits and the last comma, then convert comma to dot
+      const parts = value.split(',');
+      const integerPart = parts[0].replace(/[^\d]/g, ''); // Remove all non-digits from integer part
+      const decimalPart = parts[1]?.replace(/[^\d]/g, '') || '00';
+      cleaned = `${integerPart}.${decimalPart}`;
+    } else if (dotPos > commaPos && dotPos !== -1) {
+      // American format: dot is decimal separator
+      const parts = value.split('.');
+      const integerPart = parts[0].replace(/[^\d]/g, '');
+      const decimalPart = parts[1]?.replace(/[^\d]/g, '') || '00';
+      cleaned = `${integerPart}.${decimalPart}`;
+    } else if (commaPos !== -1) {
+      // Only comma, treat as decimal
+      const parts = value.split(',');
+      const integerPart = parts[0].replace(/[^\d]/g, '');
+      const decimalPart = parts[1]?.replace(/[^\d]/g, '') || '00';
+      cleaned = `${integerPart}.${decimalPart}`;
+    } else {
+      // No comma or dot - just digits (or spaces as thousands separator)
+      cleaned = value.replace(/[^\d]/g, '');
+      // If it looks like cents (more than 2 digits and no decimal was present), assume whole number
     }
 
     let amount = parseFloat(cleaned) || 0;
@@ -880,6 +945,7 @@ export default function CsvImportPage() {
       amount: tx.amount,
       balance: tx.balance,
       reference: tx.reference,
+      categoryId: tx.predictedCategoryId, // Include selected/predicted category
     }));
 
     const BATCH_SIZE = 500;
@@ -1213,18 +1279,39 @@ export default function CsvImportPage() {
                         })}
                       </td>
                       <td className="px-4 py-2">
-                        {tx.predictedCategoryName ? (
+                        {availableCategories.length > 0 ? (
+                          <div className="flex items-center gap-1.5">
+                            <select
+                              value={tx.predictedCategoryId || ''}
+                              onChange={(e) => handleCategoryChange(tx.id, e.target.value)}
+                              className={cn(
+                                'rounded-md border px-2 py-1 text-xs max-w-[160px]',
+                                tx.predictedCategoryId
+                                  ? 'border-primary/30 bg-primary/5 text-primary'
+                                  : 'border-border bg-background text-muted-foreground'
+                              )}
+                            >
+                              <option value="">Select category...</option>
+                              {availableCategories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </option>
+                              ))}
+                            </select>
+                            {tx.predictedConfidence !== undefined &&
+                              tx.predictedConfidence < 100 && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {Math.round(tx.predictedConfidence)}%
+                                </span>
+                              )}
+                          </div>
+                        ) : predictingCategories ? (
+                          <span className="text-xs text-muted-foreground">...</span>
+                        ) : tx.predictedCategoryName ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                             <Tag className="h-3 w-3" />
                             {tx.predictedCategoryName}
-                            {tx.predictedConfidence !== undefined && (
-                              <span className="text-primary/60">
-                                {Math.round(tx.predictedConfidence)}%
-                              </span>
-                            )}
                           </span>
-                        ) : predictingCategories ? (
-                          <span className="text-xs text-muted-foreground">...</span>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
