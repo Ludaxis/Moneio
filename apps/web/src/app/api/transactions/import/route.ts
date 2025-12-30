@@ -130,24 +130,24 @@ export async function POST(request: Request) {
     });
     const existingHashes = new Set(existing.map((e) => e.txHash));
 
-    const createPayload = prepared
-      .filter((tx) => !existingHashes.has(tx.txHash))
-      .map((tx) => ({
-        workspaceId,
-        bankAccountId: bankAccount.id,
-        txHash: tx.txHash,
-        postedAt: tx.postedAt,
-        description: tx.description || null,
-        amount: tx.amount,
-        currency: bankAccount.currency,
-        balance: tx.balance ?? null,
-        categoryId: tx.categoryId ?? null, // Include pre-assigned category
-        rawData: {
-          imported: true,
-          fileName,
-          reference: tx.reference,
-        },
-      }));
+    // Separate transactions to create and their category assignments
+    const toCreate = prepared.filter((tx) => !existingHashes.has(tx.txHash));
+
+    const createPayload = toCreate.map((tx) => ({
+      workspaceId,
+      bankAccountId: bankAccount.id,
+      txHash: tx.txHash,
+      postedAt: tx.postedAt,
+      description: tx.description || null,
+      amount: tx.amount,
+      currency: bankAccount.currency,
+      balance: tx.balance ?? null,
+      rawData: {
+        imported: true,
+        fileName,
+        reference: tx.reference,
+      },
+    }));
 
     if (createPayload.length > 0) {
       const result = await prisma.bankTransaction.createMany({
@@ -155,6 +155,42 @@ export async function POST(request: Request) {
         skipDuplicates: true, // extra safety if a concurrent import races
       });
       imported = result.count;
+
+      // Create categorization records for transactions with pre-assigned categories
+      const txsWithCategories = toCreate.filter((tx) => tx.categoryId);
+      if (txsWithCategories.length > 0) {
+        // Get the created transaction IDs by their hashes
+        const createdTxs = await prisma.bankTransaction.findMany({
+          where: {
+            workspaceId,
+            txHash: { in: txsWithCategories.map((tx) => tx.txHash) },
+          },
+          select: { id: true, txHash: true },
+        });
+
+        const hashToId = new Map(createdTxs.map((tx) => [tx.txHash, tx.id]));
+
+        // Create categorization records
+        const categorizationPayload = txsWithCategories
+          .filter((tx) => hashToId.has(tx.txHash) && tx.categoryId)
+          .map((tx) => ({
+            workspaceId,
+            transactionId: hashToId.get(tx.txHash)!,
+            categoryId: tx.categoryId!,
+            confidence: 1.0, // User-selected during import
+            source: 'manual',
+            approved: true,
+            approvedAt: new Date(),
+            approvedBy: user.id,
+          }));
+
+        if (categorizationPayload.length > 0) {
+          await prisma.transactionCategorization.createMany({
+            data: categorizationPayload,
+            skipDuplicates: true,
+          });
+        }
+      }
     }
 
     skipped = transactions.length - imported;
