@@ -17,6 +17,10 @@ import {
   getRecurringSummary,
   calculateRunway,
   getRunwayDescription,
+  trackSubscriptions,
+  getSubscriptionSummary,
+  detectMoneyLeaks,
+  getMoneyLeaksSummary,
   type MonthlySummary,
 } from '@moneio/domain';
 import { NextResponse } from 'next/server';
@@ -479,6 +483,381 @@ function createDataProvider(workspaceId: string, baseCurrency: string): Financia
         .sort((a, b) => b.amount - a.amount);
 
       return { categories, currency: baseCurrency };
+    },
+
+    // New AI-first methods
+
+    async getSubscriptionAnalysis(_workspaceId: string) {
+      // Get 12 months of transactions for subscription detection
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - 12);
+
+      const transactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          postedAt: { gte: cutoffDate },
+          amount: { lt: 0 },
+        },
+        select: {
+          id: true,
+          postedAt: true,
+          description: true,
+          amount: true,
+          currency: true,
+          categorizations: {
+            where: { approved: true },
+            take: 1,
+            include: { category: { select: { id: true, name: true } } },
+          },
+        },
+        orderBy: { postedAt: 'desc' },
+      });
+
+      const inputTransactions = transactions.map((tx) => ({
+        id: tx.id,
+        postedAt: tx.postedAt,
+        description: tx.description,
+        amount: tx.amount.toNumber(),
+        currency: tx.currency,
+        categorizations: tx.categorizations.map((c) => ({
+          category: c.category ? { id: c.category.id, name: c.category.name } : null,
+        })),
+      }));
+
+      // First detect recurring patterns, then track as subscriptions
+      const patterns = detectRecurringPatterns(inputTransactions, {
+        minOccurrences: 2,
+        minConfidence: 0.5,
+      });
+      const subscriptions = trackSubscriptions(patterns);
+      const summary = getSubscriptionSummary(subscriptions);
+
+      return {
+        subscriptions: subscriptions.map((sub) => ({
+          name: sub.merchantName,
+          amount: sub.amount,
+          frequency: sub.frequency,
+          monthlyEquivalent: sub.monthlyEquivalent,
+          status: sub.status,
+          flags: sub.flags.map((f) => f.type),
+        })),
+        totalMonthly: summary.totalMonthly,
+        totalAnnual: summary.totalAnnual,
+        flaggedCount: summary.flaggedCount,
+        currency: baseCurrency,
+      };
+    },
+
+    async getMoneyLeaks(_workspaceId: string) {
+      // Get 12 months of transactions
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - 12);
+
+      const transactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          postedAt: { gte: cutoffDate },
+        },
+        select: {
+          id: true,
+          postedAt: true,
+          description: true,
+          amount: true,
+          currency: true,
+          categorizations: {
+            where: { approved: true },
+            take: 1,
+            include: { category: { select: { id: true, name: true } } },
+          },
+        },
+        orderBy: { postedAt: 'desc' },
+      });
+
+      const inputTransactions = transactions.map((tx) => ({
+        id: tx.id,
+        postedAt: tx.postedAt,
+        description: tx.description,
+        amount: tx.amount.toNumber(),
+        currency: tx.currency,
+        categorizations: tx.categorizations.map((c) => ({
+          category: c.category ? { id: c.category.id, name: c.category.name } : null,
+        })),
+      }));
+
+      // Detect recurring patterns for expense transactions, then track as subscriptions
+      const expenseTransactions = inputTransactions.filter((tx) => tx.amount < 0);
+      const patterns = detectRecurringPatterns(expenseTransactions, {
+        minOccurrences: 2,
+        minConfidence: 0.5,
+      });
+      const subscriptions = trackSubscriptions(patterns);
+      const leaks = detectMoneyLeaks(inputTransactions, subscriptions);
+      const summary = getMoneyLeaksSummary(leaks);
+
+      return {
+        leaks: leaks.map((leak) => ({
+          type: leak.type,
+          title: leak.title,
+          description: leak.description,
+          annualImpact: leak.annualImpact,
+          recommendation: leak.recommendation,
+        })),
+        totalPotentialSavings: summary.totalPotentialSavings,
+        currency: baseCurrency,
+      };
+    },
+
+    async getSavingsOpportunities(_workspaceId: string) {
+      // Get money leaks and convert to savings opportunities
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - 12);
+
+      const transactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          postedAt: { gte: cutoffDate },
+        },
+        select: {
+          id: true,
+          postedAt: true,
+          description: true,
+          amount: true,
+          currency: true,
+          categorizations: {
+            where: { approved: true },
+            take: 1,
+            include: { category: { select: { id: true, name: true } } },
+          },
+        },
+        orderBy: { postedAt: 'desc' },
+      });
+
+      const inputTransactions = transactions.map((tx) => ({
+        id: tx.id,
+        postedAt: tx.postedAt,
+        description: tx.description,
+        amount: tx.amount.toNumber(),
+        currency: tx.currency,
+        categorizations: tx.categorizations.map((c) => ({
+          category: c.category ? { id: c.category.id, name: c.category.name } : null,
+        })),
+      }));
+
+      // Detect recurring patterns for expense transactions, then track as subscriptions
+      const expenseTransactions = inputTransactions.filter((tx) => tx.amount < 0);
+      const patterns = detectRecurringPatterns(expenseTransactions, {
+        minOccurrences: 2,
+        minConfidence: 0.5,
+      });
+      const subscriptions = trackSubscriptions(patterns);
+      const leaks = detectMoneyLeaks(inputTransactions, subscriptions);
+
+      const opportunities = leaks.map((leak) => ({
+        title: leak.title,
+        description: leak.description,
+        potentialSavings: leak.annualImpact,
+        actionable: leak.actionable,
+      }));
+
+      return {
+        opportunities,
+        totalPotentialSavings: leaks.reduce((sum, l) => sum + l.annualImpact, 0),
+        currency: baseCurrency,
+      };
+    },
+
+    async getExpenseComparison(_workspaceId: string, startDate: Date, endDate: Date) {
+      // Get current period expenses
+      const currentTransactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          postedAt: { gte: startDate, lte: endDate },
+          amount: { lt: 0 },
+        },
+        select: { amount: true },
+      });
+
+      const currentTotal = currentTransactions.reduce(
+        (sum, tx) => sum + Math.abs(tx.amount.toNumber()),
+        0
+      );
+
+      // Calculate previous period (same duration, immediately before)
+      const duration = endDate.getTime() - startDate.getTime();
+      const previousStart = new Date(startDate.getTime() - duration);
+      const previousEnd = new Date(startDate.getTime() - 1);
+
+      const previousTransactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          postedAt: { gte: previousStart, lte: previousEnd },
+          amount: { lt: 0 },
+        },
+        select: { amount: true },
+      });
+
+      const previousTotal = previousTransactions.reduce(
+        (sum, tx) => sum + Math.abs(tx.amount.toNumber()),
+        0
+      );
+
+      const change = currentTotal - previousTotal;
+      const changePercent = previousTotal > 0 ? (change / previousTotal) * 100 : 0;
+      const trend = changePercent > 5 ? 'up' : changePercent < -5 ? 'down' : 'stable';
+
+      return {
+        currentPeriod: {
+          total: currentTotal,
+          periodLabel: 'Current period',
+        },
+        previousPeriod: {
+          total: previousTotal,
+          periodLabel: 'Previous period',
+        },
+        change,
+        changePercent,
+        trend,
+        anomalies: [], // TODO: Add anomaly detection
+        currency: baseCurrency,
+      };
+    },
+
+    async getVendorAnalysis(
+      _workspaceId: string,
+      merchant: string,
+      _startDate: Date,
+      _endDate: Date
+    ) {
+      // Get all transactions for this merchant
+      const transactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          description: { contains: merchant, mode: 'insensitive' },
+        },
+        include: {
+          categorizations: {
+            where: { approved: true },
+            take: 1,
+            include: { category: { select: { name: true } } },
+          },
+        },
+        orderBy: { postedAt: 'desc' },
+      });
+
+      if (transactions.length === 0) {
+        return {
+          merchant,
+          totalSpent: 0,
+          transactionCount: 0,
+          averageTransaction: 0,
+          firstTransaction: 'N/A',
+          lastTransaction: 'N/A',
+          frequency: 'none',
+          isRecurring: false,
+          currency: baseCurrency,
+        };
+      }
+
+      const amounts = transactions.map((tx) => Math.abs(tx.amount.toNumber()));
+      const totalSpent = amounts.reduce((sum, a) => sum + a, 0);
+      const averageTransaction = totalSpent / transactions.length;
+
+      // Detect if recurring
+      const inputTransactions = transactions.map((tx) => ({
+        id: tx.id,
+        postedAt: tx.postedAt,
+        description: tx.description,
+        amount: tx.amount.toNumber(),
+        currency: tx.currency,
+      }));
+
+      const patterns = detectRecurringPatterns(inputTransactions, {
+        minOccurrences: 2,
+        minConfidence: 0.5,
+      });
+
+      const matchingPattern = patterns.find(
+        (p) => p.merchantName.toLowerCase().includes(merchant.toLowerCase())
+      );
+
+      return {
+        merchant,
+        totalSpent,
+        transactionCount: transactions.length,
+        averageTransaction,
+        firstTransaction: transactions[transactions.length - 1].postedAt
+          .toISOString()
+          .split('T')[0],
+        lastTransaction: transactions[0].postedAt.toISOString().split('T')[0],
+        frequency: matchingPattern?.frequency || 'irregular',
+        isRecurring: !!matchingPattern,
+        category: transactions[0].categorizations[0]?.category?.name,
+        currency: baseCurrency,
+      };
+    },
+
+    async getInvoiceStatus(_workspaceId: string) {
+      const invoices = await prisma.invoice.findMany({
+        where: { workspaceId },
+        select: {
+          id: true,
+          invoiceNumber: true,
+          total: true,
+          status: true,
+          dueDate: true,
+          updatedAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const now = new Date();
+      const paid = invoices.filter((i) => i.status === 'paid');
+      const pending = invoices.filter((i) => i.status === 'pending');
+      const overdue = invoices.filter(
+        (i) => i.status === 'pending' && i.dueDate && i.dueDate < now
+      );
+
+      const totalOutstanding = [...pending].reduce(
+        (sum, i) => sum + i.total.toNumber(),
+        0
+      );
+      const totalOverdue = overdue.reduce((sum, i) => sum + i.total.toNumber(), 0);
+
+      // Find oldest overdue
+      let oldestOverdue;
+      if (overdue.length > 0) {
+        const oldest = overdue.reduce((a, b) =>
+          (a.dueDate?.getTime() || 0) < (b.dueDate?.getTime() || 0) ? a : b
+        );
+        oldestOverdue = {
+          number: oldest.invoiceNumber || oldest.id.substring(0, 8),
+          daysOverdue: oldest.dueDate
+            ? Math.floor((now.getTime() - oldest.dueDate.getTime()) / (1000 * 60 * 60 * 24))
+            : 0,
+          amount: oldest.total.toNumber(),
+        };
+      }
+
+      // Recent payments (use updatedAt as proxy for paid date)
+      const recentPayments = paid.slice(0, 5).map((inv) => ({
+        number: inv.invoiceNumber || inv.id.substring(0, 8),
+        amount: inv.total.toNumber(),
+        paidDate: inv.updatedAt?.toISOString().split('T')[0] || 'N/A',
+      }));
+
+      return {
+        overview: {
+          total: invoices.length,
+          paid: paid.length,
+          pending: pending.length,
+          overdue: overdue.length,
+        },
+        totalOutstanding,
+        totalOverdue,
+        oldestOverdue,
+        recentPayments,
+        currency: baseCurrency,
+      };
     },
   };
 }

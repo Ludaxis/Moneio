@@ -81,6 +81,28 @@ export interface FinancialDataProvider {
     startDate: Date,
     endDate: Date
   ): Promise<{ categories: CategoryBreakdown[]; currency: string }>;
+
+  // New AI-first methods
+  getSubscriptionAnalysis(workspaceId: string): Promise<SubscriptionAnalysisData>;
+
+  getMoneyLeaks(workspaceId: string): Promise<MoneyLeaksData>;
+
+  getSavingsOpportunities(workspaceId: string): Promise<SavingsData>;
+
+  getExpenseComparison(
+    workspaceId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<ExpenseComparisonData>;
+
+  getVendorAnalysis(
+    workspaceId: string,
+    merchant: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<VendorAnalysisData>;
+
+  getInvoiceStatus(workspaceId: string): Promise<InvoiceStatusData>;
 }
 
 interface CategoryBreakdown {
@@ -124,6 +146,82 @@ interface PendingInvoice {
   amount: number;
   dueDate: string;
   daysOverdue?: number;
+}
+
+// New AI-first data types
+interface SubscriptionAnalysisData {
+  subscriptions: Array<{
+    name: string;
+    amount: number;
+    frequency: string;
+    monthlyEquivalent: number;
+    status: string;
+    flags: string[];
+  }>;
+  totalMonthly: number;
+  totalAnnual: number;
+  flaggedCount: number;
+  currency: string;
+}
+
+interface MoneyLeaksData {
+  leaks: Array<{
+    type: string;
+    title: string;
+    description: string;
+    annualImpact: number;
+    recommendation: string;
+  }>;
+  totalPotentialSavings: number;
+  currency: string;
+}
+
+interface SavingsData {
+  opportunities: Array<{
+    title: string;
+    description: string;
+    potentialSavings: number;
+    actionable: boolean;
+  }>;
+  totalPotentialSavings: number;
+  currency: string;
+}
+
+interface ExpenseComparisonData {
+  currentPeriod: { total: number; periodLabel: string };
+  previousPeriod: { total: number; periodLabel: string };
+  change: number;
+  changePercent: number;
+  trend: 'up' | 'down' | 'stable';
+  anomalies: Array<{ category: string; deviation: number; description: string }>;
+  currency: string;
+}
+
+interface VendorAnalysisData {
+  merchant: string;
+  totalSpent: number;
+  transactionCount: number;
+  averageTransaction: number;
+  firstTransaction: string;
+  lastTransaction: string;
+  frequency: string;
+  isRecurring: boolean;
+  category?: string;
+  currency: string;
+}
+
+interface InvoiceStatusData {
+  overview: {
+    total: number;
+    paid: number;
+    pending: number;
+    overdue: number;
+  };
+  totalOutstanding: number;
+  totalOverdue: number;
+  oldestOverdue?: { number: string; daysOverdue: number; amount: number };
+  recentPayments: Array<{ number: string; amount: number; paidDate: string }>;
+  currency: string;
 }
 
 /**
@@ -288,6 +386,89 @@ export class FinancialChatService {
             ),
           };
 
+        // New AI-first query handlers
+        case 'subscription_analysis':
+          return {
+            success: true,
+            data: await this.dataProvider.getSubscriptionAnalysis(context.workspaceId),
+          };
+
+        case 'money_leaks':
+          return {
+            success: true,
+            data: await this.dataProvider.getMoneyLeaks(context.workspaceId),
+          };
+
+        case 'savings_opportunities':
+          return {
+            success: true,
+            data: await this.dataProvider.getSavingsOpportunities(context.workspaceId),
+          };
+
+        case 'expense_comparison':
+          return {
+            success: true,
+            data: await this.dataProvider.getExpenseComparison(
+              context.workspaceId,
+              startDate,
+              endDate
+            ),
+          };
+
+        case 'vendor_analysis':
+          if (!parsed.merchant) {
+            return { success: false, error: 'Could not identify vendor name' };
+          }
+          return {
+            success: true,
+            data: await this.dataProvider.getVendorAnalysis(
+              context.workspaceId,
+              parsed.merchant,
+              startDate,
+              endDate
+            ),
+          };
+
+        case 'tax_deductions':
+          // Placeholder - will be implemented in Phase 3
+          return {
+            success: true,
+            data: {
+              message: 'Tax deduction tracking is coming soon! For now, I can help you categorize business expenses.',
+              suggestion: 'Show my category breakdown',
+            },
+          };
+
+        case 'invoice_status':
+          return {
+            success: true,
+            data: await this.dataProvider.getInvoiceStatus(context.workspaceId),
+          };
+
+        case 'budget_check':
+          // Placeholder - will require budget feature
+          return {
+            success: true,
+            data: {
+              message: 'Budget tracking is coming soon! For now, I can show you your spending patterns.',
+              suggestion: 'Show my spending this month',
+            },
+          };
+
+        case 'financial_advice':
+          // Combine multiple insights for advice
+          return {
+            success: true,
+            data: {
+              type: 'advice',
+              suggestions: [
+                'Review your subscriptions for potential savings',
+                'Check for money leaks',
+                'Review your runway',
+              ],
+            },
+          };
+
         case 'unknown':
         default:
           return {
@@ -368,6 +549,34 @@ export class FinancialChatService {
 
       case 'category_breakdown':
         return this.formatCategoryBreakdown(data, period);
+
+      // New AI-first query formatters
+      case 'subscription_analysis':
+        return this.formatSubscriptionAnalysis(data);
+
+      case 'money_leaks':
+        return this.formatMoneyLeaks(data);
+
+      case 'savings_opportunities':
+        return this.formatSavingsOpportunities(data);
+
+      case 'expense_comparison':
+        return this.formatExpenseComparison(data);
+
+      case 'vendor_analysis':
+        return this.formatVendorAnalysis(parsed.merchant!, data);
+
+      case 'tax_deductions':
+        return this.formatPlaceholder(data, 'Tax Deductions');
+
+      case 'invoice_status':
+        return this.formatInvoiceStatus(data);
+
+      case 'budget_check':
+        return this.formatPlaceholder(data, 'Budget Status');
+
+      case 'financial_advice':
+        return this.formatFinancialAdvice(data);
 
       default:
         return "I found some data but I'm not sure how to present it. Can you rephrase your question?";
@@ -584,6 +793,184 @@ export class FinancialChatService {
     }).format(amount);
   }
 
+  // New AI-first formatters
+  private formatSubscriptionAnalysis(data: Record<string, unknown>): string {
+    const subscriptionData = data as unknown as SubscriptionAnalysisData;
+    const { subscriptions, totalMonthly, totalAnnual, flaggedCount, currency } = subscriptionData;
+
+    if (!subscriptions || subscriptions.length === 0) {
+      return "I haven't detected any subscriptions yet. Import more transactions to enable subscription tracking.";
+    }
+
+    let response = `**Subscription Analysis**\n\n`;
+    response += `- Total: **${this.formatCurrency(totalMonthly, currency)}/month** (${this.formatCurrency(totalAnnual, currency)}/year)\n`;
+    response += `- Active subscriptions: ${subscriptions.length}\n`;
+
+    if (flaggedCount > 0) {
+      response += `- ⚠️ **${flaggedCount} subscriptions need attention**\n`;
+    }
+
+    response += `\n**Your Subscriptions:**\n`;
+    subscriptions.slice(0, 8).forEach((sub) => {
+      response += `- ${sub.name}: ${this.formatCurrency(sub.monthlyEquivalent, currency)}/month (${sub.frequency})`;
+      if (sub.flags.length > 0) {
+        response += ` ⚠️`;
+      }
+      response += `\n`;
+    });
+
+    if (subscriptions.length > 8) {
+      response += `\n...and ${subscriptions.length - 8} more`;
+    }
+
+    return response;
+  }
+
+  private formatMoneyLeaks(data: Record<string, unknown>): string {
+    const leaksData = data as unknown as MoneyLeaksData;
+    const { leaks, totalPotentialSavings, currency } = leaksData;
+
+    if (!leaks || leaks.length === 0) {
+      return "**Great news!** I haven't detected any money leaks. Your finances look healthy!";
+    }
+
+    let response = `**Money Leaks Detected**\n\n`;
+    response += `Found **${leaks.length} issue${leaks.length > 1 ? 's' : ''}** with potential savings of **${this.formatCurrency(totalPotentialSavings, currency)}/year**\n\n`;
+
+    leaks.slice(0, 5).forEach((leak, i) => {
+      response += `${i + 1}. **${leak.title}**\n`;
+      response += `   ${leak.description}\n`;
+      response += `   💡 ${leak.recommendation}\n\n`;
+    });
+
+    if (leaks.length > 5) {
+      response += `\n...and ${leaks.length - 5} more issues to review`;
+    }
+
+    return response;
+  }
+
+  private formatSavingsOpportunities(data: Record<string, unknown>): string {
+    const savingsData = data as unknown as SavingsData;
+    const { opportunities, totalPotentialSavings, currency } = savingsData;
+
+    if (!opportunities || opportunities.length === 0) {
+      return "I don't see any immediate savings opportunities. Your spending looks optimized!";
+    }
+
+    let response = `**Savings Opportunities**\n\n`;
+    response += `Total potential savings: **${this.formatCurrency(totalPotentialSavings, currency)}/year**\n\n`;
+
+    opportunities.forEach((opp, i) => {
+      response += `${i + 1}. **${opp.title}**\n`;
+      response += `   ${opp.description}\n`;
+      if (opp.potentialSavings > 0) {
+        response += `   Potential savings: ${this.formatCurrency(opp.potentialSavings, currency)}\n`;
+      }
+      response += `\n`;
+    });
+
+    return response;
+  }
+
+  private formatExpenseComparison(data: Record<string, unknown>): string {
+    const comparisonData = data as unknown as ExpenseComparisonData;
+    const { currentPeriod, previousPeriod, change, changePercent, trend, anomalies, currency } =
+      comparisonData;
+
+    let response = `**Expense Comparison**\n\n`;
+    response += `- ${currentPeriod.periodLabel}: ${this.formatCurrency(currentPeriod.total, currency)}\n`;
+    response += `- ${previousPeriod.periodLabel}: ${this.formatCurrency(previousPeriod.total, currency)}\n\n`;
+
+    const trendEmoji = trend === 'up' ? '📈' : trend === 'down' ? '📉' : '➡️';
+    const changeDirection = change >= 0 ? 'more' : 'less';
+    response += `${trendEmoji} You spent **${this.formatCurrency(Math.abs(change), currency)} ${changeDirection}** (${Math.abs(changePercent).toFixed(1)}%)\n`;
+
+    if (anomalies && anomalies.length > 0) {
+      response += `\n**Unusual Activity:**\n`;
+      anomalies.forEach((a) => {
+        response += `- ${a.category}: ${a.description}\n`;
+      });
+    }
+
+    return response;
+  }
+
+  private formatVendorAnalysis(merchant: string, data: Record<string, unknown>): string {
+    const vendorData = data as unknown as VendorAnalysisData;
+    const { totalSpent, transactionCount, averageTransaction, firstTransaction, lastTransaction, frequency, isRecurring, category, currency } = vendorData;
+
+    let response = `**${merchant} Analysis**\n\n`;
+    response += `- Total spent: **${this.formatCurrency(totalSpent, currency)}**\n`;
+    response += `- Transactions: ${transactionCount}\n`;
+    response += `- Average: ${this.formatCurrency(averageTransaction, currency)}\n`;
+    response += `- First transaction: ${firstTransaction}\n`;
+    response += `- Last transaction: ${lastTransaction}\n`;
+
+    if (isRecurring) {
+      response += `\n🔄 This appears to be a **${frequency}** recurring payment`;
+    }
+
+    if (category) {
+      response += `\n📁 Category: ${category}`;
+    }
+
+    return response;
+  }
+
+  private formatInvoiceStatus(data: Record<string, unknown>): string {
+    const statusData = data as unknown as InvoiceStatusData;
+    const { overview, totalOutstanding, totalOverdue, oldestOverdue, currency } = statusData;
+
+    let response = `**Invoice Status**\n\n`;
+    response += `- Total invoices: ${overview.total}\n`;
+    response += `- Paid: ${overview.paid} ✅\n`;
+    response += `- Pending: ${overview.pending}\n`;
+    response += `- Overdue: ${overview.overdue} ⚠️\n\n`;
+
+    response += `Outstanding: **${this.formatCurrency(totalOutstanding, currency)}**\n`;
+
+    if (totalOverdue > 0) {
+      response += `Overdue: **${this.formatCurrency(totalOverdue, currency)}**\n`;
+    }
+
+    if (oldestOverdue) {
+      response += `\n⚠️ Oldest overdue: Invoice ${oldestOverdue.number} (${oldestOverdue.daysOverdue} days) - ${this.formatCurrency(oldestOverdue.amount, currency)}`;
+    }
+
+    return response;
+  }
+
+  private formatPlaceholder(data: Record<string, unknown>, feature: string): string {
+    const message = data.message as string;
+    const suggestion = data.suggestion as string;
+
+    let response = `**${feature}**\n\n`;
+    response += message || `This feature is coming soon!`;
+
+    if (suggestion) {
+      response += `\n\nIn the meantime, try: "${suggestion}"`;
+    }
+
+    return response;
+  }
+
+  private formatFinancialAdvice(data: Record<string, unknown>): string {
+    const suggestions = data.suggestions as string[];
+
+    let response = `**Here are some suggestions to improve your finances:**\n\n`;
+
+    if (suggestions && suggestions.length > 0) {
+      suggestions.forEach((s, i) => {
+        response += `${i + 1}. ${s}\n`;
+      });
+    }
+
+    response += `\nWould you like me to elaborate on any of these?`;
+
+    return response;
+  }
+
   /**
    * Get follow-up suggestions based on query type
    */
@@ -623,6 +1010,52 @@ export class FinancialChatService {
         'What are my biggest expenses?',
         'Show recurring expenses',
         'Am I profitable?',
+      ],
+      // New AI-first query suggestions
+      subscription_analysis: [
+        'Where is my money leaking?',
+        'How can I save money?',
+        'Show my recurring expenses',
+      ],
+      money_leaks: [
+        'What subscriptions am I paying for?',
+        'How can I save money?',
+        'Show my biggest expenses',
+      ],
+      savings_opportunities: [
+        'Where is my money leaking?',
+        'What subscriptions do I have?',
+        'Am I profitable?',
+      ],
+      expense_comparison: [
+        'Where is my money going?',
+        'Show my biggest expenses',
+        'What are my recurring expenses?',
+      ],
+      vendor_analysis: [
+        'What are my recurring expenses?',
+        'Where is my money going?',
+        'Show category breakdown',
+      ],
+      tax_deductions: [
+        'Show category breakdown',
+        'What are my biggest expenses?',
+        'How much did I spend on business?',
+      ],
+      invoice_status: [
+        'What is my income?',
+        'What are my pending invoices?',
+        'Am I profitable?',
+      ],
+      budget_check: [
+        'How much did I spend this month?',
+        'Am I spending more than usual?',
+        'Where is my money going?',
+      ],
+      financial_advice: [
+        'Where is my money leaking?',
+        'What subscriptions do I have?',
+        'What is my runway?',
       ],
       unknown: [
         'How much did I spend this month?',

@@ -4,4 +4,5 @@ export * from './extraction/index';
 export * from './categorization/index';
 export * from './chat/index';
 export * from './csv/index';
+export * from './recommendations/index';
 export * from './types';

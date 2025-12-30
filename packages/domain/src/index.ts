@@ -5,3 +5,5 @@ export * from './financial/index';
 export * from './categorization/index';
 export * from './transactions/index';
 export * from './analytics/index';
+export * from './subscriptions/index';
+export * from './insights/index';

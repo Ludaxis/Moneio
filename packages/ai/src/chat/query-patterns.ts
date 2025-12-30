@@ -20,6 +20,16 @@ export type QueryType =
   | 'profitable'
   | 'pending_invoices'
   | 'category_breakdown'
+  // New AI-first query types
+  | 'subscription_analysis'
+  | 'money_leaks'
+  | 'savings_opportunities'
+  | 'expense_comparison'
+  | 'vendor_analysis'
+  | 'tax_deductions'
+  | 'invoice_status'
+  | 'budget_check'
+  | 'financial_advice'
   | 'unknown';
 
 /**
@@ -210,6 +220,116 @@ const QUERY_PATTERNS: QueryPattern[] = [
       /break\s*down (?:my )?(?:spending|expenses?)/i,
     ],
   },
+
+  // Subscription analysis
+  {
+    type: 'subscription_analysis',
+    patterns: [
+      /(?:what|show|list) (?:are )?(?:my )?subscriptions?/i,
+      /(?:how much|what) (?:am i|do i) (?:pay|paying|spend|spending) on subscriptions?/i,
+      /(?:analyze|review) (?:my )?subscriptions?/i,
+      /(?:subscription|recurring) (?:costs?|summary|overview)/i,
+      /(?:what|which) (?:services?|subscriptions?) (?:am i|do i) (?:pay|subscribe)/i,
+    ],
+  },
+
+  // Money leaks
+  {
+    type: 'money_leaks',
+    patterns: [
+      /(?:where|what|how) (?:is|am|are) (?:my )?money (?:leaking|wasting|going)/i,
+      /(?:find|detect|show) (?:my )?(?:money )?leaks?/i,
+      /(?:wasting|losing) money/i,
+      /(?:unnecessary|wasteful|duplicate) (?:charges?|expenses?|payments?)/i,
+      /(?:hidden|forgotten) (?:fees?|charges?|subscriptions?)/i,
+      /bank fees?/i,
+    ],
+  },
+
+  // Savings opportunities
+  {
+    type: 'savings_opportunities',
+    patterns: [
+      /(?:how|where) can i save (?:money)?/i,
+      /(?:ways?|tips?|suggestions?) to save/i,
+      /(?:reduce|cut|lower) (?:my )?(?:expenses?|spending|costs?)/i,
+      /(?:saving|savings) (?:opportunities|potential|suggestions?)/i,
+      /(?:optimize|improve) (?:my )?(?:spending|finances?)/i,
+    ],
+  },
+
+  // Expense comparison
+  {
+    type: 'expense_comparison',
+    patterns: [
+      /(?:am i|is) (?:spending|paying) more than (?:usual|normal|average)/i,
+      /(?:compare|comparison) (?:my )?(?:spending|expenses?)/i,
+      /spending (?:vs|versus|compared to) (?:last|previous)/i,
+      /(?:unusual|abnormal) (?:spending|expenses?)/i,
+      /(?:spending|expense) (?:trends?|patterns?)/i,
+    ],
+  },
+
+  // Vendor analysis
+  {
+    type: 'vendor_analysis',
+    patterns: [
+      /how much (?:have i|did i) (?:pay|paid|spend|spent) (?:to|at|on) (.+?)(?:\?|$| this| last| in| ever| all)/i,
+      /(?:total|all) (?:payments?|spending) (?:to|at|for) (.+)/i,
+      /(.+?) (?:history|payments?|spending|total)/i,
+      /(?:analyze|review) (?:my )?(?:spending|payments?) (?:to|at|for|on) (.+)/i,
+    ],
+    extractors: {
+      merchant: /(?:to|at|on|for) (.+?)(?:\?|$| this| last| in| ever| all)/i,
+    },
+  },
+
+  // Tax deductions
+  {
+    type: 'tax_deductions',
+    patterns: [
+      /(?:tax|taxable) (?:deductions?|deductible)/i,
+      /(?:what|which) (?:expenses?|purchases?) (?:are|is) (?:tax )?deductible/i,
+      /(?:business|work) expenses? (?:for taxes?)?/i,
+      /(?:prepare|help with) (?:my )?taxes?/i,
+      /(?:tax|taxes?) (?:summary|report|overview)/i,
+    ],
+  },
+
+  // Invoice status
+  {
+    type: 'invoice_status',
+    patterns: [
+      /(?:overdue|late|unpaid) invoices?/i,
+      /(?:invoice|invoices?) (?:status|summary)/i,
+      /(?:who|which (?:clients?|customers?)) (?:owes?|hasn't paid)/i,
+      /(?:outstanding|pending) (?:payments?|invoices?)/i,
+      /(?:when will|expected) (?:payments?|money) (?:come in|arrive)/i,
+    ],
+  },
+
+  // Budget check
+  {
+    type: 'budget_check',
+    patterns: [
+      /(?:am i|are we) (?:over|under|within) budget/i,
+      /(?:budget|spending limit) (?:status|check)/i,
+      /(?:how much|what) (?:budget|money) (?:is )?(?:left|remaining)/i,
+      /(?:spending|expense) (?:vs|versus|against) budget/i,
+    ],
+  },
+
+  // Financial advice
+  {
+    type: 'financial_advice',
+    patterns: [
+      /(?:should i|do you recommend)/i,
+      /(?:what|how) should i (?:do|handle)/i,
+      /(?:financial|money) (?:advice|tips?|suggestions?|recommendations?)/i,
+      /(?:improve|better manage) (?:my )?(?:finances?|money)/i,
+      /(?:financial|money) (?:health|status)/i,
+    ],
+  },
 ];
 
 /**
@@ -242,6 +362,11 @@ export function parseQuery(question: string): ParsedQuery {
 
         if (queryPattern.type === 'largest_expenses') {
           parsed.limit = extractLimit(normalizedQuestion) || 10;
+        }
+
+        // Handle vendor_analysis similarly to spending_by_merchant
+        if (queryPattern.type === 'vendor_analysis') {
+          parsed.merchant = extractMerchant(question, match);
         }
 
         return parsed;
