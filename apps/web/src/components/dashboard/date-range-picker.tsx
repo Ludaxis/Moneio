@@ -84,6 +84,18 @@ const presets: Record<
   },
 };
 
+// Calculate min date (1 year ago)
+function getMinDate(): string {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+// Calculate max date (today)
+function getMaxDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function getDefaultDateRange(): DateRange {
   const dates = presets['6m'].getDates();
   return { ...dates, label: presets['6m'].label };
@@ -91,13 +103,20 @@ export function getDefaultDateRange(): DateRange {
 
 export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
+  const [customStart, setCustomStart] = useState(value.startDate);
+  const [customEnd, setCustomEnd] = useState(value.endDate);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Check if current value is a preset
+  const isPreset = Object.values(presets).some((p) => p.label === value.label);
 
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpen(false);
+        setShowCustom(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -108,7 +127,34 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
     const preset = presets[key];
     const dates = preset.getDates();
     onChange({ ...dates, label: preset.label });
+    setShowCustom(false);
     setOpen(false);
+  };
+
+  const handleCustomClick = () => {
+    setShowCustom(true);
+    setCustomStart(value.startDate);
+    setCustomEnd(value.endDate);
+  };
+
+  const handleApplyCustom = () => {
+    if (customStart && customEnd && customStart <= customEnd) {
+      const startLabel = new Date(customStart).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+      const endLabel = new Date(customEnd).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+      onChange({
+        startDate: customStart,
+        endDate: customEnd,
+        label: `${startLabel} - ${endLabel}`,
+      });
+      setShowCustom(false);
+      setOpen(false);
+    }
   };
 
   return (
@@ -129,31 +175,102 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-border bg-popover shadow-lg">
-          <div className="p-1">
-            {(Object.keys(presets) as PresetKey[]).map((key) => {
-              const preset = presets[key];
-              const isSelected = value.label === preset.label;
-              return (
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-border bg-popover shadow-lg">
+          {!showCustom ? (
+            <div className="p-1">
+              {(Object.keys(presets) as PresetKey[]).map((key) => {
+                const preset = presets[key];
+                const isSelected = value.label === preset.label;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleSelect(key)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-md px-3 py-2 text-sm',
+                      'hover:bg-muted transition-colors',
+                      isSelected && 'bg-muted'
+                    )}
+                  >
+                    <span
+                      className={cn(isSelected ? 'font-medium text-foreground' : 'text-foreground')}
+                    >
+                      {preset.label}
+                    </span>
+                    {isSelected && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                );
+              })}
+              <div className="my-1 border-t border-border" />
+              <button
+                onClick={handleCustomClick}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-md px-3 py-2 text-sm',
+                  'hover:bg-muted transition-colors',
+                  !isPreset && 'bg-muted'
+                )}
+              >
+                <span className={cn(!isPreset ? 'font-medium text-foreground' : 'text-foreground')}>
+                  Custom range
+                </span>
+                {!isPreset && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            </div>
+          ) : (
+            <div className="p-3 space-y-3">
+              <div className="text-sm font-medium text-foreground">Custom Date Range</div>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-muted-foreground">Start Date</label>
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    min={getMinDate()}
+                    max={customEnd || getMaxDate()}
+                    className={cn(
+                      'w-full mt-1 px-3 py-2 rounded-md text-sm',
+                      'bg-muted border border-border',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/20'
+                    )}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">End Date</label>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    min={customStart || getMinDate()}
+                    max={getMaxDate()}
+                    className={cn(
+                      'w-full mt-1 px-3 py-2 rounded-md text-sm',
+                      'bg-muted border border-border',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/20'
+                    )}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
                 <button
-                  key={key}
-                  onClick={() => handleSelect(key)}
+                  onClick={() => setShowCustom(false)}
+                  className="flex-1 px-3 py-2 text-sm rounded-md border border-border hover:bg-muted transition-colors"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleApplyCustom}
+                  disabled={!customStart || !customEnd || customStart > customEnd}
                   className={cn(
-                    'flex w-full items-center justify-between rounded-md px-3 py-2 text-sm',
-                    'hover:bg-muted transition-colors',
-                    isSelected && 'bg-muted'
+                    'flex-1 px-3 py-2 text-sm rounded-md font-medium transition-colors',
+                    'bg-primary text-primary-foreground hover:bg-primary/90',
+                    'disabled:opacity-50 disabled:cursor-not-allowed'
                   )}
                 >
-                  <span
-                    className={cn(isSelected ? 'font-medium text-foreground' : 'text-foreground')}
-                  >
-                    {preset.label}
-                  </span>
-                  {isSelected && <Check className="h-4 w-4 text-primary" />}
+                  Apply
                 </button>
-              );
-            })}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

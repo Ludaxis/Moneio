@@ -53,9 +53,9 @@ export function OperatingExpensesChart({
 
       const result = await response.json();
 
-      // Get unique categories from breakdown
+      // Get unique categories from breakdown (filter by type='expense')
       const expenseCategories = (result.categoryBreakdown || [])
-        .filter((cat: { amount: number }) => cat.amount < 0)
+        .filter((cat: { type: string }) => cat.type === 'expense')
         .map((cat: { categoryName: string }) => cat.categoryName)
         .slice(0, 5);
 

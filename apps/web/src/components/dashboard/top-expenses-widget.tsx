@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 interface ExpenseCategory {
   categoryId: string;
   categoryName: string;
+  type: 'income' | 'expense';
   amount: number;
   percentage: number;
   transactionCount: number;
@@ -53,13 +54,9 @@ export function TopExpensesWidget({
 
       const data = await response.json();
 
-      // Filter and sort expense categories
+      // Filter and sort expense categories (filter by type='expense')
       const expenseCategories = (data.categoryBreakdown || [])
-        .filter((cat: ExpenseCategory) => cat.amount < 0)
-        .map((cat: ExpenseCategory) => ({
-          ...cat,
-          amount: Math.abs(cat.amount),
-        }))
+        .filter((cat: { type: string }) => cat.type === 'expense')
         .sort((a: ExpenseCategory, b: ExpenseCategory) => b.amount - a.amount)
         .slice(0, 5);
 

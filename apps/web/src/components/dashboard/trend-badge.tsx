@@ -66,7 +66,7 @@ export function TrendBadge({
         <span className="tabular-nums">
           {direction === 'stable'
             ? '0%'
-            : `${direction === 'up' ? '+' : '-'}${Math.abs(percentage)}%`}
+            : `${direction === 'up' ? '+' : '-'}${Math.min(Math.abs(percentage), 999).toFixed(1)}%`}
         </span>
       </div>
       {period && <span className="text-xs text-muted-foreground">{period}</span>}
