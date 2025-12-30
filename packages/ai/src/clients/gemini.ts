@@ -4,8 +4,10 @@ import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/ge
 import type { LlmClient } from '../extraction/invoice-extractor';
 import type { AiConfig, ModelInfo } from '../types';
 
-const DEFAULT_MODEL = 'gemini-3-pro-preview';
-const CHAT_MODEL = 'gemini-3-flash-preview';
+// Use stable GA models - preview models have inconsistent JSON support
+const DEFAULT_MODEL = 'gemini-2.0-flash';
+const FALLBACK_MODEL = 'gemini-1.5-flash';
+const CHAT_MODEL = 'gemini-2.0-flash';
 const DEFAULT_MAX_TOKENS = 4096;
 const DEFAULT_TEMPERATURE = 0.1;
 
@@ -43,12 +45,50 @@ export class GeminiClient implements LlmClient {
    * @returns The model's response text
    */
   async complete(prompt: string, _schema?: unknown): Promise<string> {
+    const systemPrompt =
+      'You are an expert document data extractor. Always respond with valid JSON only, no markdown or explanations.';
+
+    // Try with the configured model first, then fallback
+    const modelsToTry = [this.model, FALLBACK_MODEL].filter((m, i, arr) => arr.indexOf(m) === i);
+
+    let lastError: Error | null = null;
+
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`[Gemini] Trying model: ${modelName}`);
+        const result = await this.tryGenerate(modelName, systemPrompt, prompt, true);
+        if (result) return result;
+      } catch (error) {
+        console.warn(`[Gemini] Model ${modelName} with JSON mode failed:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Try without JSON mode as fallback
+        try {
+          console.log(`[Gemini] Retrying ${modelName} without JSON mode`);
+          const result = await this.tryGenerate(modelName, systemPrompt, prompt, false);
+          if (result) return result;
+        } catch (retryError) {
+          console.warn(`[Gemini] Model ${modelName} without JSON mode also failed:`, retryError);
+          lastError = retryError instanceof Error ? retryError : new Error(String(retryError));
+        }
+      }
+    }
+
+    throw lastError || new Error('All Gemini models failed');
+  }
+
+  private async tryGenerate(
+    modelName: string,
+    systemPrompt: string,
+    prompt: string,
+    useJsonMode: boolean
+  ): Promise<string | null> {
     const generativeModel = this.client.getGenerativeModel({
-      model: this.model,
+      model: modelName,
       generationConfig: {
         maxOutputTokens: this.maxTokens,
         temperature: this.temperature,
-        responseMimeType: 'application/json',
+        ...(useJsonMode ? { responseMimeType: 'application/json' } : {}),
       },
       safetySettings: [
         {
@@ -70,60 +110,35 @@ export class GeminiClient implements LlmClient {
       ],
     });
 
-    const systemPrompt =
-      'You are an expert document data extractor. Always respond with valid JSON only, no markdown or explanations.';
-
-    let result;
-    try {
-      result = await generativeModel.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `${systemPrompt}\n\n${prompt}` }],
-          },
-        ],
-      });
-    } catch (apiError) {
-      console.error('[Gemini] API error:', apiError);
-      throw new Error(
-        `Gemini API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`
-      );
-    }
+    const result = await generativeModel.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: `${systemPrompt}\n\n${prompt}` }],
+        },
+      ],
+    });
 
     const response = result.response;
 
     // Check for blocked content or safety issues
     if (response.promptFeedback?.blockReason) {
-      console.error('[Gemini] Prompt blocked:', response.promptFeedback);
       throw new Error(`Gemini blocked prompt: ${response.promptFeedback.blockReason}`);
     }
 
     // Check candidates for finish reasons
     const candidate = response.candidates?.[0];
     if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
-      console.error('[Gemini] Unexpected finish reason:', candidate.finishReason);
       throw new Error(`Gemini finish reason: ${candidate.finishReason}`);
     }
 
-    let content: string;
-    try {
-      content = response.text();
-    } catch (textError) {
-      console.error(
-        '[Gemini] Error getting text:',
-        textError,
-        'Response:',
-        JSON.stringify(response)
-      );
-      throw new Error(
-        `Gemini text extraction error: ${textError instanceof Error ? textError.message : String(textError)}`
-      );
-    }
+    const content = response.text();
 
     if (!content) {
-      console.error('[Gemini] Empty response. Full response:', JSON.stringify(response));
-      throw new Error('Gemini returned empty response - check API key and model availability');
+      throw new Error('Gemini returned empty response');
     }
+
+    console.log(`[Gemini] Success with model: ${modelName}`);
 
     // Clean up response if it has markdown code blocks
     let cleanContent = content.trim();
