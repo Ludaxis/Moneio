@@ -6,6 +6,7 @@ import {
   FileText,
   Receipt,
   CreditCard,
+  Sparkles,
   BarChart3,
   MessageSquare,
   Settings,
@@ -28,6 +29,7 @@ const navItems: NavItem[] = [
   { href: '/documents', icon: FileText, labelKey: 'documents' },
   { href: '/invoices', icon: Receipt, labelKey: 'invoices' },
   { href: '/transactions', icon: CreditCard, labelKey: 'transactions' },
+  { href: '/review', icon: Sparkles, labelKey: 'review' },
   { href: '/reports', icon: BarChart3, labelKey: 'reports' },
   { href: '/chat', icon: MessageSquare, labelKey: 'chat' },
 ];

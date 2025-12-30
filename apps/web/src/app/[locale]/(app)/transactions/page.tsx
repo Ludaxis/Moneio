@@ -12,13 +12,25 @@ import {
   Trash2,
   Copy,
   X,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 
+import { ConfidenceBadge } from '@/components/ai';
+import { TransactionDetailDialog } from '@/components/transactions';
 import { useWorkspace } from '@/lib/workspace';
+
+interface PendingSuggestion {
+  id: string;
+  type: 'categorization' | 'match';
+  confidence: number;
+  suggestedCategory?: { id: string; name: string };
+  matchedInvoice?: { id: string; invoiceNumber: string | null; total: number };
+  rationale?: string;
+}
 
 interface BankTransaction {
   id: string;
@@ -28,7 +40,9 @@ interface BankTransaction {
   currency: string;
   balance: number | null;
   hasMatch: boolean;
+  categoryId: string | null;
   categoryName: string | null;
+  pendingSuggestions?: PendingSuggestion[];
 }
 
 interface TransactionsResponse {
@@ -67,6 +81,11 @@ export default function TransactionsPage() {
   const [removingDuplicates, setRemovingDuplicates] = useState(false);
   const [showDuplicatesBanner, setShowDuplicatesBanner] = useState(false);
 
+  // Transaction detail dialog state
+  const [selectedTransaction, setSelectedTransaction] = useState<BankTransaction | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [approvingInline, setApprovingInline] = useState<string | null>(null);
+
   useEffect(() => {
     if (!workspaceId) {
       setLoading(false);
@@ -77,7 +96,7 @@ export default function TransactionsPage() {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/transactions?workspaceId=${workspaceId}&page=${page}&pageSize=${pageSize}`
+          `/api/transactions?workspaceId=${workspaceId}&page=${page}&pageSize=${pageSize}&includeSuggestions=true`
         );
         if (response.ok) {
           const data: TransactionsResponse = await response.json();
@@ -151,7 +170,7 @@ export default function TransactionsPage() {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/transactions?workspaceId=${workspaceId}&page=${page}&pageSize=${pageSize}`
+        `/api/transactions?workspaceId=${workspaceId}&page=${page}&pageSize=${pageSize}&includeSuggestions=true`
       );
       if (response.ok) {
         const data: TransactionsResponse = await response.json();
@@ -284,6 +303,68 @@ export default function TransactionsPage() {
     } finally {
       setRemovingDuplicates(false);
     }
+  };
+
+  // Handle row click to open detail dialog
+  const handleRowClick = (tx: BankTransaction, e: React.MouseEvent) => {
+    // Don't open dialog if clicking on checkbox or action buttons
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'BUTTON' ||
+      target.closest('button')
+    ) {
+      return;
+    }
+    setSelectedTransaction(tx);
+    setDialogOpen(true);
+  };
+
+  // Handle inline quick approve for category suggestion
+  const handleInlineApprove = async (tx: BankTransaction, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const suggestion = tx.pendingSuggestions?.find((s) => s.type === 'categorization');
+    if (!suggestion?.suggestedCategory) return;
+
+    setApprovingInline(tx.id);
+    try {
+      const response = await fetch(`/api/transactions/${tx.id}/categorize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId,
+          categoryId: suggestion.suggestedCategory.id,
+          suggestionId: suggestion.id,
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state to reflect the change
+        setTransactions((prev) =>
+          prev.map((t) =>
+            t.id === tx.id
+              ? {
+                  ...t,
+                  categoryId: suggestion.suggestedCategory!.id,
+                  categoryName: suggestion.suggestedCategory!.name,
+                  pendingSuggestions: t.pendingSuggestions?.filter(
+                    (s) => s.id !== suggestion.id
+                  ),
+                }
+              : t
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to approve category:', error);
+    } finally {
+      setApprovingInline(null);
+    }
+  };
+
+  // Handle category approved from dialog
+  const handleCategoryApproved = () => {
+    refetchTransactions();
   };
 
   const formatCurrency = (amount: number, currency: string) => {
@@ -525,53 +606,95 @@ export default function TransactionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {transactions.map((tx) => (
-                    <tr
-                      key={tx.id}
-                      className={cn(
-                        'hover:bg-accent/50',
-                        selectedIds.has(tx.id) && 'bg-primary/5',
-                        duplicateIds.includes(tx.id) && 'bg-amber-50/50 dark:bg-amber-950/20'
-                      )}
-                    >
-                      <td className="px-3 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(tx.id)}
-                          onChange={() => handleToggleSelect(tx.id)}
-                          className="h-4 w-4 rounded border-border"
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-sm">{formatDate(tx.postedAt)}</td>
-                      <td className="px-4 py-3 text-sm max-w-[300px] truncate">
-                        {tx.description || '-'}
-                      </td>
-                      <td
+                  {transactions.map((tx) => {
+                    const categorySuggestion = tx.pendingSuggestions?.find(
+                      (s) => s.type === 'categorization'
+                    );
+                    const matchSuggestion = tx.pendingSuggestions?.find(
+                      (s) => s.type === 'match'
+                    );
+                    const hasPendingSuggestion = !!categorySuggestion || !!matchSuggestion;
+
+                    return (
+                      <tr
+                        key={tx.id}
+                        onClick={(e) => handleRowClick(tx, e)}
                         className={cn(
-                          'px-4 py-3 text-sm text-right font-tabular-nums',
-                          tx.amount >= 0 ? 'text-success' : 'text-destructive'
+                          'hover:bg-accent/50 cursor-pointer',
+                          selectedIds.has(tx.id) && 'bg-primary/5',
+                          duplicateIds.includes(tx.id) && 'bg-amber-50/50 dark:bg-amber-950/20',
+                          hasPendingSuggestion && 'bg-primary/5'
                         )}
                       >
-                        {formatCurrency(tx.amount, tx.currency)}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {tx.categoryName ? (
-                          <span className="rounded-full bg-muted px-2 py-1 text-xs">
-                            {tx.categoryName}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {tx.hasMatch ? (
-                          <CheckCircle2 className="mx-auto h-4 w-4 text-success" />
-                        ) : (
-                          <LinkIcon className="mx-auto h-4 w-4 text-muted-foreground" />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(tx.id)}
+                            onChange={() => handleToggleSelect(tx.id)}
+                            className="h-4 w-4 rounded border-border"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm">{formatDate(tx.postedAt)}</td>
+                        <td className="px-4 py-3 text-sm max-w-[300px] truncate">
+                          {tx.description || '-'}
+                        </td>
+                        <td
+                          className={cn(
+                            'px-4 py-3 text-sm text-right font-tabular-nums',
+                            tx.amount >= 0 ? 'text-success' : 'text-destructive'
+                          )}
+                        >
+                          {formatCurrency(tx.amount, tx.currency)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {tx.categoryName ? (
+                            <span className="rounded-full bg-muted px-2 py-1 text-xs">
+                              {tx.categoryName}
+                            </span>
+                          ) : categorySuggestion?.suggestedCategory ? (
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {categorySuggestion.suggestedCategory.name}
+                                </span>
+                              </div>
+                              <ConfidenceBadge confidence={categorySuggestion.confidence} size="sm" />
+                              <button
+                                onClick={(e) => handleInlineApprove(tx, e)}
+                                disabled={approvingInline === tx.id}
+                                className="flex h-6 w-6 items-center justify-center rounded-full bg-success-100 text-success-700 hover:bg-success-200 disabled:opacity-50 dark:bg-success-900/30 dark:text-success-400"
+                                title="Approve category"
+                              >
+                                {approvingInline === tx.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {tx.hasMatch ? (
+                            <CheckCircle2 className="mx-auto h-4 w-4 text-success" />
+                          ) : matchSuggestion ? (
+                            <div className="flex items-center justify-center gap-1">
+                              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                              <ConfidenceBadge confidence={matchSuggestion.confidence} size="sm" />
+                            </div>
+                          ) : (
+                            <LinkIcon className="mx-auto h-4 w-4 text-muted-foreground" />
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -625,6 +748,16 @@ export default function TransactionsPage() {
           </>
         )}
       </div>
+
+      {/* Transaction Detail Dialog */}
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        workspaceId={workspaceId}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onCategoryApproved={handleCategoryApproved}
+        locale={locale}
+      />
     </div>
   );
 }

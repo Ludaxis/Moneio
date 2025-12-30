@@ -13,9 +13,22 @@ const deleteTransactionsSchema = z.object({
   transactionIds: z.array(z.string().uuid()).min(1).max(500),
 });
 
+interface CategorizationPayload {
+  categoryId: string;
+  categoryName: string;
+  reason?: string;
+}
+
 /**
  * GET /api/transactions
  * List bank transactions for a workspace
+ *
+ * Query params:
+ * - workspaceId: required UUID
+ * - page: page number (default 1)
+ * - pageSize: items per page (default 20, max 200)
+ * - uncategorized: if 'true', only return uncategorized transactions
+ * - includeSuggestions: if 'true', include pending AI suggestions
  */
 export async function GET(request: Request) {
   try {
@@ -33,6 +46,7 @@ export async function GET(request: Request) {
     const page = Math.max(parseInt(searchParams.get('page') || '1'), 1);
     const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '20'), 200);
     const uncategorized = searchParams.get('uncategorized') === 'true';
+    const includeSuggestions = searchParams.get('includeSuggestions') === 'true';
 
     if (!workspaceId || !z.string().uuid().safeParse(workspaceId).success) {
       return NextResponse.json({ error: 'workspaceId is required' }, { status: 400 });
@@ -68,7 +82,7 @@ export async function GET(request: Request) {
             take: 1,
             include: {
               category: {
-                select: { name: true },
+                select: { id: true, name: true },
               },
             },
           },
@@ -81,6 +95,84 @@ export async function GET(request: Request) {
       prisma.bankTransaction.count({ where }),
     ]);
 
+    // If includeSuggestions, fetch pending AI suggestions for these transactions
+    const suggestionsMap = new Map<
+      string,
+      Array<{
+        id: string;
+        type: 'categorization' | 'match';
+        confidence: number;
+        suggestedCategory?: { id: string; name: string };
+        matchedInvoice?: { id: string; invoiceNumber: string | null; total: number };
+        rationale?: string;
+      }>
+    >();
+
+    if (includeSuggestions) {
+      const transactionIds = transactions.map((tx) => tx.id);
+
+      // Fetch categorization suggestions
+      const categorizationSuggestions = await prisma.aiSuggestion.findMany({
+        where: {
+          workspaceId,
+          suggestionType: 'categorization',
+          status: 'pending',
+          targetId: { in: transactionIds },
+        },
+      });
+
+      // Fetch match suggestions
+      const matchSuggestions = await prisma.match.findMany({
+        where: {
+          workspaceId,
+          status: 'suggested',
+          transactionId: { in: transactionIds },
+        },
+        include: {
+          invoice: {
+            select: {
+              id: true,
+              invoiceNumber: true,
+              total: true,
+            },
+          },
+        },
+      });
+
+      // Build suggestions map
+      for (const suggestion of categorizationSuggestions) {
+        const payload = suggestion.payloadJson as unknown as CategorizationPayload;
+        const suggestions = suggestionsMap.get(suggestion.targetId) || [];
+        suggestions.push({
+          id: suggestion.id,
+          type: 'categorization',
+          confidence: Number(suggestion.confidence || 0) * 100,
+          suggestedCategory: {
+            id: payload.categoryId,
+            name: payload.categoryName,
+          },
+          rationale: payload.reason,
+        });
+        suggestionsMap.set(suggestion.targetId, suggestions);
+      }
+
+      for (const match of matchSuggestions) {
+        const suggestions = suggestionsMap.get(match.transactionId) || [];
+        suggestions.push({
+          id: match.id,
+          type: 'match',
+          confidence: Number(match.confidence || 0) * 100,
+          matchedInvoice: {
+            id: match.invoice.id,
+            invoiceNumber: match.invoice.invoiceNumber,
+            total: Number(match.invoice.total),
+          },
+          rationale: match.rationale || undefined,
+        });
+        suggestionsMap.set(match.transactionId, suggestions);
+      }
+    }
+
     // Transform to response format
     // Note: amount/balance use strings to preserve precision for large values
     const formatted = transactions.map((tx) => ({
@@ -91,7 +183,11 @@ export async function GET(request: Request) {
       currency: tx.currency,
       balance: serializeDecimal(tx.balance),
       hasMatch: tx.matches.length > 0,
+      categoryId: tx.categorizations[0]?.category.id ?? null,
       categoryName: tx.categorizations[0]?.category.name ?? null,
+      ...(includeSuggestions && {
+        pendingSuggestions: suggestionsMap.get(tx.id) || [],
+      }),
     }));
 
     return NextResponse.json({
