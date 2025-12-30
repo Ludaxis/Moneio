@@ -55,11 +55,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsed = listQuerySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
-      accountType: searchParams.get('accountType'),
-      parentId: searchParams.get('parentId'),
-      isActive: searchParams.get('isActive'),
-      page: searchParams.get('page'),
-      pageSize: searchParams.get('pageSize'),
+      accountType: searchParams.get('accountType') || undefined,
+      parentId: searchParams.get('parentId') || undefined,
+      isActive: searchParams.get('isActive') || undefined,
+      page: searchParams.get('page') || undefined,
+      pageSize: searchParams.get('pageSize') || undefined,
     });
 
     if (!parsed.success) {

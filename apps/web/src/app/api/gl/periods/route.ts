@@ -54,10 +54,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsed = listQuerySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
-      fiscalYear: searchParams.get('fiscalYear'),
-      status: searchParams.get('status'),
-      page: searchParams.get('page'),
-      pageSize: searchParams.get('pageSize'),
+      fiscalYear: searchParams.get('fiscalYear') || undefined,
+      status: searchParams.get('status') || undefined,
+      page: searchParams.get('page') || undefined,
+      pageSize: searchParams.get('pageSize') || undefined,
     });
 
     if (!parsed.success) {

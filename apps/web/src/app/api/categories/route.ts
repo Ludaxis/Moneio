@@ -46,9 +46,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsed = listQuerySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
-      parentId: searchParams.get('parentId'),
-      page: searchParams.get('page'),
-      pageSize: searchParams.get('pageSize'),
+      parentId: searchParams.get('parentId') || undefined,
+      page: searchParams.get('page') || undefined,
+      pageSize: searchParams.get('pageSize') || undefined,
     });
 
     if (!parsed.success) {

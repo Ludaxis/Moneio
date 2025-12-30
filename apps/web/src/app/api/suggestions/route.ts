@@ -56,9 +56,9 @@ export async function GET(request: Request) {
       workspaceId: searchParams.get('workspaceId'),
       type: searchParams.get('type') || 'all',
       status: searchParams.get('status') || 'pending',
-      minConfidence: searchParams.get('minConfidence'),
-      page: searchParams.get('page'),
-      pageSize: searchParams.get('pageSize'),
+      minConfidence: searchParams.get('minConfidence') || undefined,
+      page: searchParams.get('page') || undefined,
+      pageSize: searchParams.get('pageSize') || undefined,
     });
 
     if (!parsed.success) {

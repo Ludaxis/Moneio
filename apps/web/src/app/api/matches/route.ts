@@ -49,11 +49,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsed = listQuerySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
-      status: searchParams.get('status'),
-      invoiceId: searchParams.get('invoiceId'),
-      transactionId: searchParams.get('transactionId'),
-      page: searchParams.get('page'),
-      pageSize: searchParams.get('pageSize'),
+      status: searchParams.get('status') || undefined,
+      invoiceId: searchParams.get('invoiceId') || undefined,
+      transactionId: searchParams.get('transactionId') || undefined,
+      page: searchParams.get('page') || undefined,
+      pageSize: searchParams.get('pageSize') || undefined,
     });
 
     if (!parsed.success) {
