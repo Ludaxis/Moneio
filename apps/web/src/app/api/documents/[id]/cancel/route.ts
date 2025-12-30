@@ -9,6 +9,7 @@ import { prisma, DocumentStatus } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { enqueueDocNormalize } from '@/lib/queue/client';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -84,6 +85,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
         newValue: { status: newStatus },
       },
     });
+
+    // If retrying, enqueue the document for processing
+    if (action === 'retry') {
+      await enqueueDocNormalize({
+        documentId: document.id,
+        workspaceId,
+      });
+    }
 
     return NextResponse.json({
       success: true,
