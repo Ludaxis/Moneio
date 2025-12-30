@@ -4,8 +4,8 @@ import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/ge
 import type { LlmClient } from '../extraction/invoice-extractor';
 import type { AiConfig, ModelInfo } from '../types';
 
-const DEFAULT_MODEL = 'gemini-2.0-flash-exp';
-const CHAT_MODEL = 'gemini-2.0-flash-exp';
+const DEFAULT_MODEL = 'gemini-3-pro-preview';
+const CHAT_MODEL = 'gemini-3-pro-preview';
 const DEFAULT_MAX_TOKENS = 4096;
 const DEFAULT_TEMPERATURE = 0.1;
 
