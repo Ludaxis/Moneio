@@ -117,6 +117,15 @@ export async function handleDocOcr(job: Job<DocOcrJobData>): Promise<DocOcrResul
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[DOC_OCR] Failed for ${documentId} page ${pageNumber}:`, errorMessage);
 
+    // Update document status to failed so it doesn't stay stuck in "processing"
+    await prisma.document.update({
+      where: { id: documentId },
+      data: {
+        status: DocumentStatus.failed,
+        failReason: `OCR failed on page ${pageNumber}: ${errorMessage}`,
+      },
+    });
+
     return {
       success: false,
       documentId,
