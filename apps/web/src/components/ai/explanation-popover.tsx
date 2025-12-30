@@ -4,6 +4,7 @@ import { cn } from '@moneio/ui';
 import { HelpCircle, X, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+
 import { ConfidenceBadge, ConfidenceMeter } from './confidence-badge';
 
 export interface ExplanationFactor {

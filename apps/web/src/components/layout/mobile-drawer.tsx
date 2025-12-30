@@ -78,8 +78,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   // Close drawer on route change
   useEffect(() => {
     onClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, onClose]);
 
   const handleSignOut = async () => {
     const supabase = createBrowserClient();

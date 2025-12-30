@@ -5,10 +5,10 @@ import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useCallback, useMemo } from 'react';
 
-import { InsightCard } from './insight-card';
-
 import type { AiInsight } from '@/lib/ai/insight-types';
 import { sortInsights, getHighPriorityInsights } from '@/lib/ai/insight-types';
+
+import { InsightCard } from './insight-card';
 
 export interface InsightBannerProps {
   /** List of insights to display */

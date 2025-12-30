@@ -3,12 +3,12 @@
 import { cn } from '@moneio/ui';
 import { useState, useCallback } from 'react';
 
+import { useResponsive } from '@/hooks/use-media-query';
+
 import { MobileDrawer } from './mobile-drawer';
 import { MobileNav } from './mobile-nav';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
-
-import { useResponsive } from '@/hooks/use-media-query';
 
 interface AppShellProps {
   children: React.ReactNode;
