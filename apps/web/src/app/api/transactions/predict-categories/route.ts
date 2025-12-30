@@ -3,9 +3,12 @@
  *
  * POST /api/transactions/predict-categories
  * Predict categories for transactions during import preview (before saving)
+ *
+ * Uses HeuristicCategorizer for instant results (no AI API calls).
+ * Full AI categorization happens after import via the worker.
  */
 
-import { TransactionCategorizer, HeuristicCategorizer, createLlmClient } from '@moneio/ai';
+import { HeuristicCategorizer } from '@moneio/ai';
 import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -14,6 +17,8 @@ import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
+// Increase timeout for Vercel
+export const maxDuration = 30;
 
 const transactionSchema = z.object({
   id: z.string(), // temporary ID from import preview
@@ -101,16 +106,9 @@ export async function POST(request: Request) {
       merchantNames: [] as string[],
     };
 
-    // Check if LLM is configured
-    const llmConfigured =
-      !!process.env.GEMINI_API_KEY ||
-      !!process.env.GOOGLE_AI_API_KEY ||
-      !!process.env.OPENAI_API_KEY;
-
-    const client = llmConfigured ? createLlmClient() : null;
-    const categorizer = llmConfigured
-      ? new TransactionCategorizer(client!)
-      : new HeuristicCategorizer();
+    // Use HeuristicCategorizer for instant results during import preview
+    // Full AI categorization happens after import via the background worker
+    const categorizer = new HeuristicCategorizer();
 
     const predictions: PredictionResult[] = [];
 
