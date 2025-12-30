@@ -125,7 +125,14 @@ export function TransactionDetailDialog({
     } finally {
       setLoading(null);
     }
-  }, [transaction, selectedCategoryId, workspaceId, categorySuggestion, onCategoryApproved, onOpenChange]);
+  }, [
+    transaction,
+    selectedCategoryId,
+    workspaceId,
+    categorySuggestion,
+    onCategoryApproved,
+    onOpenChange,
+  ]);
 
   const handleRejectCategory = useCallback(async () => {
     if (!transaction || !categorySuggestion) return;
@@ -267,9 +274,7 @@ export function TransactionDetailDialog({
               </div>
 
               <div className="mt-4">
-                <label className="mb-2 block text-sm text-muted-foreground">
-                  Category
-                </label>
+                <label className="mb-2 block text-sm text-muted-foreground">Category</label>
                 <CategorySelector
                   workspaceId={workspaceId}
                   value={selectedCategoryId || undefined}
@@ -330,7 +335,13 @@ export function TransactionDetailDialog({
                 </span>
                 {matchSuggestion.matchedInvoice && (
                   <span className="text-muted-foreground">
-                    ({formatCurrency(matchSuggestion.matchedInvoice.total, transaction.currency, locale)})
+                    (
+                    {formatCurrency(
+                      matchSuggestion.matchedInvoice.total,
+                      transaction.currency,
+                      locale
+                    )}
+                    )
                   </span>
                 )}
               </div>

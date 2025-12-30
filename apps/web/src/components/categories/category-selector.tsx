@@ -53,8 +53,8 @@ export function CategorySelector({
   useEffect(() => {
     async function fetchCategories() {
       try {
-        // Fetch all categories (use large pageSize to get all)
-        const response = await fetch(`/api/categories?workspaceId=${workspaceId}&pageSize=500`);
+        // Fetch all categories (max 100 per API limit)
+        const response = await fetch(`/api/categories?workspaceId=${workspaceId}&pageSize=100`);
         if (response.ok) {
           const data = await response.json();
           setCategories(data.categories || []);

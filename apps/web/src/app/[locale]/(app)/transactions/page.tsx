@@ -309,11 +309,7 @@ export default function TransactionsPage() {
   const handleRowClick = (tx: BankTransaction, e: React.MouseEvent) => {
     // Don't open dialog if clicking on checkbox or action buttons
     const target = e.target as HTMLElement;
-    if (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'BUTTON' ||
-      target.closest('button')
-    ) {
+    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button')) {
       return;
     }
     setSelectedTransaction(tx);
@@ -347,9 +343,7 @@ export default function TransactionsPage() {
                   ...t,
                   categoryId: suggestion.suggestedCategory!.id,
                   categoryName: suggestion.suggestedCategory!.name,
-                  pendingSuggestions: t.pendingSuggestions?.filter(
-                    (s) => s.id !== suggestion.id
-                  ),
+                  pendingSuggestions: t.pendingSuggestions?.filter((s) => s.id !== suggestion.id),
                 }
               : t
           )
@@ -610,9 +604,7 @@ export default function TransactionsPage() {
                     const categorySuggestion = tx.pendingSuggestions?.find(
                       (s) => s.type === 'categorization'
                     );
-                    const matchSuggestion = tx.pendingSuggestions?.find(
-                      (s) => s.type === 'match'
-                    );
+                    const matchSuggestion = tx.pendingSuggestions?.find((s) => s.type === 'match');
                     const hasPendingSuggestion = !!categorySuggestion || !!matchSuggestion;
 
                     return (
@@ -662,7 +654,10 @@ export default function TransactionsPage() {
                                   {categorySuggestion.suggestedCategory.name}
                                 </span>
                               </div>
-                              <ConfidenceBadge confidence={categorySuggestion.confidence} size="sm" />
+                              <ConfidenceBadge
+                                confidence={categorySuggestion.confidence}
+                                size="sm"
+                              />
                               <button
                                 onClick={(e) => handleInlineApprove(tx, e)}
                                 disabled={approvingInline === tx.id}

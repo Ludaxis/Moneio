@@ -70,10 +70,11 @@ export default function ReviewPage() {
 
     setLoading(true);
     try {
-      const typeParam = activeTab === 'all' ? '' : `&type=${activeTab === 'categories' ? 'categorization' : 'match'}`;
-      const response = await fetch(
-        `/api/suggestions?workspaceId=${workspaceId}${typeParam}`
-      );
+      const typeParam =
+        activeTab === 'all'
+          ? ''
+          : `&type=${activeTab === 'categories' ? 'categorization' : 'match'}`;
+      const response = await fetch(`/api/suggestions?workspaceId=${workspaceId}${typeParam}`);
       if (response.ok) {
         const data: SuggestionsResponse = await response.json();
         setSuggestions(data.suggestions);
@@ -112,14 +113,23 @@ export default function ReviewPage() {
 
       if (response.ok) {
         setSuggestions((prev) => prev.filter((s) => s.id !== id));
-        setCounts((prev) => prev ? {
-          ...prev,
-          total: prev.total - 1,
-          categorization: prev.categorization - 1,
-          highConfidence: suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
-          mediumConfidence: suggestion.confidence >= 50 && suggestion.confidence < 80 ? prev.mediumConfidence - 1 : prev.mediumConfidence,
-          lowConfidence: suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
-        } : null);
+        setCounts((prev) =>
+          prev
+            ? {
+                ...prev,
+                total: prev.total - 1,
+                categorization: prev.categorization - 1,
+                highConfidence:
+                  suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
+                mediumConfidence:
+                  suggestion.confidence >= 50 && suggestion.confidence < 80
+                    ? prev.mediumConfidence - 1
+                    : prev.mediumConfidence,
+                lowConfidence:
+                  suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
+              }
+            : null
+        );
       }
     } else if (suggestion.type === 'match') {
       const response = await fetch(`/api/matches/${suggestion.id}`, {
@@ -133,14 +143,23 @@ export default function ReviewPage() {
 
       if (response.ok) {
         setSuggestions((prev) => prev.filter((s) => s.id !== id));
-        setCounts((prev) => prev ? {
-          ...prev,
-          total: prev.total - 1,
-          match: prev.match - 1,
-          highConfidence: suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
-          mediumConfidence: suggestion.confidence >= 50 && suggestion.confidence < 80 ? prev.mediumConfidence - 1 : prev.mediumConfidence,
-          lowConfidence: suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
-        } : null);
+        setCounts((prev) =>
+          prev
+            ? {
+                ...prev,
+                total: prev.total - 1,
+                match: prev.match - 1,
+                highConfidence:
+                  suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
+                mediumConfidence:
+                  suggestion.confidence >= 50 && suggestion.confidence < 80
+                    ? prev.mediumConfidence - 1
+                    : prev.mediumConfidence,
+                lowConfidence:
+                  suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
+              }
+            : null
+        );
       }
     }
   };
@@ -162,14 +181,23 @@ export default function ReviewPage() {
 
       if (response.ok) {
         setSuggestions((prev) => prev.filter((s) => s.id !== id));
-        setCounts((prev) => prev ? {
-          ...prev,
-          total: prev.total - 1,
-          categorization: prev.categorization - 1,
-          highConfidence: suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
-          mediumConfidence: suggestion.confidence >= 50 && suggestion.confidence < 80 ? prev.mediumConfidence - 1 : prev.mediumConfidence,
-          lowConfidence: suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
-        } : null);
+        setCounts((prev) =>
+          prev
+            ? {
+                ...prev,
+                total: prev.total - 1,
+                categorization: prev.categorization - 1,
+                highConfidence:
+                  suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
+                mediumConfidence:
+                  suggestion.confidence >= 50 && suggestion.confidence < 80
+                    ? prev.mediumConfidence - 1
+                    : prev.mediumConfidence,
+                lowConfidence:
+                  suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
+              }
+            : null
+        );
       }
     } else if (suggestion.type === 'match') {
       const response = await fetch(`/api/matches/${suggestion.id}`, {
@@ -183,14 +211,23 @@ export default function ReviewPage() {
 
       if (response.ok) {
         setSuggestions((prev) => prev.filter((s) => s.id !== id));
-        setCounts((prev) => prev ? {
-          ...prev,
-          total: prev.total - 1,
-          match: prev.match - 1,
-          highConfidence: suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
-          mediumConfidence: suggestion.confidence >= 50 && suggestion.confidence < 80 ? prev.mediumConfidence - 1 : prev.mediumConfidence,
-          lowConfidence: suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
-        } : null);
+        setCounts((prev) =>
+          prev
+            ? {
+                ...prev,
+                total: prev.total - 1,
+                match: prev.match - 1,
+                highConfidence:
+                  suggestion.confidence >= 80 ? prev.highConfidence - 1 : prev.highConfidence,
+                mediumConfidence:
+                  suggestion.confidence >= 50 && suggestion.confidence < 80
+                    ? prev.mediumConfidence - 1
+                    : prev.mediumConfidence,
+                lowConfidence:
+                  suggestion.confidence < 50 ? prev.lowConfidence - 1 : prev.lowConfidence,
+              }
+            : null
+        );
       }
     }
   };
@@ -201,9 +238,7 @@ export default function ReviewPage() {
 
     setBulkApproving(true);
     try {
-      const highConfidenceIds = suggestions
-        .filter((s) => s.confidence >= 80)
-        .map((s) => s.id);
+      const highConfidenceIds = suggestions.filter((s) => s.confidence >= 80).map((s) => s.id);
 
       if (highConfidenceIds.length === 0) return;
 

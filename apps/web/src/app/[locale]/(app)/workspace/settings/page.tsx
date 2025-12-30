@@ -78,7 +78,7 @@ export default function WorkspaceSettingsPage() {
 
     setLoadingCategories(true);
     try {
-      const response = await fetch(`/api/categories?workspaceId=${workspace.id}&pageSize=500`);
+      const response = await fetch(`/api/categories?workspaceId=${workspace.id}&pageSize=100`);
       if (response.ok) {
         const data = await response.json();
         setCategories(data.categories || []);
@@ -455,9 +455,7 @@ export default function WorkspaceSettingsPage() {
               </button>
             </div>
 
-            {categoryError && (
-              <p className="mt-2 text-sm text-destructive">{categoryError}</p>
-            )}
+            {categoryError && <p className="mt-2 text-sm text-destructive">{categoryError}</p>}
 
             {/* Categories List */}
             <div className="mt-4">
