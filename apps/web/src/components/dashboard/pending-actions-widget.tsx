@@ -231,27 +231,27 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
       {counts.total > 0 && (
         <div className="mt-4 grid grid-cols-3 gap-2">
           {counts.invoices > 0 && (
-            <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-2 text-center">
+            <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-2 text-center min-w-0">
               <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {counts.invoices}
               </p>
-              <p className="text-xs text-blue-600/70 dark:text-blue-400/70">Invoices</p>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 truncate">Invoices</p>
             </div>
           )}
           {counts.documents > 0 && (
-            <div className="rounded-lg bg-purple-50 dark:bg-purple-950 p-2 text-center">
+            <div className="rounded-lg bg-purple-50 dark:bg-purple-950 p-2 text-center min-w-0">
               <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
                 {counts.documents}
               </p>
-              <p className="text-xs text-purple-600/70 dark:text-purple-400/70">Documents</p>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 truncate">Documents</p>
             </div>
           )}
           {counts.uncategorized > 0 && (
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-2 text-center">
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-950 p-2 text-center min-w-0">
               <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
                 {counts.uncategorized}
               </p>
-              <p className="text-xs text-amber-600/70 dark:text-amber-400/70">Uncategorized</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 truncate">Uncat.</p>
             </div>
           )}
         </div>

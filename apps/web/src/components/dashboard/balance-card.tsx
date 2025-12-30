@@ -106,16 +106,14 @@ export function BalanceCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-muted-foreground truncate">{label}</p>
-              <p className="text-2xl font-bold tabular-nums text-foreground tracking-tight mt-0.5">
-                {value}
-              </p>
-              {lastUpdated && <p className="text-xs text-muted-foreground mt-1">{lastUpdated}</p>}
-            </div>
-
-            {/* Trend badge */}
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold tabular-nums text-foreground tracking-tight mt-0.5">
+            {value}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {lastUpdated && (
+              <p className="text-xs text-muted-foreground">{lastUpdated}</p>
+            )}
             {comparison && (
               <TrendBadge
                 percentage={comparison.percentage}
