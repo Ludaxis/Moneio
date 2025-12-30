@@ -80,7 +80,7 @@ async function getImageInfo(data: Buffer, _mimeType: string): Promise<DocumentIn
 
 /**
  * Extract pages from a PDF as images
- * Note: This is a placeholder - full implementation requires pdf-to-image library
+ * Uses sharp with libvips if available, otherwise falls back to single-page PDFs
  */
 export async function extractPdfPages(
   data: Buffer,
@@ -89,12 +89,17 @@ export async function extractPdfPages(
   const pdfDoc = await PDFDocument.load(data, { ignoreEncryption: true });
   const pageCount = pdfDoc.getPageCount();
 
+  console.log(`[PDF] Extracting ${pageCount} page(s) from PDF (${data.length} bytes)`);
+
   const pages: ProcessedPage[] = [];
 
-  // Try rendering to PNG (best OCR). If sharp PDF rendering is not supported in the runtime, fall back to single-page PDFs.
+  // Try rendering to PNG using sharp (requires libvips with PDF/poppler support)
   for (let i = 0; i < pageCount; i++) {
     try {
-      const pngBuffer = await sharp(data, { density: 200, page: i }).png().toBuffer();
+      // Higher density = better OCR results (300 DPI is standard for OCR)
+      const pngBuffer = await sharp(data, { density: 300, page: i }).png().toBuffer();
+
+      console.log(`[PDF] Page ${i + 1}: Rendered to PNG successfully (${pngBuffer.length} bytes)`);
 
       pages.push({
         pageNumber: i + 1,
@@ -102,12 +107,22 @@ export async function extractPdfPages(
         mimeType: 'image/png',
       });
     } catch (error) {
-      console.warn(`[PDF] Failed to render page ${i + 1} to PNG, falling back to PDF:`, error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`[PDF] Page ${i + 1}: Sharp PDF rendering failed - ${errorMsg}`);
+
+      // Fallback: Extract as single-page PDF
+      // Note: Google Vision can process PDFs directly but the content parameter
+      // only supports images. For PDFs, we need to use GCS-based batch processing
+      // or render to image. Since we can't render, we'll try sending as PDF anyway
+      // (it sometimes works for simple PDFs).
+      console.log(`[PDF] Page ${i + 1}: Falling back to single-page PDF extraction`);
 
       const singlePagePdf = await PDFDocument.create();
       const [copiedPage] = await singlePagePdf.copyPages(pdfDoc, [i]);
       singlePagePdf.addPage(copiedPage);
       const pdfBytes = await singlePagePdf.save();
+
+      console.log(`[PDF] Page ${i + 1}: Extracted as PDF (${pdfBytes.length} bytes)`);
 
       pages.push({
         pageNumber: i + 1,
@@ -115,6 +130,18 @@ export async function extractPdfPages(
         mimeType: 'application/pdf',
       });
     }
+  }
+
+  // Log summary
+  const pngCount = pages.filter((p) => p.mimeType === 'image/png').length;
+  const pdfCount = pages.filter((p) => p.mimeType === 'application/pdf').length;
+  console.log(`[PDF] Extraction complete: ${pngCount} PNG(s), ${pdfCount} PDF(s)`);
+
+  if (pdfCount > 0) {
+    console.warn(
+      '[PDF] Warning: Some pages could not be rendered to images. ' +
+        'OCR quality may be reduced. Consider installing libvips with PDF support.'
+    );
   }
 
   return pages;

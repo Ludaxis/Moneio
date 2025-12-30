@@ -91,28 +91,102 @@ export interface OcrResult {
 export async function performOcr(imageData: Buffer, mimeType: string): Promise<OcrResult> {
   const client = getVisionClient();
 
-  console.log(`[OCR] Processing image (${imageData.length} bytes, ${mimeType})`);
+  console.log(`[OCR] Processing file (${imageData.length} bytes, ${mimeType})`);
+
+  // Validate input
+  if (!imageData || imageData.length === 0) {
+    throw new Error('OCR received empty image data');
+  }
+
+  // Log first few bytes to verify it's a valid file
+  const header = imageData.subarray(0, 8).toString('hex');
+  console.log(`[OCR] File header (hex): ${header}`);
+
+  // Check for known file signatures
+  const isPdf = header.startsWith('25504446') || mimeType === 'application/pdf';
+  if (header.startsWith('89504e47')) {
+    console.log('[OCR] Detected PNG file');
+  } else if (header.startsWith('ffd8ff')) {
+    console.log('[OCR] Detected JPEG file');
+  } else if (isPdf) {
+    console.log('[OCR] Detected PDF file');
+  } else {
+    console.log('[OCR] Unknown file format, treating as image');
+  }
 
   try {
-    // For PDFs, use documentTextDetection
-    // For images, use textDetection
-    const isPdf = mimeType === 'application/pdf';
+    let annotation: protos.google.cloud.vision.v1.ITextAnnotation | null | undefined;
 
-    // For PDF and images, use documentTextDetection
-    const [response] = await client.documentTextDetection({
-      image: { content: imageData.toString('base64') },
-      imageContext: {
-        languageHints: ['en', 'et', 'ar', 'fa'],
-      },
-    });
+    if (isPdf) {
+      // For PDFs, use batchAnnotateFiles which supports inline PDF content
+      console.log('[OCR] Using batchAnnotateFiles for PDF processing');
 
-    // Unused variable suppression for isPdf
-    void isPdf;
+      const [result] = await client.batchAnnotateFiles({
+        requests: [
+          {
+            inputConfig: {
+              content: imageData.toString('base64'),
+              mimeType: 'application/pdf',
+            },
+            features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
+            // Process all pages (up to 5 for synchronous processing)
+            pages: [1, 2, 3, 4, 5],
+          },
+        ],
+      });
 
-    const annotation = response.fullTextAnnotation;
+      // Extract text from all pages
+      const responses = result.responses?.[0]?.responses || [];
+      console.log(`[OCR] PDF processed, got ${responses.length} page response(s)`);
+
+      if (responses.length === 0) {
+        console.log('[OCR] No text detected in PDF');
+        return {
+          fullText: '',
+          blocks: [],
+          confidence: 0,
+          language: null,
+        };
+      }
+
+      // Combine text from all pages
+      const fullTexts: string[] = [];
+      for (const pageResponse of responses) {
+        if (pageResponse.fullTextAnnotation?.text) {
+          fullTexts.push(pageResponse.fullTextAnnotation.text);
+        }
+      }
+
+      // Use first page's annotation for detailed block info
+      annotation = responses[0]?.fullTextAnnotation;
+
+      // Override fullText with combined text from all pages
+      if (annotation && fullTexts.length > 0) {
+        (annotation as { text: string }).text = fullTexts.join('\n\n--- Page Break ---\n\n');
+      }
+    } else {
+      // For images, use documentTextDetection
+      console.log('[OCR] Using documentTextDetection for image processing');
+
+      const [response] = await client.documentTextDetection({
+        image: { content: imageData.toString('base64') },
+        imageContext: {
+          languageHints: ['en', 'et', 'ar', 'fa'],
+        },
+      });
+
+      annotation = response.fullTextAnnotation;
+
+      if (response.error) {
+        console.error(`[OCR] Vision API error in response:`, response.error);
+      }
+    }
+
+    // Log response details for debugging
+    console.log(`[OCR] Response received - has annotation: ${!!annotation}`);
 
     if (!annotation) {
-      console.log('[OCR] No text detected');
+      console.log('[OCR] No text detected in document');
       return {
         fullText: '',
         blocks: [],
