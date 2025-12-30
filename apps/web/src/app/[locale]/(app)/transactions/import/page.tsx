@@ -12,6 +12,8 @@ import {
   Trash2,
   Settings2,
   X,
+  Sparkles,
+  Tag,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -52,6 +54,17 @@ interface PreviewTransaction {
   category?: string;
   status?: string;
   originalRow: ParsedRow;
+  // AI-predicted category
+  predictedCategoryId?: string;
+  predictedCategoryName?: string;
+  predictedConfidence?: number;
+}
+
+interface CategoryPrediction {
+  id: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  confidence: number;
 }
 
 const REQUIRED_COLUMNS = ['date', 'description', 'amount'] as const;
@@ -87,6 +100,7 @@ export default function CsvImportPage() {
     startTime: number;
   } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [predictingCategories, setPredictingCategories] = useState(false);
 
   const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
     const lines = text.split(/\r?\n/).filter((line) => line.trim());
@@ -636,6 +650,63 @@ export default function CsvImportPage() {
       .filter((tx): tx is NonNullable<typeof tx> => tx !== null);
   };
 
+  // Fetch AI category predictions for transactions
+  const predictCategories = async (txns: PreviewTransaction[]): Promise<void> => {
+    if (!workspaceId || txns.length === 0) return;
+
+    setPredictingCategories(true);
+    try {
+      // Batch in chunks of 50 to avoid timeouts
+      const BATCH_SIZE = 50;
+      const allPredictions: CategoryPrediction[] = [];
+
+      for (let i = 0; i < txns.length; i += BATCH_SIZE) {
+        const batch = txns.slice(i, i + BATCH_SIZE);
+        const response = await fetch('/api/transactions/predict-categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            workspaceId,
+            transactions: batch.map((tx) => ({
+              id: tx.id,
+              description: tx.description,
+              amount: tx.amount,
+              date: tx.date,
+            })),
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          allPredictions.push(...data.predictions);
+        }
+      }
+
+      // Update transactions with predictions
+      if (allPredictions.length > 0) {
+        const predictionMap = new Map(allPredictions.map((p) => [p.id, p]));
+        setTransactions((prev) =>
+          prev.map((tx) => {
+            const prediction = predictionMap.get(tx.id);
+            if (prediction && prediction.categoryId) {
+              return {
+                ...tx,
+                predictedCategoryId: prediction.categoryId,
+                predictedCategoryName: prediction.categoryName || undefined,
+                predictedConfidence: prediction.confidence,
+              };
+            }
+            return tx;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Failed to predict categories:', error);
+    } finally {
+      setPredictingCategories(false);
+    }
+  };
+
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setError(null);
     setFile(selectedFile);
@@ -716,6 +787,8 @@ export default function CsvImportPage() {
         const txns = generateTransactions(csvRows, detected);
         setTransactions(txns);
         setStep('preview');
+        // Start AI category prediction in background
+        predictCategories(txns);
       } else {
         // Show mapping editor if we couldn't detect all fields
         setShowMappingEditor(true);
@@ -727,7 +800,7 @@ export default function CsvImportPage() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, []);
+  }, [workspaceId]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -1091,6 +1164,15 @@ export default function CsvImportPage() {
                     <th className="px-4 py-2 text-left font-medium">Date</th>
                     <th className="px-4 py-2 text-left font-medium">Description</th>
                     <th className="px-4 py-2 text-right font-medium">Amount</th>
+                    <th className="px-4 py-2 text-left font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        Category
+                        {predictingCategories && (
+                          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                        )}
+                      </span>
+                    </th>
                     {mapping.balance && (
                       <th className="px-4 py-2 text-right font-medium">Balance</th>
                     )}
@@ -1126,6 +1208,23 @@ export default function CsvImportPage() {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
+                      </td>
+                      <td className="px-4 py-2">
+                        {tx.predictedCategoryName ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                            <Tag className="h-3 w-3" />
+                            {tx.predictedCategoryName}
+                            {tx.predictedConfidence !== undefined && (
+                              <span className="text-primary/60">
+                                {Math.round(tx.predictedConfidence)}%
+                              </span>
+                            )}
+                          </span>
+                        ) : predictingCategories ? (
+                          <span className="text-xs text-muted-foreground">...</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </td>
                       {mapping.balance && (
                         <td className="px-4 py-2 text-right font-tabular-nums whitespace-nowrap">

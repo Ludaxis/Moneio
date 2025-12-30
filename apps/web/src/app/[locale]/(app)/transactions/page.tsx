@@ -135,12 +135,13 @@ export default function TransactionsPage() {
     }
   }, [workspaceId]);
 
-  // Check duplicates when workspace changes
-  useEffect(() => {
-    if (workspaceId && transactions.length > 0) {
-      checkDuplicates();
-    }
-  }, [workspaceId, transactions.length, checkDuplicates]);
+  // Duplicate detection disabled - the import API uses txHash for accurate deduplication
+  // The simple date+amount+description check had too many false positives
+  // useEffect(() => {
+  //   if (workspaceId && transactions.length > 0) {
+  //     checkDuplicates();
+  //   }
+  // }, [workspaceId, transactions.length, checkDuplicates]);
 
   // Fetch all transaction IDs for "select all pages"
   const fetchAllTransactionIds = useCallback(async () => {
