@@ -9,6 +9,20 @@ function getVisionClient(): ImageAnnotatorClient {
     const credentials = process.env.GOOGLE_CLOUD_CREDENTIALS;
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
 
+    // Log credential status for debugging
+    console.log('[OCR] Initializing Google Vision client...');
+    console.log(`[OCR] Project ID: ${projectId ? projectId : 'NOT SET'}`);
+    console.log(
+      `[OCR] Credentials: ${credentials ? (credentials.startsWith('{') ? 'JSON string provided' : 'File path provided') : 'NOT SET'}`
+    );
+
+    if (!projectId) {
+      console.error('[OCR] WARNING: GOOGLE_CLOUD_PROJECT_ID is not set!');
+    }
+    if (!credentials) {
+      console.error('[OCR] WARNING: GOOGLE_CLOUD_CREDENTIALS is not set!');
+    }
+
     if (credentials) {
       try {
         // Credentials can be a JSON string or file path
@@ -19,11 +33,14 @@ function getVisionClient(): ImageAnnotatorClient {
           credentials: parsedCredentials,
           keyFilename: parsedCredentials ? undefined : credentials,
         });
-      } catch {
+        console.log('[OCR] Vision client initialized successfully');
+      } catch (err) {
+        console.error('[OCR] Failed to parse credentials:', err);
         visionClient = new ImageAnnotatorClient({ projectId });
       }
     } else {
       // Use default credentials (e.g., from GOOGLE_APPLICATION_CREDENTIALS)
+      console.log('[OCR] Using default credentials (GOOGLE_APPLICATION_CREDENTIALS)');
       visionClient = new ImageAnnotatorClient({ projectId });
     }
   }
@@ -190,7 +207,19 @@ export async function performOcr(imageData: Buffer, mimeType: string): Promise<O
       language: primaryLanguage,
     };
   } catch (error) {
+    // Log detailed error information for debugging
     console.error('[OCR] Google Vision API error:', error);
+
+    // Check for common Google Cloud errors
+    const err = error as { code?: string | number; details?: string; message?: string };
+    if (err.code === 'UNAUTHENTICATED' || err.code === 16) {
+      console.error('[OCR] Authentication failed - check GOOGLE_CLOUD_CREDENTIALS');
+    } else if (err.code === 'PERMISSION_DENIED' || err.code === 7) {
+      console.error('[OCR] Permission denied - ensure Cloud Vision API is enabled');
+    } else if (err.code === 'NOT_FOUND' || err.code === 5) {
+      console.error('[OCR] Resource not found - check GOOGLE_CLOUD_PROJECT_ID');
+    }
+
     throw error;
   }
 }
