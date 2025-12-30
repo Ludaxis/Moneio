@@ -4,8 +4,8 @@ import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/ge
 import type { LlmClient } from '../extraction/invoice-extractor';
 import type { AiConfig, ModelInfo } from '../types';
 
-const DEFAULT_MODEL = 'gemini-2.0-flash';
-const CHAT_MODEL = 'gemini-2.0-flash';
+const DEFAULT_MODEL = 'gemini-3-pro-preview';
+const CHAT_MODEL = 'gemini-3-flash-preview';
 const DEFAULT_MAX_TOKENS = 4096;
 const DEFAULT_TEMPERATURE = 0.1;
 
@@ -73,20 +73,47 @@ export class GeminiClient implements LlmClient {
     const systemPrompt =
       'You are an expert document data extractor. Always respond with valid JSON only, no markdown or explanations.';
 
-    const result = await generativeModel.generateContent({
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: `${systemPrompt}\n\n${prompt}` }],
-        },
-      ],
-    });
+    let result;
+    try {
+      result = await generativeModel.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `${systemPrompt}\n\n${prompt}` }],
+          },
+        ],
+      });
+    } catch (apiError) {
+      console.error('[Gemini] API error:', apiError);
+      throw new Error(`Gemini API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+    }
 
     const response = result.response;
-    const content = response.text();
+
+    // Check for blocked content or safety issues
+    if (response.promptFeedback?.blockReason) {
+      console.error('[Gemini] Prompt blocked:', response.promptFeedback);
+      throw new Error(`Gemini blocked prompt: ${response.promptFeedback.blockReason}`);
+    }
+
+    // Check candidates for finish reasons
+    const candidate = response.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+      console.error('[Gemini] Unexpected finish reason:', candidate.finishReason);
+      throw new Error(`Gemini finish reason: ${candidate.finishReason}`);
+    }
+
+    let content: string;
+    try {
+      content = response.text();
+    } catch (textError) {
+      console.error('[Gemini] Error getting text:', textError, 'Response:', JSON.stringify(response));
+      throw new Error(`Gemini text extraction error: ${textError instanceof Error ? textError.message : String(textError)}`);
+    }
 
     if (!content) {
-      throw new Error('Gemini returned empty response');
+      console.error('[Gemini] Empty response. Full response:', JSON.stringify(response));
+      throw new Error('Gemini returned empty response - check API key and model availability');
     }
 
     // Clean up response if it has markdown code blocks
