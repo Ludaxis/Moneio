@@ -28,22 +28,40 @@ export interface DocumentTypeResult {
 
 /**
  * Pattern definitions for document type detection
+ *
+ * Patterns are scored, and some patterns are "strong" indicators that
+ * should heavily influence the decision.
  */
-const INVOICE_PATTERNS = [
-  /invoice/i,
-  /bill\s+to/i,
-  /due\s+date/i,
+
+// Strong indicators that definitively identify document type
+const STRONG_INVOICE_PATTERNS = [
+  /\binvoice\b/i, // Word "invoice" on its own
+  /\binvoice\s*[-#:]\s*\w+/i, // "Invoice #123" or "Invoice: ABC"
+  /tax\s+invoice/i,
+  /proforma\s+invoice/i,
   /invoice\s+number/i,
+  /invoice\s+date/i,
+];
+
+const INVOICE_PATTERNS = [
+  /bill\s*(?:ed\s+)?to/i,
+  /due\s+date/i,
   /payment\s+terms/i,
   /amount\s+due/i,
   /vat|value\s+added\s+tax/i,
-  /tax\s+invoice/i,
-  /proforma/i,
   /billing\s+address/i,
+  /line\s+items?/i,
+  /unit\s+price/i,
+  /quantity/i,
+  /tax\s+rate/i,
+  /from\s*:/i, // "From:" section common in invoices
+  /issued\s+on/i,
+  /registration\s+number/i,
 ];
 
+const STRONG_RECEIPT_PATTERNS = [/\breceipt\b/i, /sales\s+receipt/i, /payment\s+receipt/i];
+
 const RECEIPT_PATTERNS = [
-  /receipt/i,
   /cash|credit\s+card/i,
   /change\s+due/i,
   /thank\s+you\s+for\s+your\s+purchase/i,
@@ -52,20 +70,28 @@ const RECEIPT_PATTERNS = [
   /payment\s+received/i,
   /paid\s+in\s+full/i,
   /cashier/i,
+  /transaction\s+id/i,
+];
+
+const STRONG_STATEMENT_PATTERNS = [
+  /bank\s+statement/i,
+  /account\s+statement/i,
+  /statement\s+of\s+account/i,
+  /statement\s+period/i,
 ];
 
 const STATEMENT_PATTERNS = [
-  /statement/i,
-  /account\s+number/i,
   /opening\s+balance/i,
   /closing\s+balance/i,
   /transaction\s+history/i,
-  /iban/i,
-  /bic|swift/i,
-  /account\s+statement/i,
-  /bank\s+statement/i,
   /current\s+balance/i,
+  /available\s+balance/i,
+  /previous\s+balance/i,
+  /statement\s+date/i,
 ];
+
+// Note: IBAN/BIC removed from statement patterns because invoices
+// often include bank details for payment purposes
 
 /**
  * Detect document type from OCR payload
@@ -91,19 +117,34 @@ export function detectDocumentType(payload: OcrPayload): DocumentTypeResult {
 export function detectDocumentTypeFromText(text: string): DocumentTypeResult {
   const fullText = text.toLowerCase();
 
-  // Count matches for each type
-  const invoiceScore = INVOICE_PATTERNS.filter((p) => p.test(fullText)).length;
-  const receiptScore = RECEIPT_PATTERNS.filter((p) => p.test(fullText)).length;
-  const statementScore = STATEMENT_PATTERNS.filter((p) => p.test(fullText)).length;
+  // Strong patterns are worth 3 points each (they're definitive indicators)
+  // Regular patterns are worth 1 point each
+  const STRONG_WEIGHT = 3;
+
+  // Calculate scores with weighted strong patterns
+  const strongInvoiceMatches = STRONG_INVOICE_PATTERNS.filter((p) => p.test(fullText)).length;
+  const regularInvoiceMatches = INVOICE_PATTERNS.filter((p) => p.test(fullText)).length;
+  const invoiceScore = strongInvoiceMatches * STRONG_WEIGHT + regularInvoiceMatches;
+
+  const strongReceiptMatches = STRONG_RECEIPT_PATTERNS.filter((p) => p.test(fullText)).length;
+  const regularReceiptMatches = RECEIPT_PATTERNS.filter((p) => p.test(fullText)).length;
+  const receiptScore = strongReceiptMatches * STRONG_WEIGHT + regularReceiptMatches;
+
+  const strongStatementMatches = STRONG_STATEMENT_PATTERNS.filter((p) => p.test(fullText)).length;
+  const regularStatementMatches = STATEMENT_PATTERNS.filter((p) => p.test(fullText)).length;
+  const statementScore = strongStatementMatches * STRONG_WEIGHT + regularStatementMatches;
 
   const maxScore = Math.max(invoiceScore, receiptScore, statementScore);
 
-  // Calculate confidence as percentage of patterns matched relative to max possible
-  const confidence = maxScore > 0 ? Math.round((maxScore / Math.max(...[10, 9, 10])) * 100) : 0;
+  // Calculate confidence based on how many patterns matched
+  // Max possible: 6 strong patterns * 3 + 13 regular patterns = 31 for invoice
+  const maxPossible = 30;
+  const confidence = maxScore > 0 ? Math.min(Math.round((maxScore / maxPossible) * 100), 100) : 0;
 
   // Determine type based on highest score
   let type: DetectedDocumentType;
 
+  // If we have strong matches for a type, that type wins (unless another has more strong matches)
   if (invoiceScore >= receiptScore && invoiceScore >= statementScore && invoiceScore > 0) {
     type = 'invoice';
   } else if (receiptScore > invoiceScore && receiptScore >= statementScore && receiptScore > 0) {
@@ -114,6 +155,13 @@ export function detectDocumentTypeFromText(text: string): DocumentTypeResult {
     // Default to 'other' if no clear match
     type = 'other';
   }
+
+  // Log detection results for debugging
+  console.log(
+    `[DOC_TYPE] Detection: invoice=${invoiceScore} (${strongInvoiceMatches} strong), ` +
+      `receipt=${receiptScore} (${strongReceiptMatches} strong), ` +
+      `statement=${statementScore} (${strongStatementMatches} strong) → ${type}`
+  );
 
   return {
     type,
