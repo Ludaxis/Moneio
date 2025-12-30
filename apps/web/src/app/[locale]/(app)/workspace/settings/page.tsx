@@ -5,18 +5,27 @@ import {
   ArrowLeft,
   Building2,
   Palette,
+  Tag,
   Trash2,
   AlertTriangle,
   Loader2,
   CheckCircle2,
   X,
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { ThemeSelector } from '@/components/theme';
 import { useWorkspace } from '@/lib/workspace';
+
+interface Category {
+  id: string;
+  name: string;
+  parentId: string | null;
+  transactionCount: number;
+}
 
 const currencies = [
   { code: 'EUR', name: 'Euro' },
@@ -48,6 +57,13 @@ export default function WorkspaceSettingsPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleting, setDeleting] = useState(false);
 
+  // Categories state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+
   // Initialize form with workspace data
   useEffect(() => {
     if (workspace) {
@@ -55,6 +71,80 @@ export default function WorkspaceSettingsPage() {
       setBaseCurrency(workspace.baseCurrency);
     }
   }, [workspace]);
+
+  // Fetch categories
+  const fetchCategories = useCallback(async () => {
+    if (!workspace) return;
+
+    setLoadingCategories(true);
+    try {
+      const response = await fetch(`/api/categories?workspaceId=${workspace.id}&pageSize=500`);
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, [workspace]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Add category
+  const handleAddCategory = async () => {
+    if (!workspace || !newCategoryName.trim()) return;
+
+    setAddingCategory(true);
+    setCategoryError(null);
+
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId: workspace.id,
+          name: newCategoryName.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create category');
+      }
+
+      setNewCategoryName('');
+      fetchCategories();
+    } catch (err) {
+      setCategoryError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  // Delete category
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!workspace) return;
+
+    if (!confirm('Delete this category?')) return;
+
+    try {
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId: workspace.id }),
+      });
+
+      if (response.ok) {
+        fetchCategories();
+      }
+    } catch (err) {
+      console.error('Failed to delete category:', err);
+    }
+  };
 
   const handleSave = async () => {
     if (!workspace) return;
@@ -325,6 +415,88 @@ export default function WorkspaceSettingsPage() {
               <div className="mt-4">
                 <ThemeSelector />
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Categories */}
+        <div className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Tag className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">Categories</h2>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Add Category */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddCategory();
+                }}
+                placeholder="New category name..."
+                className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={handleAddCategory}
+                disabled={addingCategory || !newCategoryName.trim()}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {addingCategory ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                Add
+              </button>
+            </div>
+
+            {categoryError && (
+              <p className="mt-2 text-sm text-destructive">{categoryError}</p>
+            )}
+
+            {/* Categories List */}
+            <div className="mt-4">
+              {loadingCategories ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : categories.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  No categories yet. Add your first category above.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {categories
+                    .filter((cat) => !cat.parentId)
+                    .map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3"
+                      >
+                        <div>
+                          <span className="font-medium text-foreground">{category.name}</span>
+                          {category.transactionCount > 0 && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              ({category.transactionCount} transactions)
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          title="Delete category"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

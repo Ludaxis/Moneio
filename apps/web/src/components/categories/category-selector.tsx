@@ -53,7 +53,8 @@ export function CategorySelector({
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const response = await fetch(`/api/categories?workspaceId=${workspaceId}`);
+        // Fetch all categories (use large pageSize to get all)
+        const response = await fetch(`/api/categories?workspaceId=${workspaceId}&pageSize=500`);
         if (response.ok) {
           const data = await response.json();
           setCategories(data.categories || []);
@@ -65,7 +66,11 @@ export function CategorySelector({
       }
     }
 
-    fetchCategories();
+    if (workspaceId) {
+      fetchCategories();
+    } else {
+      setLoading(false);
+    }
   }, [workspaceId]);
 
   // Determine if AI suggestion is currently selected
@@ -102,6 +107,15 @@ export function CategorySelector({
             </SelectItem>
             <div className="my-1 h-px bg-border" />
           </>
+        )}
+
+        {/* Empty state */}
+        {categories.length === 0 && !suggestedId && (
+          <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+            No categories found.
+            <br />
+            <span className="text-xs">Create categories in Settings.</span>
+          </div>
         )}
 
         {/* All categories */}
