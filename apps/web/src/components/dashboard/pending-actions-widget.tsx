@@ -243,7 +243,9 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
                 {counts.documents}
               </p>
-              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 truncate">Documents</p>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 truncate">
+                Documents
+              </p>
             </div>
           )}
           {counts.uncategorized > 0 && (

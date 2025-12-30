@@ -111,9 +111,7 @@ export function BalanceCard({
             {value}
           </p>
           <div className="flex items-center gap-2 mt-1">
-            {lastUpdated && (
-              <p className="text-xs text-muted-foreground">{lastUpdated}</p>
-            )}
+            {lastUpdated && <p className="text-xs text-muted-foreground">{lastUpdated}</p>}
             {comparison && (
               <TrendBadge
                 percentage={comparison.percentage}
