@@ -60,9 +60,7 @@ export function ConnectBankCTA({
             <Building2 className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">
-              Connect your bank account
-            </h3>
+            <h3 className="text-sm font-semibold text-foreground">Connect your bank account</h3>
             <p className="text-xs text-muted-foreground">
               Auto-sync transactions and get AI insights
             </p>
@@ -96,21 +94,13 @@ export function ConnectBankCTA({
   if (variant === 'inline') {
     return (
       <div
-        className={cn(
-          'flex items-center justify-between p-3 rounded-lg bg-muted/50',
-          className
-        )}
+        className={cn('flex items-center justify-between p-3 rounded-lg bg-muted/50', className)}
       >
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            Connect bank for live data
-          </span>
+          <span className="text-sm text-muted-foreground">Connect bank for live data</span>
         </div>
-        <button
-          onClick={onConnect}
-          className="text-sm font-medium text-primary hover:underline"
-        >
+        <button onClick={onConnect} className="text-sm font-medium text-primary hover:underline">
           Connect
         </button>
       </div>
@@ -119,12 +109,7 @@ export function ConnectBankCTA({
 
   // Card variant (default)
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-border bg-card overflow-hidden',
-        className
-      )}
-    >
+    <div className={cn('rounded-lg border border-border bg-card overflow-hidden', className)}>
       {/* Header */}
       <div className="p-6 pb-4">
         <div className="flex items-center gap-3 mb-3">
@@ -132,12 +117,8 @@ export function ConnectBankCTA({
             <Building2 className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">
-              Connect your bank
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Unlock the full power of Moneio
-            </p>
+            <h3 className="text-lg font-semibold text-foreground">Connect your bank</h3>
+            <p className="text-sm text-muted-foreground">Unlock the full power of Moneio</p>
           </div>
         </div>
 
@@ -151,12 +132,8 @@ export function ConnectBankCTA({
                   <Icon className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {feature.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {feature.description}
-                  </p>
+                  <p className="text-sm font-medium text-foreground">{feature.title}</p>
+                  <p className="text-xs text-muted-foreground">{feature.description}</p>
                 </div>
               </div>
             );
@@ -259,10 +236,7 @@ export function BankConnectionPrompt({
         <div className="h-2 w-2 rounded-full bg-warning" />
         <span className="text-sm text-foreground">No bank connected</span>
       </div>
-      <button
-        onClick={onConnect}
-        className="text-xs font-medium text-primary hover:underline"
-      >
+      <button onClick={onConnect} className="text-xs font-medium text-primary hover:underline">
         Connect now
       </button>
     </div>

@@ -142,12 +142,7 @@ const rowSpanClasses = {
   2: 'row-span-2',
 };
 
-export function CardGridItem({
-  span,
-  rowSpan = 1,
-  children,
-  className,
-}: CardGridItemProps) {
+export function CardGridItem({ span, rowSpan = 1, children, className }: CardGridItemProps) {
   return (
     <div
       className={cn(
@@ -192,13 +187,7 @@ export function TwoColumnLayout({
   const isLeftSidebar = sidebarPosition === 'left';
 
   return (
-    <div
-      className={cn(
-        'grid grid-cols-1 lg:grid-cols-3',
-        gapClasses[gap],
-        className
-      )}
-    >
+    <div className={cn('grid grid-cols-1 lg:grid-cols-3', gapClasses[gap], className)}>
       {/* Main content - 2/3 width on desktop */}
       <div
         className={cn(

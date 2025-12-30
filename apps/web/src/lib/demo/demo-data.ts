@@ -335,7 +335,8 @@ export const DEMO_HEALTH_SCORE: DemoHealthScore = {
       description: 'Revenue stability',
     },
   ],
-  summary: 'Your financial health is good with strong profitability. Consider building more reserves.',
+  summary:
+    'Your financial health is good with strong profitability. Consider building more reserves.',
   recommendations: [
     'Increase emergency fund to 3 months of expenses',
     'Diversify revenue streams for more stability',

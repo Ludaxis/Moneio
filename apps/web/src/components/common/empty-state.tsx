@@ -1,14 +1,7 @@
 'use client';
 
 import { cn } from '@moneio/ui';
-import {
-  FileText,
-  Receipt,
-  CreditCard,
-  Building2,
-  Sparkles,
-  type LucideIcon,
-} from 'lucide-react';
+import { FileText, Receipt, CreditCard, Building2, Sparkles, type LucideIcon } from 'lucide-react';
 
 export interface EmptyStateProps {
   /** Icon to display */
@@ -279,18 +272,10 @@ export function InlineEmpty({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center justify-center py-6 text-center',
-        className
-      )}
-    >
+    <div className={cn('flex flex-col items-center justify-center py-6 text-center', className)}>
       <p className="text-sm text-muted-foreground">{message}</p>
       {action && (
-        <button
-          onClick={action.onClick}
-          className="mt-2 text-sm text-primary hover:underline"
-        >
+        <button onClick={action.onClick} className="mt-2 text-sm text-primary hover:underline">
           {action.label}
         </button>
       )}

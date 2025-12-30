@@ -113,10 +113,7 @@ export function sortInsights(insights: AiInsight[]): AiInsight[] {
 /**
  * Filter insights by type
  */
-export function filterInsightsByType(
-  insights: AiInsight[],
-  types: InsightType[]
-): AiInsight[] {
+export function filterInsightsByType(insights: AiInsight[], types: InsightType[]): AiInsight[] {
   return insights.filter((insight) => types.includes(insight.type));
 }
 

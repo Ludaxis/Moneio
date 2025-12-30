@@ -158,25 +158,16 @@ export interface ChartTooltipContentProps {
   footer?: React.ReactNode;
 }
 
-export function ChartTooltipContent({
-  label,
-  items,
-  footer,
-}: ChartTooltipContentProps) {
+export function ChartTooltipContent({ label, items, footer }: ChartTooltipContentProps) {
   return (
     <div className="space-y-2">
-      {label && (
-        <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      )}
+      {label && <div className="text-xs font-medium text-muted-foreground">{label}</div>}
       <div className="space-y-1">
         {items.map((item, index) => (
           <div key={index} className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               {item.color && (
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
               )}
               <span className="text-sm text-muted-foreground">{item.name}</span>
             </div>
@@ -185,9 +176,7 @@ export function ChartTooltipContent({
         ))}
       </div>
       {footer && (
-        <div className="pt-2 border-t border-border text-xs text-muted-foreground">
-          {footer}
-        </div>
+        <div className="pt-2 border-t border-border text-xs text-muted-foreground">{footer}</div>
       )}
     </div>
   );

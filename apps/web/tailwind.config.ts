@@ -112,11 +112,11 @@ const config: Config = {
       },
       spacing: {
         // Layout-specific spacing
-        'sidebar': 'var(--sidebar-width)',
+        sidebar: 'var(--sidebar-width)',
         'sidebar-collapsed': 'var(--sidebar-width-collapsed)',
-        'topbar': 'var(--topbar-height)',
+        topbar: 'var(--topbar-height)',
         'bottom-nav': 'var(--bottom-nav-height)',
-        'fab': 'var(--mobile-fab-size)',
+        fab: 'var(--mobile-fab-size)',
       },
       zIndex: {
         dropdown: 'var(--z-dropdown)',

@@ -79,11 +79,7 @@ export function FloatingAIButton({
       aria-label={isOpen ? 'Close AI chat' : 'Open AI chat'}
     >
       {/* Icon */}
-      {isOpen ? (
-        <X className="h-6 w-6" />
-      ) : (
-        <Sparkles className="h-6 w-6" />
-      )}
+      {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
 
       {/* Badge */}
       {!isOpen && insightCount > 0 && (
@@ -107,13 +103,7 @@ export function FloatingAIButton({
 /**
  * Mini FAB variant for inline use
  */
-export function MiniAIButton({
-  onClick,
-  className,
-}: {
-  onClick?: () => void;
-  className?: string;
-}) {
+export function MiniAIButton({ onClick, className }: { onClick?: () => void; className?: string }) {
   return (
     <button
       onClick={onClick}

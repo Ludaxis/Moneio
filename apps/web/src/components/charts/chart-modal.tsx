@@ -168,9 +168,7 @@ export function ChartModal({
         <div className="flex items-center justify-between px-4 pb-2 md:pt-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-semibold text-foreground truncate">{title}</h2>
-            {subtitle && (
-              <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
@@ -219,9 +217,7 @@ export function ChartModal({
         )}
 
         {/* Chart content */}
-        <div className={cn('flex-1 overflow-auto p-4', className)}>
-          {children}
-        </div>
+        <div className={cn('flex-1 overflow-auto p-4', className)}>{children}</div>
       </div>
     </>
   );

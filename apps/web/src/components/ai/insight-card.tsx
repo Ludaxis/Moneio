@@ -116,12 +116,7 @@ export function InsightCard({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h4
-              className={cn(
-                'font-medium text-foreground',
-                isCompact ? 'text-sm' : 'text-base'
-              )}
-            >
+            <h4 className={cn('font-medium text-foreground', isCompact ? 'text-sm' : 'text-base')}>
               {insight.title}
             </h4>
 
@@ -150,12 +145,7 @@ export function InsightCard({
             )}
           </div>
 
-          <p
-            className={cn(
-              'text-muted-foreground mt-1',
-              isCompact ? 'text-xs' : 'text-sm'
-            )}
-          >
+          <p className={cn('text-muted-foreground mt-1', isCompact ? 'text-xs' : 'text-sm')}>
             {insight.message}
           </p>
 
@@ -178,9 +168,7 @@ export function InsightCard({
                 />
               )}
               {insight.metric.label && (
-                <span className="text-xs text-muted-foreground">
-                  {insight.metric.label}
-                </span>
+                <span className="text-xs text-muted-foreground">{insight.metric.label}</span>
               )}
             </div>
           )}

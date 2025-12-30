@@ -44,15 +44,10 @@ export function InsightBanner({
 
   // Sort insights by priority
   const sortedInsights = useMemo(() => sortInsights(insights), [insights]);
-  const highPriorityCount = useMemo(
-    () => getHighPriorityInsights(insights).length,
-    [insights]
-  );
+  const highPriorityCount = useMemo(() => getHighPriorityInsights(insights).length, [insights]);
 
   // Determine which insights to show
-  const visibleInsights = expanded
-    ? sortedInsights
-    : sortedInsights.slice(0, collapsedCount);
+  const visibleInsights = expanded ? sortedInsights : sortedInsights.slice(0, collapsedCount);
   const hiddenCount = sortedInsights.length - collapsedCount;
   const hasMore = hiddenCount > 0;
 
@@ -77,9 +72,7 @@ export function InsightBanner({
       <div className="flex items-center justify-between px-4 py-3 border-b border-ai/10">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-ai animate-pulse-soft" />
-          <span className="text-sm font-medium text-foreground">
-            AI Insights
-          </span>
+          <span className="text-sm font-medium text-foreground">AI Insights</span>
           {highPriorityCount > 0 && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-ai/20 text-ai">
               {highPriorityCount} important
@@ -156,12 +149,8 @@ export function InsightBannerCompact({
       <div className="flex items-start gap-2">
         <Sparkles className="h-4 w-4 text-ai flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">
-            {topInsight.title}
-          </p>
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-            {topInsight.message}
-          </p>
+          <p className="text-sm font-medium text-foreground truncate">{topInsight.title}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{topInsight.message}</p>
         </div>
         {onDismiss && (
           <button
@@ -171,15 +160,18 @@ export function InsightBannerCompact({
           >
             <span className="sr-only">Dismiss</span>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         )}
       </div>
       {insights.length > 1 && (
-        <div className="mt-2 text-xs text-ai">
-          +{insights.length - 1} more insights
-        </div>
+        <div className="mt-2 text-xs text-ai">+{insights.length - 1} more insights</div>
       )}
     </div>
   );

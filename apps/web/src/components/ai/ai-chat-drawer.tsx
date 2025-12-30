@@ -38,12 +38,7 @@ const quickQuestions = [
  * - Chat history
  * - Context-aware suggestions
  */
-export function AIChatDrawer({
-  isOpen,
-  onClose,
-  pageContext,
-  className,
-}: AIChatDrawerProps) {
+export function AIChatDrawer({ isOpen, onClose, pageContext, className }: AIChatDrawerProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -199,11 +194,7 @@ export function AIChatDrawer({
                 Ask me anything about your finances
               </p>
 
-              {pageContext && (
-                <p className="text-xs text-center text-ai">
-                  Viewing: {pageContext}
-                </p>
-              )}
+              {pageContext && <p className="text-xs text-center text-ai">Viewing: {pageContext}</p>}
 
               <div className="grid grid-cols-2 gap-2">
                 {quickQuestions.map((q) => (
@@ -227,10 +218,7 @@ export function AIChatDrawer({
             messages.map((message) => (
               <div
                 key={message.id}
-                className={cn(
-                  'flex',
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                )}
+                className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}
               >
                 <div
                   className={cn(
@@ -265,10 +253,7 @@ export function AIChatDrawer({
         </div>
 
         {/* Input */}
-        <form
-          onSubmit={handleSubmit}
-          className="border-t border-border p-4"
-        >
+        <form onSubmit={handleSubmit} className="border-t border-border p-4">
           <div className="flex items-center gap-2">
             <input
               ref={inputRef}

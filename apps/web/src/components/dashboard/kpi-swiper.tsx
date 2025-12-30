@@ -145,9 +145,7 @@ export function KPISwiper({
             </div>
           ))
         ) : (
-          <div className="flex-shrink-0 snap-start w-[calc(80%-0.5rem)] sm:w-auto">
-            {children}
-          </div>
+          <div className="flex-shrink-0 snap-start w-[calc(80%-0.5rem)] sm:w-auto">{children}</div>
         )}
       </div>
 
@@ -192,13 +190,7 @@ export function KPISwiperItem({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        'flex-shrink-0 snap-start',
-        'w-[calc(80%-0.5rem)] sm:w-auto',
-        className
-      )}
-    >
+    <div className={cn('flex-shrink-0 snap-start', 'w-[calc(80%-0.5rem)] sm:w-auto', className)}>
       {children}
     </div>
   );

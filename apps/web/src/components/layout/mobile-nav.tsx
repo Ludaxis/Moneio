@@ -1,13 +1,7 @@
 'use client';
 
 import { cn } from '@moneio/ui';
-import {
-  LayoutDashboard,
-  FileText,
-  CreditCard,
-  MessageSquare,
-  Sparkles,
-} from 'lucide-react';
+import { LayoutDashboard, FileText, CreditCard, MessageSquare, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';

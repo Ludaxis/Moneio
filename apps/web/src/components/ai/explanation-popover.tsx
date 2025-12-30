@@ -199,9 +199,7 @@ export function ExplanationPopover({
             <span>Explain</span>
           </>
         ) : (
-          <HelpCircle
-            className={variant === 'compact' ? 'h-3 w-3' : sizeStyles[size].icon}
-          />
+          <HelpCircle className={variant === 'compact' ? 'h-3 w-3' : sizeStyles[size].icon} />
         )}
       </button>
 
@@ -247,9 +245,7 @@ export function ExplanationPopover({
             <div className="overflow-y-auto max-h-[calc(min(400px,80vh)-120px)]">
               {/* Explanation */}
               <div className="p-4">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {explanation}
-                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{explanation}</p>
               </div>
 
               {/* Confidence meter */}
@@ -267,10 +263,7 @@ export function ExplanationPopover({
                   </h4>
                   <ul className="space-y-2">
                     {visibleFactors.map((factor, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-sm"
-                      >
+                      <li key={index} className="flex items-start gap-2 text-sm">
                         <span
                           className={cn(
                             'mt-1 h-2 w-2 rounded-full flex-shrink-0',
@@ -281,9 +274,7 @@ export function ExplanationPopover({
                           )}
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-foreground">
-                            {factor.name}
-                          </span>
+                          <span className="font-medium text-foreground">{factor.name}</span>
                           {factor.weight !== undefined && (
                             <span className="ml-1 text-xs text-muted-foreground">
                               ({factor.weight}%)

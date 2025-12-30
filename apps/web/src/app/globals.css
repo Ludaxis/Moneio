@@ -13,73 +13,73 @@
      * ============================================ */
 
     /* Core backgrounds */
-    --background: 0 0% 98%;           /* #FAFAFA */
-    --foreground: 0 0% 9%;            /* #171717 */
-    --card: 0 0% 100%;                /* #FFFFFF */
-    --card-foreground: 0 0% 9%;       /* #171717 */
-    --popover: 0 0% 100%;             /* #FFFFFF */
-    --popover-foreground: 0 0% 9%;    /* #171717 */
+    --background: 0 0% 98%; /* #FAFAFA */
+    --foreground: 0 0% 9%; /* #171717 */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 0 0% 9%; /* #171717 */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 0 0% 9%; /* #171717 */
 
     /* Primary - Trust Blue */
-    --primary: 216 100% 50%;          /* #0066FF */
-    --primary-foreground: 0 0% 100%;  /* #FFFFFF */
+    --primary: 216 100% 50%; /* #0066FF */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
 
     /* Secondary - Subtle gray */
-    --secondary: 0 0% 96%;            /* #F5F5F5 */
-    --secondary-foreground: 0 0% 9%;  /* #171717 */
+    --secondary: 0 0% 96%; /* #F5F5F5 */
+    --secondary-foreground: 0 0% 9%; /* #171717 */
 
     /* Muted */
-    --muted: 0 0% 96%;                /* #F5F5F5 */
-    --muted-foreground: 0 0% 45%;     /* #737373 */
+    --muted: 0 0% 96%; /* #F5F5F5 */
+    --muted-foreground: 0 0% 45%; /* #737373 */
 
     /* Accent */
-    --accent: 0 0% 96%;               /* #F5F5F5 */
-    --accent-foreground: 0 0% 9%;     /* #171717 */
+    --accent: 0 0% 96%; /* #F5F5F5 */
+    --accent-foreground: 0 0% 9%; /* #171717 */
 
     /* Destructive */
-    --destructive: 0 84% 60%;         /* #EF4444 */
+    --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 0 0% 90%;               /* #E5E5E5 */
-    --input: 0 0% 90%;                /* #E5E5E5 */
-    --ring: 216 100% 50%;             /* #0066FF */
+    --border: 0 0% 90%; /* #E5E5E5 */
+    --input: 0 0% 90%; /* #E5E5E5 */
+    --ring: 216 100% 50%; /* #0066FF */
     --radius: 0.5rem;
 
     /* Status colors */
-    --success: 160 84% 39%;           /* #10B981 - Income green */
-    --warning: 38 92% 50%;            /* #F59E0B - Attention orange */
-    --danger: 0 84% 60%;              /* #EF4444 - Expense red */
-    --info: 216 100% 50%;             /* #0066FF - Primary blue */
+    --success: 160 84% 39%; /* #10B981 - Income green */
+    --warning: 38 92% 50%; /* #F59E0B - Attention orange */
+    --danger: 0 84% 60%; /* #EF4444 - Expense red */
+    --info: 216 100% 50%; /* #0066FF - Primary blue */
 
     /* AI Accent - Purple glow */
-    --ai-accent: 258 90% 66%;         /* #8B5CF6 */
+    --ai-accent: 258 90% 66%; /* #8B5CF6 */
     --ai-accent-foreground: 0 0% 100%;
 
     /* Chart colors - semantic */
-    --chart-income: 160 84% 39%;      /* #10B981 */
-    --chart-expense: 0 84% 60%;       /* #EF4444 */
-    --chart-neutral: 0 0% 45%;        /* #737373 */
-    --chart-grid: 0 0% 90%;           /* #E5E5E5 */
+    --chart-income: 160 84% 39%; /* #10B981 */
+    --chart-expense: 0 84% 60%; /* #EF4444 */
+    --chart-neutral: 0 0% 45%; /* #737373 */
+    --chart-grid: 0 0% 90%; /* #E5E5E5 */
 
     /* Chart palette - categorical */
-    --chart-1: 216 100% 50%;          /* Primary blue */
-    --chart-2: 160 84% 39%;           /* Success green */
-    --chart-3: 0 84% 60%;             /* Danger red */
-    --chart-4: 38 92% 50%;            /* Warning orange */
-    --chart-5: 258 90% 66%;           /* AI purple */
-    --chart-6: 330 81% 60%;           /* Pink */
-    --chart-7: 187 92% 41%;           /* Cyan */
-    --chart-8: 24 95% 53%;            /* Orange */
+    --chart-1: 216 100% 50%; /* Primary blue */
+    --chart-2: 160 84% 39%; /* Success green */
+    --chart-3: 0 84% 60%; /* Danger red */
+    --chart-4: 38 92% 50%; /* Warning orange */
+    --chart-5: 258 90% 66%; /* AI purple */
+    --chart-6: 330 81% 60%; /* Pink */
+    --chart-7: 187 92% 41%; /* Cyan */
+    --chart-8: 24 95% 53%; /* Orange */
 
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;   /* #FFFFFF */
-    --sidebar-foreground: 0 0% 25%;    /* Slightly muted text */
-    --sidebar-primary: 216 100% 50%;   /* #0066FF */
+    --sidebar-background: 0 0% 100%; /* #FFFFFF */
+    --sidebar-foreground: 0 0% 25%; /* Slightly muted text */
+    --sidebar-primary: 216 100% 50%; /* #0066FF */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;        /* #F5F5F5 */
+    --sidebar-accent: 0 0% 96%; /* #F5F5F5 */
     --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 92%;        /* Subtle border */
+    --sidebar-border: 0 0% 92%; /* Subtle border */
   }
 
   .dark {
@@ -89,50 +89,50 @@
      * ============================================ */
 
     /* Core backgrounds */
-    --background: 240 6% 4%;          /* #0A0A0B */
-    --foreground: 0 0% 98%;           /* #FAFAFA */
-    --card: 240 5% 8%;                /* #141416 */
-    --card-foreground: 0 0% 98%;      /* #FAFAFA */
-    --popover: 240 5% 8%;             /* #141416 */
-    --popover-foreground: 0 0% 98%;   /* #FAFAFA */
+    --background: 240 6% 4%; /* #0A0A0B */
+    --foreground: 0 0% 98%; /* #FAFAFA */
+    --card: 240 5% 8%; /* #141416 */
+    --card-foreground: 0 0% 98%; /* #FAFAFA */
+    --popover: 240 5% 8%; /* #141416 */
+    --popover-foreground: 0 0% 98%; /* #FAFAFA */
 
     /* Primary - Trust Blue (slightly brighter for dark) */
-    --primary: 216 100% 55%;          /* Brighter blue */
+    --primary: 216 100% 55%; /* Brighter blue */
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
-    --secondary: 240 4% 16%;          /* #27272A */
+    --secondary: 240 4% 16%; /* #27272A */
     --secondary-foreground: 0 0% 98%;
 
     /* Muted */
-    --muted: 240 4% 16%;              /* #27272A */
-    --muted-foreground: 240 5% 65%;   /* #A1A1AA */
+    --muted: 240 4% 16%; /* #27272A */
+    --muted-foreground: 240 5% 65%; /* #A1A1AA */
 
     /* Accent */
-    --accent: 240 4% 16%;             /* #27272A */
+    --accent: 240 4% 16%; /* #27272A */
     --accent-foreground: 0 0% 98%;
 
     /* Destructive */
-    --destructive: 0 72% 51%;         /* Slightly muted red for dark */
+    --destructive: 0 72% 51%; /* Slightly muted red for dark */
     --destructive-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 240 4% 16%;             /* #27272A */
-    --input: 240 4% 16%;              /* #27272A */
+    --border: 240 4% 16%; /* #27272A */
+    --input: 240 4% 16%; /* #27272A */
     --ring: 216 100% 55%;
 
     /* Status colors */
-    --success: 160 84% 39%;           /* Keep same for consistency */
+    --success: 160 84% 39%; /* Keep same for consistency */
     --warning: 38 92% 50%;
     --danger: 0 72% 51%;
     --info: 216 100% 55%;
 
     /* AI Accent */
-    --ai-accent: 258 90% 70%;         /* Slightly brighter purple */
+    --ai-accent: 258 90% 70%; /* Slightly brighter purple */
     --ai-accent-foreground: 0 0% 100%;
 
     /* Chart colors - semantic (dark) */
-    --chart-income: 160 84% 45%;      /* Slightly brighter for visibility */
+    --chart-income: 160 84% 45%; /* Slightly brighter for visibility */
     --chart-expense: 0 72% 55%;
     --chart-neutral: 240 5% 65%;
     --chart-grid: 240 4% 20%;
@@ -148,7 +148,7 @@
     --chart-8: 24 95% 58%;
 
     /* Sidebar */
-    --sidebar-background: 240 5% 6%;   /* Slightly lighter than bg */
+    --sidebar-background: 240 5% 6%; /* Slightly lighter than bg */
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 216 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;

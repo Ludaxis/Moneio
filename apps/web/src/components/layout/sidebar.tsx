@@ -77,11 +77,7 @@ export function Sidebar({ defaultCollapsed = false }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav
-        id="main-navigation"
-        className="flex-1 space-y-1 p-2"
-        aria-label="Main navigation"
-      >
+      <nav id="main-navigation" className="flex-1 space-y-1 p-2" aria-label="Main navigation">
         {navItems.map((item) => {
           const isActive = pathname.includes(item.href);
           const Icon = item.icon;

@@ -24,23 +24,24 @@ function getConfidenceLevel(confidence: number): ConfidenceLevel {
   return 'low';
 }
 
-const levelStyles: Record<ConfidenceLevel, { bg: string; text: string; icon: typeof CheckCircle }> = {
-  high: {
-    bg: 'bg-success/10',
-    text: 'text-success',
-    icon: CheckCircle,
-  },
-  medium: {
-    bg: 'bg-warning/10',
-    text: 'text-warning',
-    icon: HelpCircle,
-  },
-  low: {
-    bg: 'bg-danger/10',
-    text: 'text-danger',
-    icon: AlertCircle,
-  },
-};
+const levelStyles: Record<ConfidenceLevel, { bg: string; text: string; icon: typeof CheckCircle }> =
+  {
+    high: {
+      bg: 'bg-success/10',
+      text: 'text-success',
+      icon: CheckCircle,
+    },
+    medium: {
+      bg: 'bg-warning/10',
+      text: 'text-warning',
+      icon: HelpCircle,
+    },
+    low: {
+      bg: 'bg-danger/10',
+      text: 'text-danger',
+      icon: AlertCircle,
+    },
+  };
 
 const sizeStyles = {
   sm: {

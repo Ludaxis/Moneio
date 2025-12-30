@@ -72,9 +72,7 @@ export function DashboardCard({
           )}
         >
           <div className="flex items-center gap-2 min-w-0">
-            {icon && (
-              <div className="flex-shrink-0 text-muted-foreground">{icon}</div>
-            )}
+            {icon && <div className="flex-shrink-0 text-muted-foreground">{icon}</div>}
             <div className="min-w-0">
               {title && (
                 <h3
@@ -86,9 +84,7 @@ export function DashboardCard({
                   {title}
                 </h3>
               )}
-              {subtitle && (
-                <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
-              )}
+              {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -170,12 +166,7 @@ export function DashboardCardSkeleton({
 }) {
   return (
     <div className="space-y-3 animate-pulse">
-      <div
-        className={cn(
-          'rounded bg-muted',
-          variant === 'compact' ? 'h-8 w-24' : 'h-10 w-32'
-        )}
-      />
+      <div className={cn('rounded bg-muted', variant === 'compact' ? 'h-8 w-24' : 'h-10 w-32')} />
       <div className="space-y-2">
         <div className="h-4 w-full rounded bg-muted" />
         <div className="h-4 w-3/4 rounded bg-muted" />
@@ -208,9 +199,7 @@ export function DashboardCardHeader({
         {icon && <div className="flex-shrink-0 text-muted-foreground">{icon}</div>}
         <div className="min-w-0">
           <h3 className="font-semibold text-foreground truncate">{title}</h3>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
         </div>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}

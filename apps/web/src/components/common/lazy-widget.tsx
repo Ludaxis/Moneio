@@ -75,9 +75,7 @@ export function LazyWidget({
     };
   }, [threshold, rootMargin, eager, hasRendered]);
 
-  const defaultFallback = (
-    <WidgetSkeleton minHeight={minHeight} className={className} />
-  );
+  const defaultFallback = <WidgetSkeleton minHeight={minHeight} className={className} />;
 
   return (
     <div
@@ -110,11 +108,7 @@ export function WidgetSkeleton({
 }) {
   return (
     <div
-      className={cn(
-        'rounded-lg border border-border bg-card p-4',
-        'animate-pulse',
-        className
-      )}
+      className={cn('rounded-lg border border-border bg-card p-4', 'animate-pulse', className)}
       style={{ minHeight }}
     >
       {/* Header skeleton */}
@@ -133,11 +127,7 @@ export function WidgetSkeleton({
       {/* Chart-like skeleton */}
       <div className="mt-4 flex items-end gap-2 h-24">
         {[40, 60, 80, 50, 70, 90, 65].map((h, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-t bg-muted"
-            style={{ height: `${h}%` }}
-          />
+          <div key={i} className="flex-1 rounded-t bg-muted" style={{ height: `${h}%` }} />
         ))}
       </div>
     </div>
@@ -149,13 +139,7 @@ export function WidgetSkeleton({
  */
 export function KPICardSkeleton({ className }: { className?: string }) {
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-border bg-card p-4',
-        'animate-pulse',
-        className
-      )}
-    >
+    <div className={cn('rounded-lg border border-border bg-card p-4', 'animate-pulse', className)}>
       <div className="h-4 w-20 rounded bg-muted mb-2" />
       <div className="h-8 w-28 rounded bg-muted mb-1" />
       <div className="h-3 w-16 rounded bg-muted" />
@@ -174,13 +158,7 @@ export function ChartSkeleton({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-border bg-card p-4',
-        'animate-pulse',
-        className
-      )}
-    >
+    <div className={cn('rounded-lg border border-border bg-card p-4', 'animate-pulse', className)}>
       {/* Chart header */}
       <div className="flex items-center justify-between mb-4">
         <div className="h-5 w-32 rounded bg-muted" />
@@ -191,10 +169,7 @@ export function ChartSkeleton({
       </div>
 
       {/* Chart area */}
-      <div
-        className="relative rounded bg-muted"
-        style={{ height: height - 60 }}
-      >
+      <div className="relative rounded bg-muted" style={{ height: height - 60 }}>
         {/* Axis lines */}
         <div className="absolute inset-0 flex flex-col justify-between p-2">
           {[...Array(4)].map((_, i) => (
@@ -221,21 +196,9 @@ export function ChartSkeleton({
 /**
  * Table/List skeleton
  */
-export function ListSkeleton({
-  rows = 5,
-  className,
-}: {
-  rows?: number;
-  className?: string;
-}) {
+export function ListSkeleton({ rows = 5, className }: { rows?: number; className?: string }) {
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-border bg-card',
-        'animate-pulse',
-        className
-      )}
-    >
+    <div className={cn('rounded-lg border border-border bg-card', 'animate-pulse', className)}>
       {/* Header */}
       <div className="flex items-center gap-4 p-4 border-b border-border">
         <div className="h-4 w-8 rounded bg-muted" />
@@ -246,10 +209,7 @@ export function ListSkeleton({
 
       {/* Rows */}
       {[...Array(rows)].map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-4 p-4 border-b border-border last:border-b-0"
-        >
+        <div key={i} className="flex items-center gap-4 p-4 border-b border-border last:border-b-0">
           <div className="h-8 w-8 rounded-full bg-muted" />
           <div className="flex-1 space-y-2">
             <div className="h-4 w-48 rounded bg-muted" />

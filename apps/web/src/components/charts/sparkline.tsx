@@ -98,13 +98,7 @@ export function Sparkline({
 
   if (loading) {
     return (
-      <div
-        className={cn(
-          'flex items-center gap-2 animate-pulse',
-          className
-        )}
-        style={{ height }}
-      >
+      <div className={cn('flex items-center gap-2 animate-pulse', className)} style={{ height }}>
         <div className="flex-1 h-full bg-muted rounded" />
         {showTrend && <div className="w-4 h-4 bg-muted rounded" />}
       </div>
@@ -114,10 +108,7 @@ export function Sparkline({
   if (data.length === 0) {
     return (
       <div
-        className={cn(
-          'flex items-center justify-center text-muted-foreground text-xs',
-          className
-        )}
+        className={cn('flex items-center justify-center text-muted-foreground text-xs', className)}
         style={{ height }}
       >
         No data
@@ -160,12 +151,8 @@ export function Sparkline({
 
       {/* Value and trend */}
       <div className="flex flex-col items-end flex-shrink-0">
-        {showValue && (
-          <span className="text-sm font-medium amount">{displayValue}</span>
-        )}
-        {showTrend && (
-          <TrendIcon className={cn('h-4 w-4', colors.trend)} />
-        )}
+        {showValue && <span className="text-sm font-medium amount">{displayValue}</span>}
+        {showTrend && <TrendIcon className={cn('h-4 w-4', colors.trend)} />}
       </div>
     </div>
   );

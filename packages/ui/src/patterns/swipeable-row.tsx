@@ -126,7 +126,14 @@ export function SwipeableRow({
 
       setTranslateX(newTranslate);
     },
-    [isDragging, disabled, rightActions.length, leftActions.length, rightActionsWidth, leftActionsWidth]
+    [
+      isDragging,
+      disabled,
+      rightActions.length,
+      leftActions.length,
+      rightActionsWidth,
+      leftActionsWidth,
+    ]
   );
 
   // Handle touch/pointer end
@@ -164,7 +171,16 @@ export function SwipeableRow({
     } else {
       resetPosition();
     }
-  }, [isDragging, translateX, rightActions.length, leftActions.length, rightActionsWidth, leftActionsWidth, onSwipeComplete, resetPosition]);
+  }, [
+    isDragging,
+    translateX,
+    rightActions.length,
+    leftActions.length,
+    rightActionsWidth,
+    leftActionsWidth,
+    onSwipeComplete,
+    resetPosition,
+  ]);
 
   // Close on click outside
   useEffect(() => {
@@ -199,16 +215,10 @@ export function SwipeableRow({
   const hasActions = leftActions.length > 0 || rightActions.length > 0;
 
   return (
-    <div
-      ref={containerRef}
-      className={cn('relative overflow-hidden', className)}
-    >
+    <div ref={containerRef} className={cn('relative overflow-hidden', className)}>
       {/* Left actions (revealed on swipe right) */}
       {leftActions.length > 0 && (
-        <div
-          className="absolute inset-y-0 left-0 flex"
-          style={{ width: leftActionsWidth }}
-        >
+        <div className="absolute inset-y-0 left-0 flex" style={{ width: leftActionsWidth }}>
           {leftActions.map((action) => (
             <button
               key={action.id}
@@ -230,10 +240,7 @@ export function SwipeableRow({
 
       {/* Right actions (revealed on swipe left) */}
       {rightActions.length > 0 && (
-        <div
-          className="absolute inset-y-0 right-0 flex"
-          style={{ width: rightActionsWidth }}
-        >
+        <div className="absolute inset-y-0 right-0 flex" style={{ width: rightActionsWidth }}>
           {rightActions.map((action) => (
             <button
               key={action.id}

@@ -135,9 +135,7 @@ export function KPICard({
           {trendValue !== undefined && (
             <span className="text-xs font-medium">{Math.abs(trendValue)}%</span>
           )}
-          {trendPeriod && (
-            <span className="text-xs text-muted-foreground">{trendPeriod}</span>
-          )}
+          {trendPeriod && <span className="text-xs text-muted-foreground">{trendPeriod}</span>}
         </div>
       )}
     </div>

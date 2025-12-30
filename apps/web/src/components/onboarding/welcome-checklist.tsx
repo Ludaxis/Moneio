@@ -1,13 +1,7 @@
 'use client';
 
 import { cn } from '@moneio/ui';
-import {
-  Check,
-  Circle,
-  Sparkles,
-  ChevronRight,
-  PartyPopper,
-} from 'lucide-react';
+import { Check, Circle, Sparkles, ChevronRight, PartyPopper } from 'lucide-react';
 import { useState, useCallback, useMemo } from 'react';
 
 export interface ChecklistItem {
@@ -88,10 +82,7 @@ export function WelcomeChecklist({
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [celebrating, _setCelebrating] = useState(false);
 
-  const completedCount = useMemo(
-    () => items.filter((item) => item.completed).length,
-    [items]
-  );
+  const completedCount = useMemo(() => items.filter((item) => item.completed).length, [items]);
   const totalCount = items.length;
   const progress = Math.round((completedCount / totalCount) * 100);
   const isAllComplete = completedCount === totalCount;
@@ -106,12 +97,7 @@ export function WelcomeChecklist({
   // All complete celebration view
   if (isAllComplete && !celebrating) {
     return (
-      <div
-        className={cn(
-          'rounded-lg border border-success/30 bg-success/5 p-4',
-          className
-        )}
-      >
+      <div className={cn('rounded-lg border border-success/30 bg-success/5 p-4', className)}>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
             <PartyPopper className="h-5 w-5 text-success" />
@@ -223,9 +209,7 @@ export function WelcomeChecklist({
                   {item.title}
                 </p>
                 {item.description && !item.completed && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {item.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                 )}
               </div>
 
