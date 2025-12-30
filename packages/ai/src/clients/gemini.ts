@@ -85,7 +85,9 @@ export class GeminiClient implements LlmClient {
       });
     } catch (apiError) {
       console.error('[Gemini] API error:', apiError);
-      throw new Error(`Gemini API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+      throw new Error(
+        `Gemini API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`
+      );
     }
 
     const response = result.response;
@@ -107,8 +109,15 @@ export class GeminiClient implements LlmClient {
     try {
       content = response.text();
     } catch (textError) {
-      console.error('[Gemini] Error getting text:', textError, 'Response:', JSON.stringify(response));
-      throw new Error(`Gemini text extraction error: ${textError instanceof Error ? textError.message : String(textError)}`);
+      console.error(
+        '[Gemini] Error getting text:',
+        textError,
+        'Response:',
+        JSON.stringify(response)
+      );
+      throw new Error(
+        `Gemini text extraction error: ${textError instanceof Error ? textError.message : String(textError)}`
+      );
     }
 
     if (!content) {
