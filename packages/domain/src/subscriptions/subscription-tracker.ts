@@ -170,9 +170,7 @@ export function trackSubscriptions(
   });
 
   // Convert to subscriptions and add flags
-  const subscriptions = subscriptionPatterns.map((pattern) =>
-    convertToSubscription(pattern, opts)
-  );
+  const subscriptions = subscriptionPatterns.map((pattern) => convertToSubscription(pattern, opts));
 
   // Detect duplicates across all subscriptions
   detectDuplicates(subscriptions);
@@ -199,7 +197,8 @@ function convertToSubscription(
       type: 'expensive',
       severity: 'info',
       message: `High monthly cost: ${pattern.currency} ${monthlyEquivalent.toFixed(2)}/month`,
-      suggestion: 'Review if this subscription is still needed or if there are cheaper alternatives',
+      suggestion:
+        'Review if this subscription is still needed or if there are cheaper alternatives',
       detectedAt: new Date(),
     });
   }

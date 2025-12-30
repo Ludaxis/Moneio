@@ -434,7 +434,8 @@ export class FinancialChatService {
           return {
             success: true,
             data: {
-              message: 'Tax deduction tracking is coming soon! For now, I can help you categorize business expenses.',
+              message:
+                'Tax deduction tracking is coming soon! For now, I can help you categorize business expenses.',
               suggestion: 'Show my category breakdown',
             },
           };
@@ -450,7 +451,8 @@ export class FinancialChatService {
           return {
             success: true,
             data: {
-              message: 'Budget tracking is coming soon! For now, I can show you your spending patterns.',
+              message:
+                'Budget tracking is coming soon! For now, I can show you your spending patterns.',
               suggestion: 'Show my spending this month',
             },
           };
@@ -898,7 +900,17 @@ export class FinancialChatService {
 
   private formatVendorAnalysis(merchant: string, data: Record<string, unknown>): string {
     const vendorData = data as unknown as VendorAnalysisData;
-    const { totalSpent, transactionCount, averageTransaction, firstTransaction, lastTransaction, frequency, isRecurring, category, currency } = vendorData;
+    const {
+      totalSpent,
+      transactionCount,
+      averageTransaction,
+      firstTransaction,
+      lastTransaction,
+      frequency,
+      isRecurring,
+      category,
+      currency,
+    } = vendorData;
 
     let response = `**${merchant} Analysis**\n\n`;
     response += `- Total spent: **${this.formatCurrency(totalSpent, currency)}**\n`;
@@ -1042,11 +1054,7 @@ export class FinancialChatService {
         'What are my biggest expenses?',
         'How much did I spend on business?',
       ],
-      invoice_status: [
-        'What is my income?',
-        'What are my pending invoices?',
-        'Am I profitable?',
-      ],
+      invoice_status: ['What is my income?', 'What are my pending invoices?', 'Am I profitable?'],
       budget_check: [
         'How much did I spend this month?',
         'Am I spending more than usual?',

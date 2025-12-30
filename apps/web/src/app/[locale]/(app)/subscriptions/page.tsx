@@ -249,7 +249,8 @@ export default function SubscriptionsPage() {
               {formatCurrency(subscriptionSummary.totalMonthly, subscriptionSummary.currency)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {subscriptionSummary.activeCount} active of {subscriptionSummary.subscriptionCount} total
+              {subscriptionSummary.activeCount} active of {subscriptionSummary.subscriptionCount}{' '}
+              total
             </p>
           </div>
 
@@ -449,9 +450,7 @@ export default function SubscriptionsPage() {
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           <span>{frequencyLabels[sub.frequency] || sub.frequency}</span>
-                          <span>
-                            {formatCurrency(sub.amount, sub.currency)} per charge
-                          </span>
+                          <span>{formatCurrency(sub.amount, sub.currency)} per charge</span>
                           <span>{sub.chargeCount} charges</span>
                           {sub.category && (
                             <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
@@ -481,11 +480,7 @@ export default function SubscriptionsPage() {
                           return (
                             <div
                               key={idx}
-                              className={cn(
-                                'rounded-lg border p-3',
-                                colors.bg,
-                                colors.border
-                              )}
+                              className={cn('rounded-lg border p-3', colors.bg, colors.border)}
                             >
                               <div className="flex items-start gap-2">
                                 <AlertTriangle className={cn('h-4 w-4 mt-0.5', colors.text)} />
@@ -500,7 +495,8 @@ export default function SubscriptionsPage() {
                                   )}
                                   {flag.potentialSavings && (
                                     <p className="mt-1 text-xs font-medium text-success-600">
-                                      Potential savings: {formatCurrency(flag.potentialSavings, sub.currency)}/year
+                                      Potential savings:{' '}
+                                      {formatCurrency(flag.potentialSavings, sub.currency)}/year
                                     </p>
                                   )}
                                 </div>

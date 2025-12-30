@@ -25,7 +25,14 @@ const querySchema = z.object({
   lookbackMonths: z.coerce.number().int().min(1).max(24).optional(),
   minSeverity: z.enum(['low', 'medium', 'high']).optional(),
   type: z
-    .enum(['subscription', 'fee', 'duplicate_charge', 'price_creep', 'unused_service', 'forgotten_subscription'])
+    .enum([
+      'subscription',
+      'fee',
+      'duplicate_charge',
+      'price_creep',
+      'unused_service',
+      'forgotten_subscription',
+    ])
     .optional(),
 });
 

@@ -776,8 +776,8 @@ function createDataProvider(workspaceId: string, baseCurrency: string): Financia
         minConfidence: 0.5,
       });
 
-      const matchingPattern = patterns.find(
-        (p) => p.merchantName.toLowerCase().includes(merchant.toLowerCase())
+      const matchingPattern = patterns.find((p) =>
+        p.merchantName.toLowerCase().includes(merchant.toLowerCase())
       );
 
       return {
@@ -817,10 +817,7 @@ function createDataProvider(workspaceId: string, baseCurrency: string): Financia
         (i) => i.status === 'pending' && i.dueDate && i.dueDate < now
       );
 
-      const totalOutstanding = [...pending].reduce(
-        (sum, i) => sum + i.total.toNumber(),
-        0
-      );
+      const totalOutstanding = [...pending].reduce((sum, i) => sum + i.total.toNumber(), 0);
       const totalOverdue = overdue.reduce((sum, i) => sum + i.total.toNumber(), 0);
 
       // Find oldest overdue

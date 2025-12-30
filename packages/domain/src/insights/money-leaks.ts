@@ -155,7 +155,9 @@ function detectSubscriptionLeaks(subscriptions: Subscription[]): MoneyLeak[] {
  * Convert subscription flag to money leak
  */
 function convertFlagToLeak(subscription: Subscription, flag: SubscriptionFlag): MoneyLeak | null {
-  const monthlyImpact = flag.potentialSavings ? flag.potentialSavings / 12 : subscription.monthlyEquivalent;
+  const monthlyImpact = flag.potentialSavings
+    ? flag.potentialSavings / 12
+    : subscription.monthlyEquivalent;
   const annualImpact = flag.potentialSavings || subscription.monthlyEquivalent * 12;
 
   let type: MoneyLeakType;
@@ -237,7 +239,10 @@ function detectBankFees(
     const dates = feeTransactions.map((tx) => tx.postedAt);
     const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
     const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
-    const months = Math.max(1, (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    const months = Math.max(
+      1,
+      (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
+    );
     const monthlyFees = totalFees / months;
 
     leaks.push({
@@ -387,9 +392,7 @@ export function getMoneyLeaksSummary(leaks: MoneyLeak[]): MoneyLeaksSummary {
   }
 
   // Get top 5 leaks by impact
-  const topLeaks = [...leaks]
-    .sort((a, b) => b.annualImpact - a.annualImpact)
-    .slice(0, 5);
+  const topLeaks = [...leaks].sort((a, b) => b.annualImpact - a.annualImpact).slice(0, 5);
 
   return {
     totalLeaks: leaks.length,

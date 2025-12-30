@@ -201,7 +201,8 @@ function generateCostSavingRecommendations(input: RecommendationInput): Recommen
       recommendations.push({
         id: `rec_sub_${sub.id}_${flag.type}`,
         type: 'cost_saving',
-        priority: flag.severity === 'alert' ? 'high' : flag.severity === 'warning' ? 'medium' : 'low',
+        priority:
+          flag.severity === 'alert' ? 'high' : flag.severity === 'warning' ? 'medium' : 'low',
         title: `${sub.merchantName}: ${flag.type.replace('_', ' ')}`,
         description: flag.message,
         impact: {
@@ -442,9 +443,7 @@ function generateEfficiencyRecommendations(input: RecommendationInput): Recommen
   }
 
   // Unused subscriptions
-  const unusedSubs = subscriptions.filter((s) =>
-    s.flags.some((f) => f.type === 'unused')
-  );
+  const unusedSubs = subscriptions.filter((s) => s.flags.some((f) => f.type === 'unused'));
   if (unusedSubs.length > 0) {
     const totalUnused = unusedSubs.reduce((sum, s) => sum + s.monthlyEquivalent, 0);
     recommendations.push({

@@ -137,10 +137,12 @@ export function SubscriptionSummaryWidget({ workspaceId }: SubscriptionSummaryWi
             <p className="text-sm text-muted-foreground">Monthly Total</p>
             <div className="flex items-end gap-2">
               <p className="text-3xl font-bold text-foreground">
-                {summary.currency} {monthlyTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {summary.currency}{' '}
+                {monthlyTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
               <p className="mb-1 text-sm text-muted-foreground">
-                ({summary.currency} {annualTotal.toLocaleString('en-US', { minimumFractionDigits: 0 })}/year)
+                ({summary.currency}{' '}
+                {annualTotal.toLocaleString('en-US', { minimumFractionDigits: 0 })}/year)
               </p>
             </div>
           </div>
@@ -163,7 +165,9 @@ export function SubscriptionSummaryWidget({ workspaceId }: SubscriptionSummaryWi
               <TrendingDown className="h-5 w-5 text-success-600" />
               <div>
                 <p className="text-sm font-medium text-success-700">
-                  {summary.currency} {potentialSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })} potential savings
+                  {summary.currency}{' '}
+                  {potentialSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })} potential
+                  savings
                 </p>
                 <p className="text-xs text-success-600">Review flagged subscriptions</p>
               </div>
@@ -179,7 +183,10 @@ export function SubscriptionSummaryWidget({ workspaceId }: SubscriptionSummaryWi
                   <div key={cat.category} className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">{cat.category}</span>
                     <span className="text-sm font-medium text-foreground">
-                      {summary.currency} {parseFloat(cat.monthly).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {summary.currency}{' '}
+                      {parseFloat(cat.monthly).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                      })}
                       <span className="ml-1 text-xs text-muted-foreground">({cat.count})</span>
                     </span>
                   </div>

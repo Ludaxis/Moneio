@@ -150,7 +150,8 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
           <div className="mt-4 rounded-lg bg-warning-50 p-4">
             <p className="text-sm text-warning-700">Potential Annual Savings</p>
             <p className="mt-1 text-2xl font-bold text-warning-900">
-              {summary.currency} {potentialSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {summary.currency}{' '}
+              {potentialSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
           </div>
 
@@ -159,7 +160,10 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
             {summary.topLeaks.slice(0, 3).map((leak) => {
               const colors = severityColors[leak.severity] || severityColors.low;
               return (
-                <div key={leak.id} className="flex items-start gap-3 rounded-lg border border-border p-3">
+                <div
+                  key={leak.id}
+                  className="flex items-start gap-3 rounded-lg border border-border p-3"
+                >
                   <div className={`rounded-full p-1.5 ${colors.bg}`}>
                     <span className={colors.icon}>
                       {typeIcons[leak.type] || <AlertCircle className="h-4 w-4" />}
@@ -168,7 +172,11 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{leak.title}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {leak.currency} {parseFloat(leak.annualImpact).toLocaleString('en-US', { minimumFractionDigits: 2 })}/year
+                      {leak.currency}{' '}
+                      {parseFloat(leak.annualImpact).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                      })}
+                      /year
                     </p>
                   </div>
                   <span
