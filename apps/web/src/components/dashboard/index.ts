@@ -4,6 +4,9 @@ export { CashflowChart } from './cashflow-chart';
 export { CategoryBreakdown } from './category-breakdown';
 export { RecentActivity } from './recent-activity';
 
+// Date range picker
+export { DateRangePicker, getDefaultDateRange, type DateRange } from './date-range-picker';
+
 // New AI-powered dashboard components
 export { AIInsightsBanner } from './ai-insights-banner';
 export { BalanceCard } from './balance-card';

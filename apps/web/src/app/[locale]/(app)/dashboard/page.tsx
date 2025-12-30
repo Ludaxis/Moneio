@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import {
   AIInsightsBanner,
@@ -14,6 +14,9 @@ import {
   HealthScoreWidget,
   ForecastChart,
   RecentActivity,
+  DateRangePicker,
+  getDefaultDateRange,
+  type DateRange,
 } from '@/components/dashboard';
 import { useWorkspace } from '@/hooks/use-workspace';
 
@@ -65,14 +68,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Calculate date range for current month
-  const dateRange = useMemo(() => {
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-    const endDate = now.toISOString().slice(0, 10);
-    return { startDate, endDate };
-  }, []);
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
 
   const fetchDashboardData = useCallback(async () => {
     if (!workspaceId) return;
@@ -134,7 +130,7 @@ export default function DashboardPage() {
   const getComparison = () => {
     if (!metrics?.trend) return undefined;
     return {
-      period: 'compared to last month',
+      period: 'vs last period',
       percentage: Math.abs(metrics.trend.changePercentage),
       direction: metrics.trend.direction,
     };
@@ -174,8 +170,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      {/* Header with Date Range Picker */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
           <p className="text-sm text-muted-foreground">
@@ -187,6 +183,7 @@ export default function DashboardPage() {
             })}
           </p>
         </div>
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
       </div>
 
       {/* AI Insights Banner */}
@@ -207,7 +204,7 @@ export default function DashboardPage() {
           type="bank"
           label="Total Income"
           value={metrics?.totalIncome.formatted || formatCurrency(0, baseCurrency)}
-          lastUpdated="This month"
+          lastUpdated={dateRange.label}
           loading={isLoading}
           delay={0.1}
         />
@@ -215,7 +212,7 @@ export default function DashboardPage() {
           type="card"
           label="Total Expenses"
           value={metrics?.totalExpenses.formatted || formatCurrency(0, baseCurrency)}
-          lastUpdated="This month"
+          lastUpdated={dateRange.label}
           loading={isLoading}
           delay={0.2}
         />
@@ -229,41 +226,53 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Cash Flow Chart */}
-          <CashflowChart
-            data={metrics?.monthlyData || []}
-            loading={isLoading}
-            baseCurrency={baseCurrency}
-          />
+      {/* Full-width Cash Flow Chart */}
+      <CashflowChart
+        data={metrics?.monthlyData || []}
+        loading={isLoading}
+        baseCurrency={baseCurrency}
+      />
 
+      {/* Two Column Layout for Widgets */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Left Column */}
+        <div className="space-y-6">
           {/* Operating Expenses */}
           {workspaceId && (
-            <OperatingExpensesChart workspaceId={workspaceId} currency={baseCurrency} />
+            <OperatingExpensesChart
+              workspaceId={workspaceId}
+              currency={baseCurrency}
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+            />
           )}
 
-          {/* Forecast Chart */}
-          {workspaceId && <ForecastChart workspaceId={workspaceId} months={6} />}
+          {/* Top Expenses */}
+          {workspaceId && (
+            <TopExpensesWidget
+              workspaceId={workspaceId}
+              currency={baseCurrency}
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+            />
+          )}
         </div>
 
-        {/* Right Column - 1/3 width */}
+        {/* Right Column */}
         <div className="space-y-6">
+          {/* Forecast Chart */}
+          {workspaceId && <ForecastChart workspaceId={workspaceId} months={6} />}
+
           {/* Runway Widget */}
           {workspaceId && <RunwayWidget workspaceId={workspaceId} />}
 
           {/* Health Score */}
           {workspaceId && <HealthScoreWidget workspaceId={workspaceId} />}
-
-          {/* Top Expenses */}
-          {workspaceId && <TopExpensesWidget workspaceId={workspaceId} currency={baseCurrency} />}
-
-          {/* Pending Actions */}
-          {workspaceId && <PendingActionsWidget workspaceId={workspaceId} />}
         </div>
       </div>
+
+      {/* Pending Actions - Full Width */}
+      {workspaceId && <PendingActionsWidget workspaceId={workspaceId} />}
 
       {/* Recent Activity */}
       <RecentActivity

@@ -3,7 +3,6 @@
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { chartPalette, axisStyle, gridStyle, barChartDefaults } from '@moneio/ui/lib/chart-theme';
 import { ChartTooltip, chartTooltipContentStyle } from '@moneio/ui/patterns';
-import { ChevronDown } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -17,28 +16,36 @@ interface MonthlyExpense {
 interface OperatingExpensesChartProps {
   workspaceId: string;
   currency: string;
+  startDate?: string;
+  endDate?: string;
 }
 
-export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpensesChartProps) {
+export function OperatingExpensesChart({
+  workspaceId,
+  currency,
+  startDate: propStartDate,
+  endDate: propEndDate,
+}: OperatingExpensesChartProps) {
   const [data, setData] = useState<MonthlyExpense[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [months, setMonths] = useState(6);
-  const [showDropdown, setShowDropdown] = useState(false);
 
   const containerRef = useFadeIn({ duration: 0.5, y: 20 }) as React.RefObject<HTMLDivElement>;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      // Use props if provided, otherwise default to last 6 months
       const now = new Date();
-      const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
-      const endDate = now;
+      const startDate =
+        propStartDate ||
+        new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10);
+      const endDate = propEndDate || now.toISOString().slice(0, 10);
 
       const params = new URLSearchParams({
         workspaceId,
-        startDate: startDate.toISOString().slice(0, 10),
-        endDate: endDate.toISOString().slice(0, 10),
+        startDate,
+        endDate,
       });
 
       const response = await fetch(`/api/dashboard/metrics?${params.toString()}`);
@@ -80,7 +87,7 @@ export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpen
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, months]);
+  }, [workspaceId, propStartDate, propEndDate]);
 
   useEffect(() => {
     if (workspaceId) {
@@ -108,36 +115,7 @@ export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpen
 
   return (
     <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-foreground">Operating Expenses</h3>
-        <div className="relative">
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
-          >
-            {months} Months
-            <ChevronDown className="h-4 w-4" />
-          </button>
-          {showDropdown && (
-            <div className="absolute right-0 top-full z-10 mt-1 w-28 rounded-lg border border-border bg-popover shadow-lg">
-              {[3, 6, 12].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setMonths(m);
-                    setShowDropdown(false);
-                  }}
-                  className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                    months === m ? 'bg-muted font-medium' : ''
-                  }`}
-                >
-                  {m} Months
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <h3 className="font-semibold text-foreground">Operating Expenses</h3>
 
       {data.length === 0 ? (
         <div className="mt-4 h-64 flex items-center justify-center">

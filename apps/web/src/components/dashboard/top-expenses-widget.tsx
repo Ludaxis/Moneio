@@ -2,7 +2,7 @@
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { chartPalette } from '@moneio/ui/lib/chart-theme';
-import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -18,54 +18,29 @@ interface ExpenseCategory {
 interface TopExpensesWidgetProps {
   workspaceId: string;
   currency: string;
-  period?: 'this_month' | 'last_month' | 'this_quarter' | 'ytd';
+  startDate?: string;
+  endDate?: string;
 }
-
-const periodLabels: Record<string, string> = {
-  this_month: 'This Month',
-  last_month: 'Last Month',
-  this_quarter: 'This Quarter',
-  ytd: 'Year to Date',
-};
 
 export function TopExpensesWidget({
   workspaceId,
   currency,
-  period = 'this_month',
+  startDate: propStartDate,
+  endDate: propEndDate,
 }: TopExpensesWidgetProps) {
   const [expenses, setExpenses] = useState<ExpenseCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState(period);
-  const [showDropdown, setShowDropdown] = useState(false);
 
   const containerRef = useFadeIn({ duration: 0.5, y: 20 }) as React.RefObject<HTMLDivElement>;
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
     try {
-      // Calculate date range based on period
+      // Use props if provided, otherwise default to current month
       const now = new Date();
-      let startDate: string;
-      let endDate = now.toISOString().slice(0, 10);
-
-      switch (selectedPeriod) {
-        case 'last_month': {
-          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          startDate = lastMonth.toISOString().slice(0, 10);
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
-          break;
-        }
-        case 'this_quarter': {
-          const quarterStart = Math.floor(now.getMonth() / 3) * 3;
-          startDate = new Date(now.getFullYear(), quarterStart, 1).toISOString().slice(0, 10);
-          break;
-        }
-        case 'ytd':
-          startDate = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
-          break;
-        default: // this_month
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      }
+      const startDate =
+        propStartDate || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+      const endDate = propEndDate || now.toISOString().slice(0, 10);
 
       const params = new URLSearchParams({
         workspaceId,
@@ -94,7 +69,7 @@ export function TopExpensesWidget({
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, selectedPeriod]);
+  }, [workspaceId, propStartDate, propEndDate]);
 
   useEffect(() => {
     if (workspaceId) {
@@ -137,36 +112,7 @@ export function TopExpensesWidget({
 
   return (
     <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-foreground">Top Expenses</h3>
-        <div className="relative">
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
-          >
-            {periodLabels[selectedPeriod]}
-            <ChevronDown className="h-4 w-4" />
-          </button>
-          {showDropdown && (
-            <div className="absolute right-0 top-full z-10 mt-1 w-36 rounded-lg border border-border bg-popover shadow-lg">
-              {Object.entries(periodLabels).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setSelectedPeriod(key as typeof selectedPeriod);
-                    setShowDropdown(false);
-                  }}
-                  className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                    selectedPeriod === key ? 'bg-muted font-medium' : ''
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <h3 className="font-semibold text-foreground">Top Expenses</h3>
 
       {expenses.length === 0 ? (
         <div className="mt-6 text-center py-8">
