@@ -707,100 +707,103 @@ export default function CsvImportPage() {
     }
   };
 
-  const handleFileSelect = useCallback(async (selectedFile: File) => {
-    setError(null);
-    setFile(selectedFile);
-    setIsAnalyzing(true);
+  const handleFileSelect = useCallback(
+    async (selectedFile: File) => {
+      setError(null);
+      setFile(selectedFile);
+      setIsAnalyzing(true);
 
-    try {
-      const text = await selectedFile.text();
-      const { headers: csvHeaders, rows: csvRows } = parseCSV(text);
+      try {
+        const text = await selectedFile.text();
+        const { headers: csvHeaders, rows: csvRows } = parseCSV(text);
 
-      setHeaders(csvHeaders);
-      setRows(csvRows);
+        setHeaders(csvHeaders);
+        setRows(csvRows);
 
-      // Multi-layer detection strategy for maximum accuracy
-      let detected: Partial<ColumnMapping> = {};
+        // Multi-layer detection strategy for maximum accuracy
+        let detected: Partial<ColumnMapping> = {};
 
-      // Layer 1: Try AI normalization (primary - analyzes headers + sample data)
-      console.log('[CSV Import] Attempting AI-based header detection...');
-      const aiDetected = await normalizeHeadersWithAI(csvHeaders, csvRows);
-      if (aiDetected) {
-        console.log('[CSV Import] AI detection successful:', aiDetected);
-        detected = { ...detected, ...aiDetected };
-      } else {
-        console.log('[CSV Import] AI detection failed or returned incomplete results');
-      }
+        // Layer 1: Try AI normalization (primary - analyzes headers + sample data)
+        console.log('[CSV Import] Attempting AI-based header detection...');
+        const aiDetected = await normalizeHeadersWithAI(csvHeaders, csvRows);
+        if (aiDetected) {
+          console.log('[CSV Import] AI detection successful:', aiDetected);
+          detected = { ...detected, ...aiDetected };
+        } else {
+          console.log('[CSV Import] AI detection failed or returned incomplete results');
+        }
 
-      // Layer 2: Pattern-based detection (fills gaps with header pattern matching)
-      const patternDetected = autoDetectMapping(csvHeaders);
-      console.log('[CSV Import] Pattern detection results:', patternDetected);
+        // Layer 2: Pattern-based detection (fills gaps with header pattern matching)
+        const patternDetected = autoDetectMapping(csvHeaders);
+        console.log('[CSV Import] Pattern detection results:', patternDetected);
 
-      // Merge: AI results take priority, pattern fills gaps
-      detected = {
-        date: detected.date || patternDetected.date,
-        description: detected.description || patternDetected.description,
-        amount: detected.amount || patternDetected.amount,
-        balance: detected.balance || patternDetected.balance,
-        reference: detected.reference || patternDetected.reference,
-        direction: detected.direction || patternDetected.direction,
-        currency: detected.currency || patternDetected.currency,
-        counterpartyName: detected.counterpartyName || patternDetected.counterpartyName,
-        counterpartyAccount: detected.counterpartyAccount || patternDetected.counterpartyAccount,
-        fee: detected.fee || patternDetected.fee,
-        category: detected.category || patternDetected.category,
-        status: detected.status || patternDetected.status,
-      };
-
-      // Layer 3: Data-based detection (last resort - analyzes actual cell values)
-      if (!detected.date || !detected.amount) {
-        console.log('[CSV Import] Required fields missing, trying data-based detection...');
-        const dataDetected = detectByDataPatterns(csvHeaders, csvRows);
-        console.log('[CSV Import] Data-based detection results:', dataDetected);
-
+        // Merge: AI results take priority, pattern fills gaps
         detected = {
-          date: detected.date || dataDetected.date,
-          description: detected.description || dataDetected.description,
-          amount: detected.amount || dataDetected.amount,
-          balance: detected.balance || dataDetected.balance,
-          reference: detected.reference || dataDetected.reference,
-          direction: detected.direction || dataDetected.direction,
-          currency: detected.currency || dataDetected.currency,
-          counterpartyName: detected.counterpartyName || dataDetected.counterpartyName,
-          counterpartyAccount: detected.counterpartyAccount || dataDetected.counterpartyAccount,
-          fee: detected.fee || dataDetected.fee,
-          category: detected.category || dataDetected.category,
-          status: detected.status || dataDetected.status,
+          date: detected.date || patternDetected.date,
+          description: detected.description || patternDetected.description,
+          amount: detected.amount || patternDetected.amount,
+          balance: detected.balance || patternDetected.balance,
+          reference: detected.reference || patternDetected.reference,
+          direction: detected.direction || patternDetected.direction,
+          currency: detected.currency || patternDetected.currency,
+          counterpartyName: detected.counterpartyName || patternDetected.counterpartyName,
+          counterpartyAccount: detected.counterpartyAccount || patternDetected.counterpartyAccount,
+          fee: detected.fee || patternDetected.fee,
+          category: detected.category || patternDetected.category,
+          status: detected.status || patternDetected.status,
         };
-      }
 
-      // If no description but have counterparty name, use that
-      if (!detected.description && detected.counterpartyName) {
-        detected.description = detected.counterpartyName;
-      }
+        // Layer 3: Data-based detection (last resort - analyzes actual cell values)
+        if (!detected.date || !detected.amount) {
+          console.log('[CSV Import] Required fields missing, trying data-based detection...');
+          const dataDetected = detectByDataPatterns(csvHeaders, csvRows);
+          console.log('[CSV Import] Data-based detection results:', dataDetected);
 
-      console.log('[CSV Import] Final mapping:', detected);
-      setMapping(detected);
+          detected = {
+            date: detected.date || dataDetected.date,
+            description: detected.description || dataDetected.description,
+            amount: detected.amount || dataDetected.amount,
+            balance: detected.balance || dataDetected.balance,
+            reference: detected.reference || dataDetected.reference,
+            direction: detected.direction || dataDetected.direction,
+            currency: detected.currency || dataDetected.currency,
+            counterpartyName: detected.counterpartyName || dataDetected.counterpartyName,
+            counterpartyAccount: detected.counterpartyAccount || dataDetected.counterpartyAccount,
+            fee: detected.fee || dataDetected.fee,
+            category: detected.category || dataDetected.category,
+            status: detected.status || dataDetected.status,
+          };
+        }
 
-      // If we have all required fields, generate preview and go straight to preview
-      if (detected.date && detected.description && detected.amount) {
-        const txns = generateTransactions(csvRows, detected);
-        setTransactions(txns);
-        setStep('preview');
-        // Start AI category prediction in background
-        predictCategories(txns);
-      } else {
-        // Show mapping editor if we couldn't detect all fields
-        setShowMappingEditor(true);
-        setStep('preview');
-        setTransactions([]);
+        // If no description but have counterparty name, use that
+        if (!detected.description && detected.counterpartyName) {
+          detected.description = detected.counterpartyName;
+        }
+
+        console.log('[CSV Import] Final mapping:', detected);
+        setMapping(detected);
+
+        // If we have all required fields, generate preview and go straight to preview
+        if (detected.date && detected.description && detected.amount) {
+          const txns = generateTransactions(csvRows, detected);
+          setTransactions(txns);
+          setStep('preview');
+          // Start AI category prediction in background
+          predictCategories(txns);
+        } else {
+          // Show mapping editor if we couldn't detect all fields
+          setShowMappingEditor(true);
+          setStep('preview');
+          setTransactions([]);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to parse CSV');
+      } finally {
+        setIsAnalyzing(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse CSV');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, [workspaceId]);
+    },
+    [workspaceId]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
