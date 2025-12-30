@@ -4,6 +4,7 @@ import { cn } from '@moneio/ui';
 import {
   ArrowLeft,
   Building2,
+  Palette,
   Trash2,
   AlertTriangle,
   Loader2,
@@ -14,6 +15,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
+import { ThemeSelector } from '@/components/theme';
 import { useWorkspace } from '@/lib/workspace';
 
 const currencies = [
@@ -301,6 +303,28 @@ export default function WorkspaceSettingsPage() {
                   'Save Changes'
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Appearance Settings */}
+        <div className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Palette className="h-5 w-5 text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">Appearance</h2>
+            </div>
+          </div>
+
+          <div className="space-y-6 p-6">
+            <div>
+              <label className="block text-sm font-medium text-foreground">Theme</label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Choose how Moneio looks. Select a theme or sync with your system preference.
+              </p>
+              <div className="mt-4">
+                <ThemeSelector />
+              </div>
             </div>
           </div>
         </div>

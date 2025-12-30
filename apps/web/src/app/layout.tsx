@@ -7,6 +7,8 @@ import {
   Vazirmatn,
 } from 'next/font/google';
 
+import { ThemeProvider } from '@/components/theme';
+
 import './globals.css';
 
 // Display font - for headings and important text
@@ -55,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable} ${notoSansArabic.variable} ${vazirmatn.variable} min-h-screen bg-background font-body antialiased`}
       >
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

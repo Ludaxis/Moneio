@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import { ThemeToggleButton } from '@/components/theme';
 import { WorkspaceSwitcher } from '@/components/workspace';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 
@@ -79,6 +80,9 @@ export function Topbar({ isMobile = false, onMenuClick }: TopbarProps) {
       <div className="flex items-center gap-1 md:gap-2">
         {/* Workspace switcher - hidden on mobile (too cramped) */}
         {!isMobile && <WorkspaceSwitcher />}
+
+        {/* Theme toggle */}
+        <ThemeToggleButton />
 
         {/* Notifications */}
         <button
