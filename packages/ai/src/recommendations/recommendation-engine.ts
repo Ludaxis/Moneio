@@ -8,8 +8,7 @@
  * - Efficiency improvements
  */
 
-import type { MoneyLeak } from '@moneio/domain';
-import type { Subscription } from '@moneio/domain';
+import type { MoneyLeak, Subscription } from '@moneio/domain';
 
 /**
  * Types of recommendations
@@ -138,7 +137,7 @@ export function generateRecommendations(
   recommendations.push(...generateEfficiencyRecommendations(input));
 
   // Filter by options
-  let filtered = recommendations.filter((r) => {
+  const filtered = recommendations.filter((r) => {
     if (r.impact.confidence < opts.minConfidence) return false;
     if (!opts.types.includes(r.type)) return false;
     if (PRIORITY_ORDER[r.priority] < PRIORITY_ORDER[opts.minPriority]) return false;
