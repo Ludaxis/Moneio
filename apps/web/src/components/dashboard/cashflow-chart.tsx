@@ -1,7 +1,8 @@
 'use client';
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
-import { chartColors, tooltipStyle, axisStyle, gridStyle } from '@moneio/ui/lib/chart-theme';
+import { chartColors, axisStyle, gridStyle, areaChartDefaults } from '@moneio/ui/lib/chart-theme';
+import { ChartTooltip, chartTooltipContentStyle } from '@moneio/ui/patterns';
 import type React from 'react';
 import {
   AreaChart,
@@ -11,7 +12,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts';
 
 interface MonthlyData {
@@ -50,45 +50,55 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
   }
 
   return (
-    <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
+    <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-foreground">Cashflow</h2>
       <div className="mt-4 h-64 min-h-[256px]">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartColors.income} stopOpacity={0.3} />
+                <stop
+                  offset="5%"
+                  stopColor={chartColors.income}
+                  stopOpacity={areaChartDefaults.fillOpacity}
+                />
                 <stop offset="95%" stopColor={chartColors.income} stopOpacity={0} />
               </linearGradient>
               <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartColors.expense} stopOpacity={0.3} />
+                <stop
+                  offset="5%"
+                  stopColor={chartColors.expense}
+                  stopOpacity={areaChartDefaults.fillOpacity}
+                />
                 <stop offset="95%" stopColor={chartColors.expense} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid {...gridStyle} />
+            <CartesianGrid {...gridStyle} vertical={false} />
             <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />
             <YAxis
               tick={axisStyle}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value, baseCurrency)}
+              width={80}
             />
             <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(value, name) => [
-                formatCurrency(Number(value) || 0, baseCurrency),
-                name === 'income' ? 'Income' : 'Expenses',
-              ]}
-              labelFormatter={(label) => `Month: ${label}`}
+              content={<ChartTooltip currency={baseCurrency} formatLabel={(label) => label} />}
+              contentStyle={chartTooltipContentStyle}
             />
-            <Legend />
             <Area
               type="monotone"
               dataKey="income"
               name="Income"
               stroke={chartColors.income}
-              strokeWidth={2}
+              strokeWidth={areaChartDefaults.strokeWidth}
               fill="url(#incomeGradient)"
+              dot={false}
+              activeDot={{
+                r: areaChartDefaults.activeDotRadius,
+                strokeWidth: areaChartDefaults.activeDotStrokeWidth,
+                fill: 'white',
+              }}
               animationDuration={500}
             />
             <Area
@@ -96,12 +106,29 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
               dataKey="expenses"
               name="Expenses"
               stroke={chartColors.expense}
-              strokeWidth={2}
+              strokeWidth={areaChartDefaults.strokeWidth}
               fill="url(#expenseGradient)"
+              dot={false}
+              activeDot={{
+                r: areaChartDefaults.activeDotRadius,
+                strokeWidth: areaChartDefaults.activeDotStrokeWidth,
+                fill: 'white',
+              }}
               animationDuration={500}
             />
           </AreaChart>
         </ResponsiveContainer>
+      </div>
+      {/* Custom legend */}
+      <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full bg-chart-income" />
+          <span className="text-muted-foreground">Income</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full bg-chart-expense" />
+          <span className="text-muted-foreground">Expenses</span>
+        </div>
       </div>
     </div>
   );

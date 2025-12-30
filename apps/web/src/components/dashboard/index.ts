@@ -7,6 +7,7 @@ export { RecentActivity } from './recent-activity';
 // New AI-powered dashboard components
 export { AIInsightsBanner } from './ai-insights-banner';
 export { BalanceCard } from './balance-card';
+export { TrendBadge } from './trend-badge';
 export { RunwayWidget } from './runway-widget';
 export { TopExpensesWidget } from './top-expenses-widget';
 export { PendingActionsWidget } from './pending-actions-widget';

@@ -92,3 +92,32 @@ export const chartAnimation = {
   duration: 500,
   easing: 'ease-out',
 } as const;
+
+/**
+ * Area chart defaults - subtle fills, prominent lines
+ */
+export const areaChartDefaults = {
+  fillOpacity: 0.08,
+  strokeWidth: 2.5,
+  dotRadius: 0,
+  activeDotRadius: 4,
+  activeDotStrokeWidth: 2,
+} as const;
+
+/**
+ * Bar chart defaults - modern rounded corners
+ */
+export const barChartDefaults = {
+  barGap: 4,
+  barRadius: [4, 4, 0, 0] as [number, number, number, number],
+  maxBarSize: 48,
+} as const;
+
+/**
+ * Line chart defaults
+ */
+export const lineChartDefaults = {
+  strokeWidth: 2.5,
+  dotRadius: 0,
+  activeDotRadius: 4,
+} as const;

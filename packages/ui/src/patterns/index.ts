@@ -1,4 +1,5 @@
 export * from './card-grid';
+export * from './chart-tooltip';
 export * from './dashboard-card';
 export * from './data-table';
 export * from './empty-state';

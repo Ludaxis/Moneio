@@ -1,20 +1,12 @@
 'use client';
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
-import { chartPalette, tooltipStyle, axisStyle, gridStyle } from '@moneio/ui/lib/chart-theme';
+import { chartPalette, axisStyle, gridStyle, barChartDefaults } from '@moneio/ui/lib/chart-theme';
+import { ChartTooltip, chartTooltipContentStyle } from '@moneio/ui/patterns';
 import { ChevronDown } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface MonthlyExpense {
   month: string;
@@ -102,15 +94,6 @@ export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpen
     return value.toString();
   };
 
-  const formatTooltipValue = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
   if (loading) {
     return (
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -161,36 +144,56 @@ export function OperatingExpensesChart({ workspaceId, currency }: OperatingExpen
           <p className="text-sm text-muted-foreground">No expense data available.</p>
         </div>
       ) : (
-        <div className="mt-4 h-64 min-h-[256px]">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid {...gridStyle} vertical={false} />
-              <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />
-              <YAxis
-                tick={axisStyle}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={formatCurrency}
-              />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                formatter={(value) => formatTooltipValue(Number(value))}
-                labelFormatter={(label) => `Month: ${label}`}
-              />
-              <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" iconSize={8} />
-              {categories.map((category, index) => (
-                <Bar
-                  key={category}
-                  dataKey={category}
-                  name={category}
-                  stackId="expenses"
-                  fill={chartPalette[index % chartPalette.length]}
-                  radius={index === categories.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+        <>
+          <div className="mt-4 h-64 min-h-[256px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <BarChart
+                data={data}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                barGap={barChartDefaults.barGap}
+              >
+                <CartesianGrid {...gridStyle} vertical={false} />
+                <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />
+                <YAxis
+                  tick={axisStyle}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatCurrency}
+                  width={60}
                 />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+                <Tooltip
+                  content={<ChartTooltip currency={currency} formatLabel={(label) => label} />}
+                  contentStyle={chartTooltipContentStyle}
+                />
+                {categories.map((category, index) => (
+                  <Bar
+                    key={category}
+                    dataKey={category}
+                    name={category}
+                    stackId="expenses"
+                    fill={chartPalette[index % chartPalette.length]}
+                    radius={
+                      index === categories.length - 1 ? barChartDefaults.barRadius : [0, 0, 0, 0]
+                    }
+                    maxBarSize={barChartDefaults.maxBarSize}
+                  />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Custom legend */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm">
+            {categories.map((category, index) => (
+              <div key={category} className="flex items-center gap-2">
+                <span
+                  className="h-3 w-3 rounded-full"
+                  style={{ backgroundColor: chartPalette[index % chartPalette.length] }}
+                />
+                <span className="text-muted-foreground">{category}</span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

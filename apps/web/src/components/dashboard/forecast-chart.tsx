@@ -1,7 +1,8 @@
 'use client';
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
-import { tooltipStyle, axisStyle, gridStyle, chartPalette } from '@moneio/ui/lib/chart-theme';
+import { axisStyle, gridStyle, chartPalette, areaChartDefaults } from '@moneio/ui/lib/chart-theme';
+import { ChartTooltip, chartTooltipContentStyle } from '@moneio/ui/patterns';
 import { AlertCircle, TrendingUp, Calendar } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
@@ -90,7 +91,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="h-6 w-40 animate-pulse rounded bg-muted" />
         <div className="mt-4 h-64 animate-pulse rounded bg-muted" />
       </div>
@@ -99,7 +100,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h2>
         <div className="mt-4 flex items-center gap-2 text-sm text-danger-600">
           <AlertCircle className="h-4 w-4" />
@@ -111,7 +112,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
 
   if (!data || !data.forecast || data.forecast.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h2>
         <div className="mt-6 flex flex-col items-center justify-center py-8 text-center">
           <Calendar className="h-12 w-12 text-muted-foreground" />
@@ -133,7 +134,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
   };
 
   return (
-    <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
+    <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h2>
         <div className="flex items-center gap-2">
@@ -178,44 +179,45 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
           <AreaChart data={data.forecast} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="cashGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartPalette[0]} stopOpacity={0.3} />
+                <stop
+                  offset="5%"
+                  stopColor={chartPalette[0]}
+                  stopOpacity={areaChartDefaults.fillOpacity}
+                />
                 <stop offset="95%" stopColor={chartPalette[0]} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid {...gridStyle} />
+            <CartesianGrid {...gridStyle} vertical={false} />
             <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />
             <YAxis
               tick={axisStyle}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value, data.currency)}
+              width={80}
             />
             <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(value, name) => {
-                const labels: Record<string, string> = {
-                  endingCash: 'Ending Cash',
-                  projectedIncome: 'Income',
-                  projectedExpenses: 'Expenses',
-                };
-                return [
-                  formatCurrency(Number(value) || 0, data.currency),
-                  labels[String(name)] || String(name),
-                ];
-              }}
+              content={<ChartTooltip currency={data.currency} formatLabel={(label) => label} />}
+              contentStyle={chartTooltipContentStyle}
             />
             {/* Zero line */}
-            <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="3 3" />
+            <ReferenceLine
+              y={0}
+              stroke="hsl(var(--muted-foreground))"
+              strokeDasharray="3 3"
+              strokeOpacity={0.5}
+            />
             {/* Lowest cash point marker */}
             {data.summary.lowestCashPoint && (
               <ReferenceLine
                 y={data.summary.lowestCashPoint.amount}
-                stroke="#f87171"
+                stroke="hsl(var(--chart-expense))"
                 strokeDasharray="5 5"
+                strokeOpacity={0.6}
                 label={{
                   value: 'Lowest',
                   position: 'right',
-                  fill: '#f87171',
+                  fill: 'hsl(var(--chart-expense))',
                   fontSize: 10,
                 }}
               />
@@ -225,8 +227,14 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
               dataKey="endingCash"
               name="Ending Cash"
               stroke={chartPalette[0]}
-              strokeWidth={2}
+              strokeWidth={areaChartDefaults.strokeWidth}
               fill="url(#cashGradient)"
+              dot={false}
+              activeDot={{
+                r: areaChartDefaults.activeDotRadius,
+                strokeWidth: areaChartDefaults.activeDotStrokeWidth,
+                fill: 'white',
+              }}
               animationDuration={500}
             />
           </AreaChart>
