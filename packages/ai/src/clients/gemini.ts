@@ -19,7 +19,7 @@ export interface GeminiClientConfig {
 /**
  * Google Gemini LLM client implementation
  *
- * Uses gemini-1.5-flash by default for cost efficiency while maintaining quality.
+ * Uses gemini-3-pro-preview for best quality results.
  * Supports JSON mode for structured output extraction.
  */
 export class GeminiClient implements LlmClient {

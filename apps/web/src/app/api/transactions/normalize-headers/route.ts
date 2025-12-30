@@ -5,7 +5,7 @@
  * Supports any language - translates to standard English names
  */
 
-import { CsvHeaderNormalizer, createOpenAiClient } from '@moneio/ai';
+import { CsvHeaderNormalizer, createLlmClient } from '@moneio/ai';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -30,8 +30,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if OpenAI is configured
-    if (!process.env.OPENAI_API_KEY) {
+    // Check if AI is configured (Gemini or OpenAI)
+    const hasAiKey =
+      process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!hasAiKey) {
       // Return empty mappings - let frontend use fallback detection
       return NextResponse.json({
         mappings: [],
@@ -51,10 +53,8 @@ export async function POST(request: Request) {
 
     const { headers, sampleRows } = parsed.data;
 
-    // Create AI client and normalizer
-    const llmClient = createOpenAiClient({
-      model: 'gpt-4o-mini', // Fast and cheap for simple classification
-    });
+    // Create AI client (prefers Gemini, falls back to OpenAI)
+    const llmClient = createLlmClient();
 
     const normalizer = new CsvHeaderNormalizer(llmClient);
     const result = await normalizer.normalizeHeaders(headers, sampleRows);
