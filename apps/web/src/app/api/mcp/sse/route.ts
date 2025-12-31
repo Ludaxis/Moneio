@@ -1,4 +1,5 @@
 import { prisma } from '@moneio/db';
+
 import { verifyToken } from '../token/route';
 
 // MCP SSE endpoint for ElevenLabs
