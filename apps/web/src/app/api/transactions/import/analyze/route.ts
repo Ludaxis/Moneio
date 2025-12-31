@@ -148,7 +148,10 @@ export async function POST(request: Request) {
     const baseCurrency = workspace?.baseCurrency || 'EUR';
 
     // Step 1: Detect column mapping using LLM + heuristics
-    const { mapping, llmUsed: mappingLlmUsed } = await detectColumnMapping(headers, rows.slice(0, 5));
+    const { mapping, llmUsed: mappingLlmUsed } = await detectColumnMapping(
+      headers,
+      rows.slice(0, 5)
+    );
 
     // Apply user overrides
     if (mappingOverrides) {
@@ -409,7 +412,9 @@ async function detectColumnMapping(
     console.warn('[CSV Analyze] LLM mapping failed, using heuristics:', errorMsg);
     // Check if it's a missing API key issue
     if (errorMsg.includes('API_KEY')) {
-      console.error('[CSV Analyze] AI API key not configured! Set GEMINI_API_KEY or OPENAI_API_KEY');
+      console.error(
+        '[CSV Analyze] AI API key not configured! Set GEMINI_API_KEY or OPENAI_API_KEY'
+      );
     }
   }
 
@@ -997,7 +1002,9 @@ async function predictCategoriesWithAi(
     console.error('[CSV Analyze] AI categorization failed:', errorMsg);
     // Check if it's a missing API key issue
     if (errorMsg.includes('API_KEY')) {
-      console.error('[CSV Analyze] AI API key not configured! Set GEMINI_API_KEY or OPENAI_API_KEY');
+      console.error(
+        '[CSV Analyze] AI API key not configured! Set GEMINI_API_KEY or OPENAI_API_KEY'
+      );
     }
     // Return transactions with low confidence (fallback)
     return {
