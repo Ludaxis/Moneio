@@ -78,7 +78,7 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
       let quickTip = 'Keep tracking your expenses for better insights.';
 
       // Default metrics
-      let keyMetrics = {
+      const keyMetrics = {
         netCashflow: 0,
         netCashflowFormatted: '$0',
         burnRate: 0,
