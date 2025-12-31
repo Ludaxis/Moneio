@@ -188,7 +188,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Smart AI Summary - Comprehensive Financial Insights */}
-      {workspaceId && <SmartAISummary workspaceId={workspaceId} />}
+      {workspaceId && (
+        <SmartAISummary
+          workspaceId={workspaceId}
+          startDate={dateRange.startDate}
+          endDate={dateRange.endDate}
+        />
+      )}
 
       {/* Balance Cards Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

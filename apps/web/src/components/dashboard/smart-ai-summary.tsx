@@ -49,9 +49,11 @@ interface SmartSummary {
 
 interface SmartAISummaryProps {
   workspaceId: string;
+  startDate: string;
+  endDate: string;
 }
 
-export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
+export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISummaryProps) {
   const [summary, setSummary] = useState<SmartSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,11 +66,13 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
 
     try {
       // Fetch all necessary data in parallel
-      const [healthRes, forecastRes, cashflowRes, subscriptionsRes] = await Promise.all([
+      const [healthRes, metricsRes, cashflowRes, subscriptionsRes] = await Promise.all([
         fetch(`/api/reports/health-score?workspaceId=${workspaceId}`),
-        fetch(`/api/reports/forecast?workspaceId=${workspaceId}&months=6`),
         fetch(
-          `/api/reports/cashflow?workspaceId=${workspaceId}&startDate=${getDateMonthsAgo(3)}&endDate=${getTodayDate()}`
+          `/api/dashboard/metrics?workspaceId=${workspaceId}&startDate=${startDate}&endDate=${endDate}`
+        ),
+        fetch(
+          `/api/reports/cashflow?workspaceId=${workspaceId}&startDate=${startDate}&endDate=${endDate}`
         ),
         fetch(`/api/insights/subscriptions?workspaceId=${workspaceId}`).catch(() => null),
       ]);
@@ -90,7 +94,7 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
         savingsRate: 0,
       };
 
-      // Process health score
+      // Process health score (still 12-month based but used for headline only)
       if (healthRes.ok) {
         const health = await healthRes.json();
         const score = health.overallScore || 0;
@@ -113,7 +117,6 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
           subtext = `Health score: ${score}/100 - action needed`;
         }
 
-        // Add recommendation as insight
         if (health.recommendations?.[0]) {
           insights.push({
             id: 'recommendation',
@@ -124,7 +127,6 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
           });
         }
 
-        // Extract runway from metrics
         const runwayMetric = health.metrics?.find((m: { name: string }) => m.name === 'runway');
         if (runwayMetric) {
           keyMetrics.runway = parseFloat(runwayMetric.value) || 0;
@@ -132,105 +134,70 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
         }
       }
 
-      // Process forecast data
-      if (forecastRes.ok) {
-        const forecast = await forecastRes.json();
+      // Dashboard metrics (date-range aligned) for the primary numbers
+      if (metricsRes.ok) {
+        const metrics = await metricsRes.json();
+        keyMetrics.netCashflow = metrics.netCashflow.amount || 0;
+        keyMetrics.netCashflowFormatted = metrics.netCashflow.formatted || '$0';
+        keyMetrics.burnRate = metrics.burnRate.amount || 0;
+        keyMetrics.burnRateFormatted = metrics.burnRate.formatted || '$0';
+        keyMetrics.runway = metrics.runway?.monthsRemaining ?? keyMetrics.runway;
+        keyMetrics.runwayText =
+          metrics.runway?.monthsRemaining !== undefined
+            ? `${metrics.runway.monthsRemaining} months`
+            : keyMetrics.runwayText;
 
-        if (forecast.summary) {
-          const avgIncome = forecast.summary.avgMonthlyIncome || 0;
-          const avgExpenses = forecast.summary.avgMonthlyExpenses || 0;
-          const avgNet = avgIncome - Math.abs(avgExpenses);
-
-          keyMetrics.burnRate = Math.abs(avgExpenses);
-          keyMetrics.burnRateFormatted = formatCurrency(Math.abs(avgExpenses), forecast.currency);
-
-          // Calculate savings rate
-          if (avgIncome > 0) {
-            keyMetrics.savingsRate = Math.round((avgNet / avgIncome) * 100);
-          }
-
-          // Cash flow trend insight
-          if (avgNet > 0) {
-            insights.push({
-              id: 'positive-cashflow',
-              type: 'positive',
-              icon: 'trend-up',
-              title: 'Positive Cash Flow',
-              description: `You're saving ${formatCurrency(avgNet, forecast.currency)}/month on average. Great job!`,
-              metric: `+${keyMetrics.savingsRate}% savings rate`,
-            });
-          } else if (avgNet < 0) {
-            insights.push({
-              id: 'negative-cashflow',
-              type: 'alert',
-              icon: 'trend-down',
-              title: 'Cash Flow Warning',
-              description: `You're spending ${formatCurrency(Math.abs(avgNet), forecast.currency)} more than you earn monthly.`,
-              metric: `${formatCurrency(avgNet, forecast.currency)}/mo`,
-              action: { label: 'Review expenses', href: '/transactions?type=expense' },
-            });
-          }
-
-          // Runway warning
-          if (
-            forecast.summary.monthsUntilNegative !== null &&
-            forecast.summary.monthsUntilNegative <= 6
-          ) {
-            insights.push({
-              id: 'runway-warning',
-              type: 'alert',
-              icon: 'calendar',
-              title: 'Cash Runway Alert',
-              description: `At current spending, cash could run out in ${forecast.summary.monthsUntilNegative} months.`,
-              action: { label: 'View forecast', href: '/reports?tab=forecast' },
-            });
-            quickTip =
-              'Consider reducing non-essential expenses or increasing income to extend your runway.';
-          }
-
-          // Trend insight
-          if (forecast.summary.trend === 'improving') {
-            insights.push({
-              id: 'improving-trend',
-              type: 'positive',
-              icon: 'trend-up',
-              title: 'Improving Trend',
-              description: 'Your financial trajectory is heading in the right direction!',
-            });
-          } else if (forecast.summary.trend === 'declining') {
-            insights.push({
-              id: 'declining-trend',
-              type: 'warning',
-              icon: 'trend-down',
-              title: 'Declining Trend',
-              description: 'Your spending is trending upward. Consider reviewing recent expenses.',
-              action: { label: 'Analyze spending', href: '/reports?tab=cashflow' },
-            });
-          }
+        const income = metrics.totalIncome?.amount || 0;
+        if (income > 0 && metrics.netCashflow?.amount !== undefined) {
+          keyMetrics.savingsRate = Math.round((metrics.netCashflow.amount / income) * 100);
         }
 
-        // Check recurring expenses
-        if (forecast.recurring?.expenses?.length > 0) {
-          const totalRecurring = forecast.recurring.expenses.reduce(
-            (sum: number, e: { monthlyAmount: number }) => sum + e.monthlyAmount,
-            0
-          );
+        // Cash flow warning/positive insight based on aligned period
+        if (metrics.netCashflow?.amount < 0) {
           insights.push({
-            id: 'recurring-expenses',
-            type: 'tip',
-            icon: 'dollar',
-            title: 'Recurring Expenses',
-            description: `${forecast.recurring.expenses.length} subscriptions totaling ${formatCurrency(totalRecurring, forecast.currency)}/month`,
-            action: { label: 'Manage subscriptions', href: '/subscriptions' },
+            id: 'negative-cashflow',
+            type: 'alert',
+            icon: 'trend-down',
+            title: 'Cash Flow Warning',
+            description: `You're spending ${formatCurrency(
+              Math.abs(metrics.netCashflow.amount),
+              metrics.baseCurrency
+            )} more than you earn for this period.`,
+            metric: `${formatCurrency(metrics.netCashflow.amount, metrics.baseCurrency)}/period`,
+            action: { label: 'Review expenses', href: '/transactions?type=expense' },
           });
+        } else if (metrics.netCashflow?.amount > 0) {
+          insights.push({
+            id: 'positive-cashflow',
+            type: 'positive',
+            icon: 'trend-up',
+            title: 'Positive Cash Flow',
+            description: `You're saving ${formatCurrency(
+              metrics.netCashflow.amount,
+              metrics.baseCurrency
+            )} over this period.`,
+            metric: `+${keyMetrics.savingsRate}% savings rate`,
+          });
+        }
+
+        // Runway warning based on aligned data
+        if (metrics.runway?.monthsRemaining !== null && metrics.runway?.monthsRemaining <= 6) {
+          insights.push({
+            id: 'runway-warning',
+            type: 'alert',
+            icon: 'calendar',
+            title: 'Cash Runway Alert',
+            description: `At current spending, cash could run out in ${metrics.runway.monthsRemaining} months.`,
+            action: { label: 'View forecast', href: '/reports?tab=forecast' },
+          });
+          quickTip =
+            'Consider reducing non-essential expenses or increasing income to extend your runway.';
         }
       }
 
-      // Process cashflow data
+      // Process cashflow data (date-range aligned)
       if (cashflowRes.ok) {
         const cashflow = await cashflowRes.json();
-        keyMetrics.netCashflow = cashflow.netCashflow?.amount || 0;
-        keyMetrics.netCashflowFormatted = cashflow.netCashflow?.formatted || '$0';
 
         // Spending by category insight
         const topExpenseCategory = cashflow.byCategory
@@ -505,14 +472,4 @@ function formatCurrency(amount: number, currency: string = 'USD'): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
-}
-
-function getTodayDate(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
-function getDateMonthsAgo(months: number): string {
-  const date = new Date();
-  date.setMonth(date.getMonth() - months);
-  return date.toISOString().split('T')[0];
 }
