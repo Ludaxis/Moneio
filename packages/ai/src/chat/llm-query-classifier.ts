@@ -87,7 +87,10 @@ QUERY TYPES (choose the most appropriate one):
 20. "financial_advice" - User asks for financial advice/recommendations
     Examples: "What should I do?", "Financial advice", "How to improve finances?"
 
-21. "unknown" - Question doesn't match any financial query type
+21. "help" - User asks what the assistant can do, capabilities, or greetings
+    Examples: "What can you do?", "Help", "What can you help me with?", "Hi", "Hello"
+
+22. "unknown" - Question doesn't match any financial query type
 `;
 
 const TIME_PERIOD_DESCRIPTIONS = `
@@ -212,6 +215,7 @@ function isValidQueryType(type: string): type is QueryType {
     'invoice_status',
     'budget_check',
     'financial_advice',
+    'help',
     'unknown',
   ];
   return validTypes.includes(type as QueryType);

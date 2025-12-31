@@ -30,6 +30,7 @@ export type QueryType =
   | 'invoice_status'
   | 'budget_check'
   | 'financial_advice'
+  | 'help'
   | 'unknown';
 
 /**

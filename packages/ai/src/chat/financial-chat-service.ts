@@ -7,6 +7,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { createLlmClient } from '../clients';
+
 import { classifyQueryWithLlm } from './llm-query-classifier';
 import {
   formatPeriod,
@@ -260,8 +262,13 @@ export class FinancialChatService {
     // Execute the appropriate query
     const result = await this.executeQuery(parsedQuery, context);
 
-    // Generate response
-    const responseContent = this.generateResponse(parsedQuery, result, context);
+    // Generate response using LLM for natural language
+    const responseContent = await this.generateLlmResponse(
+      request.message,
+      parsedQuery,
+      result,
+      context
+    );
 
     // Create response message
     const responseMessage: ChatMessage = {
@@ -487,6 +494,14 @@ export class FinancialChatService {
             },
           };
 
+        case 'help':
+          return {
+            success: true,
+            data: {
+              type: 'help',
+            },
+          };
+
         case 'unknown':
         default:
           return {
@@ -510,7 +525,65 @@ export class FinancialChatService {
   }
 
   /**
-   * Generate natural language response from query result
+   * Generate response using LLM for natural, conversational output
+   */
+  private async generateLlmResponse(
+    userMessage: string,
+    parsed: ParsedQuery,
+    result: QueryResult,
+    context: FinancialContext
+  ): Promise<string> {
+    try {
+      const llmClient = createLlmClient();
+
+      // Build context about what data we have
+      const dataContext = result.success
+        ? JSON.stringify(result.data, null, 2)
+        : `Error: ${result.error}`;
+
+      const prompt = `You are a friendly, helpful AI financial assistant for a small business accounting app called Moneio.
+
+USER'S QUESTION: "${userMessage}"
+
+QUERY TYPE DETECTED: ${parsed.type}
+TIME PERIOD: ${parsed.period || 'this_month'}
+${parsed.merchant ? `MERCHANT: ${parsed.merchant}` : ''}
+${parsed.category ? `CATEGORY: ${parsed.category}` : ''}
+
+DATA FROM DATABASE:
+${dataContext}
+
+INSTRUCTIONS:
+1. Answer the user's question naturally and conversationally
+2. Use the data provided to give specific, accurate numbers
+3. Format currency amounts nicely (e.g., "$1,234.56" or "€1.234,56")
+4. Use **bold** for important numbers and key points
+5. Keep responses concise but helpful (2-4 sentences for simple questions, more for complex)
+6. If the data shows concerning trends, mention them helpfully
+7. If asked about capabilities ("what can you do"), explain you can help with:
+   - Tracking spending and income
+   - Analyzing cash runway
+   - Finding recurring expenses and subscriptions
+   - Detecting money leaks and savings opportunities
+   - Reviewing vendor spending
+   - Answering financial questions
+8. If there's an error or no data, be helpful and suggest what they can try
+9. End with a brief relevant follow-up suggestion when appropriate
+10. Be warm and professional, like a helpful financial advisor
+
+Respond directly to the user (no quotes or "Response:" prefix):`;
+
+      const response = await llmClient.complete(prompt);
+      return response.trim();
+    } catch (error) {
+      console.error('[Chat] LLM response generation failed:', error);
+      // Fallback to template-based response
+      return this.generateResponse(parsed, result, context);
+    }
+  }
+
+  /**
+   * Generate natural language response from query result (template fallback)
    */
   private generateResponse(
     parsed: ParsedQuery,
@@ -1080,6 +1153,12 @@ export class FinancialChatService {
         'Where is my money leaking?',
         'What subscriptions do I have?',
         'What is my runway?',
+      ],
+      help: [
+        'How much did I spend this month?',
+        "What's my cash runway?",
+        'Show my recurring expenses',
+        'Am I profitable?',
       ],
       unknown: [
         'How much did I spend this month?',
