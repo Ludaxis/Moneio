@@ -135,12 +135,17 @@ export function VoiceAssistant({
         }
 
         const data = await chatResponse.json();
-        setResponse(data.message);
+        // data.message is an object with {id, role, content, timestamp, metadata}
+        const responseContent =
+          typeof data.message === 'string' ? data.message : data.message?.content || '';
+        setResponse(responseContent);
         setConversationId(data.conversationId);
-        onResponse?.(data.message);
+        onResponse?.(responseContent);
 
         // Speak the response using ElevenLabs
-        await speakResponse(data.message);
+        if (responseContent) {
+          await speakResponse(responseContent);
+        }
       } catch (err) {
         console.error('Chat error:', err);
         setError('Failed to get response');
