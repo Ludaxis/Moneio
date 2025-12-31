@@ -8,3 +8,4 @@ export * from './analytics/index';
 export * from './subscriptions/index';
 export * from './insights/index';
 export * from './csv/index';
+export * from './reports/index';
