@@ -8,10 +8,7 @@
  * 3. Batch LLM calls (parallel, 20 per batch, 5 concurrent)
  */
 
-import type {
-  MerchantCategoryMapping,
-  MappingLookupResult,
-} from '@moneio/domain';
+import type { MerchantCategoryMapping, MappingLookupResult } from '@moneio/domain';
 import { applyLearnedMappings } from '@moneio/domain';
 
 import type { LlmClient } from '../extraction/invoice-extractor';
@@ -148,8 +145,11 @@ export class AiBatchCategorizer {
     }
 
     // Phase 1: Apply learned mappings (instant, free)
-    const { matched: learnedMatched, unmatched: afterLearned } =
-      this.applyLearnedMappings(transactions, learnedMappings, categories);
+    const { matched: learnedMatched, unmatched: afterLearned } = this.applyLearnedMappings(
+      transactions,
+      learnedMappings,
+      categories
+    );
 
     for (const [id, result] of learnedMatched) {
       results.set(id, {
@@ -279,10 +279,7 @@ export class AiBatchCategorizer {
   /**
    * Evaluate a rule against a transaction
    */
-  private evaluateRule(
-    rule: CategorizationRule,
-    tx: BatchCategorizationTransaction
-  ): boolean {
+  private evaluateRule(rule: CategorizationRule, tx: BatchCategorizationTransaction): boolean {
     const results = rule.conditions.map((condition) => {
       let fieldValue: string | number;
       if (condition.field === 'description') {
@@ -502,9 +499,7 @@ Important:
         if (!tx) continue;
 
         const categoryName = item.categoryName || item.category_name || item.category;
-        let category = categories.find(
-          (c) => c.name.toLowerCase() === categoryName?.toLowerCase()
-        );
+        let category = categories.find((c) => c.name.toLowerCase() === categoryName?.toLowerCase());
 
         // Try partial match
         if (!category && categoryName) {
@@ -576,7 +571,8 @@ Important:
     // Pattern matching
     const patterns: Array<{ regex: RegExp; keywords: string[]; confidence: number }> = [
       {
-        regex: /openai|anthropic|chatgpt|claude|supabase|github|aws|azure|vercel|netlify|heroku|digitalocean|cloudflare|mongodb|neon|upstash|railway|render|stripe|twilio|sendgrid/i,
+        regex:
+          /openai|anthropic|chatgpt|claude|supabase|github|aws|azure|vercel|netlify|heroku|digitalocean|cloudflare|mongodb|neon|upstash|railway|render|stripe|twilio|sendgrid/i,
         keywords: ['software', 'subscriptions', 'technology', 'saas'],
         confidence: 85,
       },

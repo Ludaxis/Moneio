@@ -67,10 +67,7 @@ export function normalizeMerchantName(name: string): string {
     // Remove "by" phrases (e.g., "Bolt by StackBlitz")
     .replace(/\s+by\s+/gi, ' ')
     // Remove subscription/payment indicators
-    .replace(
-      /\s*(subscription|payment|charge|debit|credit|monthly|annual|yearly)\s*/gi,
-      ''
-    )
+    .replace(/\s*(subscription|payment|charge|debit|credit|monthly|annual|yearly)\s*/gi, '')
     // Remove date patterns (e.g., "2024-01-15")
     .replace(/\d{4}-\d{2}-\d{2}/g, '')
     .replace(/\d{2}\/\d{2}\/\d{4}/g, '')
@@ -151,10 +148,7 @@ export function normalizeMerchantName(name: string): string {
  * Calculate similarity score between two normalized patterns
  * Returns a score between 0 and 1
  */
-export function calculatePatternSimilarity(
-  pattern1: string,
-  pattern2: string
-): number {
+export function calculatePatternSimilarity(pattern1: string, pattern2: string): number {
   if (pattern1 === pattern2) return 1;
   if (!pattern1 || !pattern2) return 0;
 
@@ -197,10 +191,7 @@ export function findBestMapping(
     }
 
     // Calculate similarity for fuzzy matching
-    const similarity = calculatePatternSimilarity(
-      normalizedInput,
-      mapping.merchantPattern
-    );
+    const similarity = calculatePatternSimilarity(normalizedInput, mapping.merchantPattern);
     if (similarity >= minSimilarity && similarity > bestSimilarity) {
       bestSimilarity = similarity;
       bestMatch = mapping;
@@ -209,10 +200,7 @@ export function findBestMapping(
 
   if (bestMatch) {
     // Adjust confidence based on similarity and frequency
-    const adjustedConfidence = Math.min(
-      Number(bestMatch.confidence) * bestSimilarity,
-      0.95
-    );
+    const adjustedConfidence = Math.min(Number(bestMatch.confidence) * bestSimilarity, 0.95);
 
     return {
       categoryId: bestMatch.categoryId,
@@ -274,9 +262,7 @@ export function prepareMappingUpsert(
 
   // Find existing mapping for this pattern
   const existing = existingMappings.find(
-    (m) =>
-      m.workspaceId === input.workspaceId &&
-      m.merchantPattern === merchantPattern
+    (m) => m.workspaceId === input.workspaceId && m.merchantPattern === merchantPattern
   );
 
   if (existing) {
@@ -314,10 +300,7 @@ export function aggregateSelectionsForLearning(
     categoryId: string;
   }>
 ): Map<string, { merchantName: string; categoryId: string; count: number }> {
-  const aggregated = new Map<
-    string,
-    { merchantName: string; categoryId: string; count: number }
-  >();
+  const aggregated = new Map<string, { merchantName: string; categoryId: string; count: number }>();
 
   for (const selection of selections) {
     const pattern = normalizeMerchantName(selection.merchantName);
