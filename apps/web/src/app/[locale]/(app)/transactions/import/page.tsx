@@ -131,7 +131,11 @@ export default function CsvImportPage() {
   const [excludedRows, setExcludedRows] = useState<
     Array<{ index: number; reason: string; category?: string }>
   >([]);
-  const [analysisStats, setAnalysisStats] = useState<{ totalRows: number; included: number; excluded: number } | null>(null);
+  const [analysisStats, setAnalysisStats] = useState<{
+    totalRows: number;
+    included: number;
+    excluded: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showMappingEditor, setShowMappingEditor] = useState(false);
@@ -561,7 +565,11 @@ export default function CsvImportPage() {
       )}
       {excludedRows.length > 0 && (
         <div className="text-xs text-muted-foreground">
-          Skipped rows: {excludedRows.slice(0, 3).map((ex) => ex.reason).join('; ')}
+          Skipped rows:{' '}
+          {excludedRows
+            .slice(0, 3)
+            .map((ex) => ex.reason)
+            .join('; ')}
           {excludedRows.length > 3 ? '…' : ''}
         </div>
       )}

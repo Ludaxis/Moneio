@@ -1,8 +1,4 @@
-import {
-  CsvHeaderNormalizer,
-  HeuristicCategorizer,
-  createLlmClient,
-} from '@moneio/ai';
+import { CsvHeaderNormalizer, HeuristicCategorizer, createLlmClient } from '@moneio/ai';
 import { prisma } from '@moneio/db';
 import {
   AmountParser,
@@ -154,13 +150,23 @@ export async function POST(request: Request) {
         heuristicMapping.description ||
         dataMapping.description,
       amount: overrides.amount || aiMapping.amount || heuristicMapping.amount || dataMapping.amount,
-      balance: overrides.balance || aiMapping.balance || heuristicMapping.balance || dataMapping.balance,
+      balance:
+        overrides.balance || aiMapping.balance || heuristicMapping.balance || dataMapping.balance,
       reference:
-        overrides.reference || aiMapping.reference || heuristicMapping.reference || dataMapping.reference,
+        overrides.reference ||
+        aiMapping.reference ||
+        heuristicMapping.reference ||
+        dataMapping.reference,
       direction:
-        overrides.direction || aiMapping.direction || heuristicMapping.direction || dataMapping.direction,
+        overrides.direction ||
+        aiMapping.direction ||
+        heuristicMapping.direction ||
+        dataMapping.direction,
       currency:
-        overrides.currency || aiMapping.currency || heuristicMapping.currency || dataMapping.currency,
+        overrides.currency ||
+        aiMapping.currency ||
+        heuristicMapping.currency ||
+        dataMapping.currency,
       counterpartyName:
         overrides.counterpartyName ||
         aiMapping.counterpartyName ||
@@ -172,7 +178,11 @@ export async function POST(request: Request) {
         heuristicMapping.counterpartyAccount ||
         dataMapping.counterpartyAccount,
       fee: overrides.fee || aiMapping.fee || heuristicMapping.fee || dataMapping.fee,
-      category: overrides.category || aiMapping.category || heuristicMapping.category || dataMapping.category,
+      category:
+        overrides.category ||
+        aiMapping.category ||
+        heuristicMapping.category ||
+        dataMapping.category,
       status: overrides.status || aiMapping.status || heuristicMapping.status || dataMapping.status,
       debit: overrides.debit || aiMapping.debit || heuristicMapping.debit || dataMapping.debit,
       credit: overrides.credit || aiMapping.credit || heuristicMapping.credit || dataMapping.credit,
@@ -209,7 +219,11 @@ export async function POST(request: Request) {
       });
 
       if (filterResult.excluded) {
-        excluded.push({ index, reason: filterResult.reason || 'Filtered', category: filterResult.category });
+        excluded.push({
+          index,
+          reason: filterResult.reason || 'Filtered',
+          category: filterResult.category,
+        });
         return;
       }
 
@@ -222,7 +236,9 @@ export async function POST(request: Request) {
         reference: mapping.reference ? row[mapping.reference] : undefined,
         currency: mapping.currency ? row[mapping.currency] || baseCurrency : baseCurrency,
         counterpartyName: mapping.counterpartyName ? row[mapping.counterpartyName] : undefined,
-        counterpartyAccount: mapping.counterpartyAccount ? row[mapping.counterpartyAccount] : undefined,
+        counterpartyAccount: mapping.counterpartyAccount
+          ? row[mapping.counterpartyAccount]
+          : undefined,
         fee,
         category: mapping.category ? row[mapping.category] : undefined,
         status,
@@ -233,7 +249,13 @@ export async function POST(request: Request) {
     });
 
     // Step 5: Predict categories heuristically (non-blocking)
-    const predicted = await predictCategories(included, categories, workspace?.locale || 'en', baseCurrency, workspaceId);
+    const predicted = await predictCategories(
+      included,
+      categories,
+      workspace?.locale || 'en',
+      baseCurrency,
+      workspaceId
+    );
     const transactions = included.map((tx) => {
       const pred = predicted.get(tx.id);
       return pred
@@ -641,7 +663,15 @@ function autoDetectMapping(headers: string[]): Partial<ColumnMapping> {
   const debitIdx = findColumn(['debit', 'withdrawal', 'ausgabe', 'deebet', 'soll', 'debet', 'out']);
   if (debitIdx >= 0) detected.debit = headers[debitIdx];
 
-  const creditIdx = findColumn(['credit', 'deposit', 'einnahme', 'kreedit', 'haben', 'kredit', 'in']);
+  const creditIdx = findColumn([
+    'credit',
+    'deposit',
+    'einnahme',
+    'kreedit',
+    'haben',
+    'kredit',
+    'in',
+  ]);
   if (creditIdx >= 0) detected.credit = headers[creditIdx];
 
   const balancePatterns = ['balance', 'saldo', 'موجودی', 'running balance', 'jääk', 'kontostand'];
@@ -665,15 +695,41 @@ function autoDetectMapping(headers: string[]): Partial<ColumnMapping> {
   const refIdx = findColumn(refPatterns);
   if (refIdx >= 0) detected.reference = headers[refIdx];
 
-  const dirPatterns = ['deebet/kreedit (d/c)', 'deebet/kreedit', 'd/c', 'direction', 'type', 'suund', 'soll/haben'];
+  const dirPatterns = [
+    'deebet/kreedit (d/c)',
+    'deebet/kreedit',
+    'd/c',
+    'direction',
+    'type',
+    'suund',
+    'soll/haben',
+  ];
   const dirIdx = findColumn(dirPatterns);
   if (dirIdx >= 0) detected.direction = headers[dirIdx];
 
-  const currencyPatterns = ['valuuta tähis', 'source currency', 'target currency', 'currency', 'ccy', 'währung', 'valuta'];
+  const currencyPatterns = [
+    'valuuta tähis',
+    'source currency',
+    'target currency',
+    'currency',
+    'ccy',
+    'währung',
+    'valuta',
+  ];
   const currencyIdx = findColumn(currencyPatterns);
   if (currencyIdx >= 0) detected.currency = headers[currencyIdx];
 
-  const feePatterns = ['teenustasu', 'source fee amount', 'target fee amount', 'fee', 'fees', 'charge', 'commission', 'gebühr', 'tasu'];
+  const feePatterns = [
+    'teenustasu',
+    'source fee amount',
+    'target fee amount',
+    'fee',
+    'fees',
+    'charge',
+    'commission',
+    'gebühr',
+    'tasu',
+  ];
   const feeIdx = findColumn(feePatterns);
   if (feeIdx >= 0) detected.fee = headers[feeIdx];
 
@@ -781,7 +837,9 @@ async function predictCategories(
   locale: string,
   currency: string,
   wsId: string
-): Promise<Map<string, { categoryId: string | null; categoryName: string | null; confidence: number }>> {
+): Promise<
+  Map<string, { categoryId: string | null; categoryName: string | null; confidence: number }>
+> {
   const categorizer = new HeuristicCategorizer();
   const results = new Map<
     string,
