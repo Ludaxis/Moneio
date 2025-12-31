@@ -6,4 +6,5 @@ export * from './chat/index';
 export * from './csv/index';
 export * from './recommendations/index';
 export * from './anomaly/index';
+export * from './invoices/index';
 export * from './types';
