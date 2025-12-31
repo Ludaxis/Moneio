@@ -96,6 +96,50 @@ export async function GET(request: Request) {
 
     const baseCurrency = workspace.baseCurrency as CurrencyCode;
 
+    // Check if GL accounts exist
+    const glAccountCount = await prisma.gLAccount.count({
+      where: { workspaceId, isActive: true },
+    });
+
+    // If no GL accounts, return empty Balance Sheet
+    if (glAccountCount === 0) {
+      const emptyMoney = { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) };
+      const emptySection = {
+        name: '',
+        key: '',
+        subsections: [],
+        total: emptyMoney,
+      };
+
+      return NextResponse.json({
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          workspaceId,
+          baseCurrency,
+          asOfDate,
+        },
+        sections: {
+          assets: { ...emptySection, name: 'Assets', key: 'assets' },
+          liabilities: { ...emptySection, name: 'Liabilities', key: 'liabilities' },
+          equity: { ...emptySection, name: 'Equity', key: 'equity' },
+        },
+        summaries: {
+          totalAssets: emptyMoney,
+          totalLiabilities: emptyMoney,
+          totalEquity: emptyMoney,
+          totalLiabilitiesAndEquity: emptyMoney,
+          isBalanced: true,
+          difference: emptyMoney,
+        },
+        ratios: {
+          currentRatio: 0,
+          quickRatio: 0,
+          debtToEquity: 0,
+        },
+        _notice: 'No GL accounts configured. Set up your Chart of Accounts to generate Balance Sheet reports.',
+      });
+    }
+
     // Create repository and service
     const repository = createPrismaReportRepository(prisma);
     const service = new BalanceSheetService(repository);

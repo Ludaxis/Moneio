@@ -112,6 +112,44 @@ export async function GET(request: Request) {
 
     const baseCurrency = workspace.baseCurrency as CurrencyCode;
 
+    // Check if GL accounts exist
+    const glAccountCount = await prisma.gLAccount.count({
+      where: { workspaceId, isActive: true },
+    });
+
+    // If no GL accounts, return empty P&L report
+    if (glAccountCount === 0) {
+      const emptySection = {
+        name: '',
+        key: '',
+        items: [],
+        subtotal: { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) },
+      };
+
+      return NextResponse.json({
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          workspaceId,
+          baseCurrency,
+          period: { start: startDate, end: endDate },
+        },
+        sections: {
+          revenue: { ...emptySection, name: 'Revenue', key: 'revenue' },
+          costOfGoodsSold: { ...emptySection, name: 'Cost of Goods Sold', key: 'cogs' },
+          operatingExpenses: { ...emptySection, name: 'Operating Expenses', key: 'operatingExpenses' },
+          otherIncome: { ...emptySection, name: 'Other Income', key: 'otherIncome' },
+          otherExpenses: { ...emptySection, name: 'Other Expenses', key: 'otherExpenses' },
+        },
+        summaries: {
+          grossProfit: { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) },
+          operatingIncome: { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) },
+          netIncome: { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) },
+        },
+        monthlyBreakdown: [],
+        _notice: 'No GL accounts configured. Set up your Chart of Accounts to generate P&L reports.',
+      });
+    }
+
     // Create repository and service
     const repository = createPrismaReportRepository(prisma);
     const service = new ProfitLossService(repository);
