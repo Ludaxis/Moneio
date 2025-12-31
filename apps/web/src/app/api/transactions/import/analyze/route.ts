@@ -148,7 +148,7 @@ export async function POST(request: Request) {
     const baseCurrency = workspace?.baseCurrency || 'EUR';
 
     // Step 1: Detect column mapping using LLM + heuristics
-    const mapping = await detectColumnMapping(headers, rows.slice(0, 5));
+    const { mapping, llmUsed: mappingLlmUsed } = await detectColumnMapping(headers, rows.slice(0, 5));
 
     // Apply user overrides
     if (mappingOverrides) {
@@ -235,7 +235,7 @@ export async function POST(request: Request) {
     });
 
     // Step 3: AI-powered batch categorization
-    const transactions = await predictCategoriesWithAi(
+    const { transactions, llmUsed: categorizationLlmUsed } = await predictCategoriesWithAi(
       included,
       categories,
       learnedMappings.map((m) => ({
@@ -277,6 +277,13 @@ export async function POST(request: Request) {
         excluded: excluded.length,
       },
       fileName,
+      // AI status for debugging
+      aiStatus: {
+        mappingLlmUsed,
+        categorizationLlmUsed,
+        learnedMappingsCount: learnedMappings.length,
+        rulesCount: rules.length,
+      },
     });
   } catch (error) {
     console.error('[CSV Analyze] Unexpected error:', error);
@@ -384,19 +391,26 @@ function detectDelimiter(lines: string[]): string {
 async function detectColumnMapping(
   headers: string[],
   sampleRows: ParsedRow[]
-): Promise<ColumnMapping> {
+): Promise<{ mapping: ColumnMapping; llmUsed: boolean }> {
   const mapping: ColumnMapping = {};
+  let llmUsed = false;
 
   // First, try LLM-based detection
   try {
     const llmClient = createLlmClient();
     const llmMapping = await detectMappingWithLlm(llmClient, headers, sampleRows);
-    if (llmMapping) {
+    if (llmMapping && Object.keys(llmMapping).length > 0) {
       Object.assign(mapping, llmMapping);
+      llmUsed = true;
       console.log('[CSV Analyze] LLM mapping result:', llmMapping);
     }
   } catch (error) {
-    console.warn('[CSV Analyze] LLM mapping failed, using heuristics:', error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.warn('[CSV Analyze] LLM mapping failed, using heuristics:', errorMsg);
+    // Check if it's a missing API key issue
+    if (errorMsg.includes('API_KEY')) {
+      console.error('[CSV Analyze] AI API key not configured! Set GEMINI_API_KEY or OPENAI_API_KEY');
+    }
   }
 
   // Fill in any missing fields with heuristic detection
@@ -409,7 +423,7 @@ async function detectColumnMapping(
     }
   });
 
-  return mapping;
+  return { mapping, llmUsed };
 }
 
 async function detectMappingWithLlm(
@@ -872,9 +886,9 @@ async function predictCategoriesWithAi(
   categories: Array<{ id: string; name: string }>,
   learnedMappings: MerchantCategoryMapping[],
   rules: CategorizationRule[]
-): Promise<ParsedTransaction[]> {
+): Promise<{ transactions: ParsedTransaction[]; llmUsed: boolean }> {
   if (categories.length === 0 || transactions.length === 0) {
-    return transactions;
+    return { transactions, llmUsed: false };
   }
 
   // Check existing category from CSV first
@@ -898,7 +912,7 @@ async function predictCategoriesWithAi(
   }
 
   if (needsCategorization.length === 0) {
-    return alreadyCategorized;
+    return { transactions: alreadyCategorized, llmUsed: false };
   }
 
   console.log('[CSV Analyze] AI categorization:', {
@@ -908,6 +922,8 @@ async function predictCategoriesWithAi(
     learnedMappings: learnedMappings.length,
     rules: rules.length,
   });
+
+  let llmUsed = false;
 
   try {
     // Create batch categorizer
@@ -943,6 +959,9 @@ async function predictCategoriesWithAi(
 
     console.log('[CSV Analyze] Categorization stats:', stats);
 
+    // Check if AI was actually used (not just learned mappings/rules)
+    llmUsed = (stats.bySource.ai || 0) > 0;
+
     // Apply predictions to transactions
     // Build result map with type assertion to avoid complex inference
     const resultMap = new Map<string, ParsedTransaction>();
@@ -972,16 +991,23 @@ async function predictCategoriesWithAi(
       }
     }
 
-    return transactions.map((tx) => resultMap.get(tx.id) || tx);
+    return { transactions: transactions.map((tx) => resultMap.get(tx.id) || tx), llmUsed };
   } catch (error) {
-    console.error('[CSV Analyze] AI categorization failed:', error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('[CSV Analyze] AI categorization failed:', errorMsg);
+    // Check if it's a missing API key issue
+    if (errorMsg.includes('API_KEY')) {
+      console.error('[CSV Analyze] AI API key not configured! Set GEMINI_API_KEY or OPENAI_API_KEY');
+    }
     // Return transactions with low confidence (fallback)
-    return transactions.map((tx) => ({
-      ...tx,
-      predictedCategoryId: undefined,
-      predictedCategoryName: undefined,
-      predictedConfidence: 20,
-      predictionSource: 'error' as const,
-    }));
+    return {
+      transactions: transactions.map((tx) => ({
+        ...tx,
+        predictedCategoryId: undefined,
+        predictedCategoryName: undefined,
+        predictedConfidence: 20,
+      })),
+      llmUsed: false,
+    };
   }
 }
