@@ -35,7 +35,9 @@ interface ParsedRow {
 interface ColumnMapping {
   date: string;
   description: string;
-  amount: string;
+  amount?: string;
+  debit?: string;
+  credit?: string;
   balance?: string;
   reference?: string;
   direction?: string;
@@ -66,15 +68,48 @@ interface PreviewTransaction {
   predictedConfidence?: number;
 }
 
-interface CategoryPrediction {
-  id: string;
-  categoryId: string | null;
-  categoryName: string | null;
-  confidence: number;
+interface AnalyzeResponse {
+  headers: string[];
+  rows: ParsedRow[];
+  mapping: Partial<ColumnMapping>;
+  transactions: PreviewTransaction[];
+  excluded: Array<{ index: number; reason: string; category?: string }>;
+  stats?: { totalRows: number; included: number; excluded: number };
+  fileName?: string;
 }
 
-const REQUIRED_COLUMNS = ['date', 'description', 'amount'] as const;
-const OPTIONAL_COLUMNS = ['balance', 'reference'] as const;
+const REQUIRED_COLUMNS = ['date', 'description'] as const;
+const OPTIONAL_COLUMNS = [
+  'amount',
+  'debit',
+  'credit',
+  'balance',
+  'reference',
+  'direction',
+  'currency',
+  'counterpartyName',
+  'counterpartyAccount',
+  'fee',
+  'category',
+  'status',
+] as const;
+
+const FIELD_LABELS: Record<string, string> = {
+  date: 'Date',
+  description: 'Description',
+  amount: 'Amount',
+  debit: 'Debit (split)',
+  credit: 'Credit (split)',
+  balance: 'Balance',
+  reference: 'Reference',
+  direction: 'Direction',
+  currency: 'Currency',
+  counterpartyName: 'Counterparty',
+  counterpartyAccount: 'Counterparty Account',
+  fee: 'Fee',
+  category: 'Category',
+  status: 'Status',
+};
 
 export default function CsvImportPage() {
   const tCommon = useTranslations('common');
@@ -88,10 +123,15 @@ export default function CsvImportPage() {
 
   const [step, setStep] = useState<ImportStep>('upload');
   const [file, setFile] = useState<File | null>(null);
+  const [fileText, setFileText] = useState<string>('');
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [mapping, setMapping] = useState<Partial<ColumnMapping>>({});
   const [transactions, setTransactions] = useState<PreviewTransaction[]>([]);
+  const [excludedRows, setExcludedRows] = useState<
+    Array<{ index: number; reason: string; category?: string }>
+  >([]);
+  const [analysisStats, setAnalysisStats] = useState<{ totalRows: number; included: number; excluded: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showMappingEditor, setShowMappingEditor] = useState(false);
@@ -106,7 +146,6 @@ export default function CsvImportPage() {
     startTime: number;
   } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [predictingCategories, setPredictingCategories] = useState(false);
   const [availableCategories, setAvailableCategories] = useState<WorkspaceCategory[]>([]);
 
   // Fetch available categories when workspace changes
@@ -147,807 +186,70 @@ export default function CsvImportPage() {
     );
   };
 
-  const parseCSV = (text: string): { headers: string[]; rows: ParsedRow[] } => {
-    const lines = text.split(/\r?\n/).filter((line) => line.trim());
-    if (lines.length < 2) {
-      throw new Error('CSV must have at least a header row and one data row');
-    }
-
-    const firstLine = lines[0];
-    const delimiter = firstLine.includes('\t') ? '\t' : firstLine.includes(';') ? ';' : ',';
-
-    const parseLine = (line: string): string[] => {
-      const result: string[] = [];
-      let current = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === delimiter && !inQuotes) {
-          result.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      result.push(current.trim());
-      return result;
-    };
-
-    const csvHeaders = parseLine(lines[0]);
-    const csvRows = lines.slice(1).map((line) => {
-      const values = parseLine(line);
-      const row: ParsedRow = {};
-      csvHeaders.forEach((header, i) => {
-        row[header] = values[i] || '';
-      });
-      return row;
-    });
-
-    return { headers: csvHeaders, rows: csvRows };
-  };
-
-  const normalizeHeadersWithAI = async (
-    csvHeaders: string[],
-    sampleRows: ParsedRow[]
-  ): Promise<Partial<ColumnMapping> | null> => {
-    try {
-      const response = await fetch('/api/transactions/normalize-headers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          headers: csvHeaders,
-          sampleRows: sampleRows.slice(0, 5).map((row) => csvHeaders.map((h) => row[h] || '')),
-        }),
-      });
-
-      if (!response.ok) return null;
-
-      const result = await response.json();
-      if (!result.mappings || result.mappings.length === 0) return null;
-
-      const detected: Partial<ColumnMapping> = {};
-      for (const m of result.mappings) {
-        if (m.normalized && m.confidence > 0.5) {
-          if (m.normalized === 'date') detected.date = m.original;
-          else if (m.normalized === 'description') detected.description = m.original;
-          else if (m.normalized === 'amount') detected.amount = m.original;
-          else if (m.normalized === 'balance') detected.balance = m.original;
-          else if (m.normalized === 'reference') detected.reference = m.original;
-          else if (m.normalized === 'direction') detected.direction = m.original;
-          else if (m.normalized === 'currency') detected.currency = m.original;
-          else if (m.normalized === 'counterpartyName') detected.counterpartyName = m.original;
-          else if (m.normalized === 'counterpartyAccount')
-            detected.counterpartyAccount = m.original;
-          else if (m.normalized === 'fee') detected.fee = m.original;
-          else if (m.normalized === 'category') detected.category = m.original;
-          else if (m.normalized === 'status') detected.status = m.original;
-        }
-      }
-
-      // If no description but we have counterparty name, use that
-      if (!detected.description && detected.counterpartyName) {
-        detected.description = detected.counterpartyName;
-      }
-
-      if (detected.date && detected.description && detected.amount) {
-        return detected;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
-  const autoDetectMapping = (csvHeaders: string[]): Partial<ColumnMapping> => {
-    const normalized = csvHeaders.map((h) => h.toLowerCase().trim());
-    const detected: Partial<ColumnMapping> = {};
-
-    // Remove special characters and diacritics for fuzzy matching
-    const normalize = (str: string): string => {
-      return str
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-        .replace(/[^a-z0-9\s]/g, '') // Remove special chars
-        .trim();
-    };
-
-    const normalizedFuzzy = csvHeaders.map(normalize);
-
-    const findColumn = (patterns: string[]): number => {
-      // Exact match first
-      for (const pattern of patterns) {
-        const idx = normalized.findIndex((h) => h === pattern);
-        if (idx >= 0) return idx;
-      }
-      // Partial match second
-      for (const pattern of patterns) {
-        const idx = normalized.findIndex((h) => h.includes(pattern));
-        if (idx >= 0) return idx;
-      }
-      // Fuzzy match third (handles corrupted characters)
-      for (const pattern of patterns) {
-        const normalizedPattern = normalize(pattern);
-        const idx = normalizedFuzzy.findIndex(
-          (h) => h.includes(normalizedPattern) || normalizedPattern.includes(h)
-        );
-        if (idx >= 0) return idx;
-      }
-      // Partial fuzzy match (even more lenient)
-      for (const pattern of patterns) {
-        const words = normalize(pattern)
-          .split(/\s+/)
-          .filter((w) => w.length > 3);
-        for (const word of words) {
-          const idx = normalizedFuzzy.findIndex((h) => h.includes(word));
-          if (idx >= 0) return idx;
-        }
-      }
-      return -1;
-    };
-
-    // Date patterns - common across banks
-    const datePatterns = [
-      'makse kuupäev', // Estonian: Payment date
-      'makse kuup', // Estonian: partial match for corrupted encoding
-      'created on', // Wise
-      'finished on', // Wise
-      'booking date',
-      'value date',
-      'transaction date',
-      'posted date',
-      'posted at',
-      'posted',
-      'date',
-      'datum', // German
-      'kuupäev', // Estonian
-      'kuup', // Estonian: partial (handles encoding issues)
-      'تاريخ', // Persian
-      'päev', // Estonian: day
-      'buchungstag', // German: booking day
-      'wertstellung', // German: value date
-    ];
-    const dateIdx = findColumn(datePatterns);
-    if (dateIdx >= 0) detected.date = csvHeaders[dateIdx];
-
-    // Description patterns - transaction narrative/details
-    const descPatterns = [
-      'selgitus', // Estonian: explanation
-      'description',
-      'narrative',
-      'memo',
-      'details',
-      'text',
-      'kirjeldus', // Estonian
-      'توضیحات', // Persian
-      'verwendungszweck', // German: purpose
-      'buchungstext', // German: booking text
-      'transaction details',
-      'payment details',
-      'particulars',
-    ];
-    const descIdx = findColumn(descPatterns);
-    if (descIdx >= 0) detected.description = csvHeaders[descIdx];
-
-    // Counterparty name patterns - payee/merchant/sender name
-    const counterpartyPatterns = [
-      'saaja/maksja nimi', // Estonian: payee/payer name
-      'target name', // Wise
-      'source name', // Wise (for incoming)
-      'merchant',
-      'payee',
-      'payer',
-      'beneficiary',
-      'counterparty',
-      'vendor',
-      'sender',
-      'recipient',
-      'nimi', // Estonian: name
-      'empfänger', // German: recipient
-      'auftraggeber', // German: client/sender
-      'begunstigde', // Dutch: beneficiary
-    ];
-    const counterpartyIdx = findColumn(counterpartyPatterns);
-    if (counterpartyIdx >= 0) detected.counterpartyName = csvHeaders[counterpartyIdx];
-
-    // If no description found, use counterparty name as description
-    if (!detected.description && detected.counterpartyName) {
-      detected.description = detected.counterpartyName;
-    }
-
-    // Counterparty account (IBAN) patterns
-    const counterpartyAccountPatterns = [
-      'saaja/maksja konto', // Estonian: payee/payer account
-      'beneficiary account',
-      'counterparty account',
-      'payee account',
-      'iban',
-      'account number',
-      'konto', // Estonian/German: account
-    ];
-    const counterpartyAccountIdx = findColumn(counterpartyAccountPatterns);
-    if (counterpartyAccountIdx >= 0)
-      detected.counterpartyAccount = csvHeaders[counterpartyAccountIdx];
-
-    // Amount patterns
-    const amountPatterns = [
-      'summa', // Estonian: sum/amount
-      'source amount (after fees)', // Wise
-      'target amount (after fees)', // Wise
-      'source amount',
-      'target amount',
-      'amount',
-      'مبلغ', // Persian
-      'value',
-      'sum',
-      'betrag', // German
-      'bedrag', // Dutch
-      'debit',
-      'credit',
-    ];
-    const amountIdx = findColumn(amountPatterns);
-    if (amountIdx >= 0) detected.amount = csvHeaders[amountIdx];
-
-    // Balance patterns
-    const balancePatterns = [
-      'balance',
-      'saldo', // German/Estonian
-      'موجودی', // Persian
-      'running balance',
-      'jääk', // Estonian: remainder
-      'kontostand', // German: account balance
-    ];
-    const balanceIdx = findColumn(balancePatterns);
-    if (balanceIdx >= 0) detected.balance = csvHeaders[balanceIdx];
-
-    // Reference/ID patterns
-    const refPatterns = [
-      'arhiveerimistunnus', // Estonian: archive ID
-      'viitenumber', // Estonian: reference number
-      'reference',
-      'ref',
-      'viide', // Estonian: reference
-      'مرجع', // Persian
-      'transaction id',
-      'trans id',
-      'id',
-      'doc',
-      'dok nr', // Estonian: document number
-      'buchungsnummer', // German: booking number
-    ];
-    const refIdx = findColumn(refPatterns);
-    if (refIdx >= 0) detected.reference = csvHeaders[refIdx];
-
-    // Direction patterns (debit/credit indicator)
-    const dirPatterns = [
-      'deebet/kreedit (d/c)', // Estonian
-      'deebet/kreedit',
-      'd/c',
-      'direction', // Wise: IN/OUT
-      'type',
-      'suund', // Estonian: direction
-      'soll/haben', // German: debit/credit
-    ];
-    const dirIdx = findColumn(dirPatterns);
-    if (dirIdx >= 0) detected.direction = csvHeaders[dirIdx];
-
-    // Currency patterns
-    const currencyPatterns = [
-      'valuuta tähis', // Estonian: currency code
-      'source currency', // Wise
-      'target currency', // Wise
-      'currency',
-      'ccy',
-      'währung', // German
-      'valuta', // Estonian
-    ];
-    const currencyIdx = findColumn(currencyPatterns);
-    if (currencyIdx >= 0) detected.currency = csvHeaders[currencyIdx];
-
-    // Fee patterns
-    const feePatterns = [
-      'teenustasu', // Estonian: service fee
-      'source fee amount', // Wise
-      'target fee amount',
-      'fee',
-      'fees',
-      'charge',
-      'commission',
-      'gebühr', // German
-      'tasu', // Estonian: fee
-    ];
-    const feeIdx = findColumn(feePatterns);
-    if (feeIdx >= 0) detected.fee = csvHeaders[feeIdx];
-
-    // Category patterns (Wise has built-in categories)
-    const categoryPatterns = [
-      'category',
-      'kategooria', // Estonian
-      'kategorie', // German
-      'type',
-      'expense type',
-    ];
-    const categoryIdx = findColumn(categoryPatterns);
-    if (categoryIdx >= 0) detected.category = csvHeaders[categoryIdx];
-
-    // Status patterns (for filtering completed vs refunded)
-    const statusPatterns = [
-      'status',
-      'state',
-      'olek', // Estonian
-      'zustand', // German
-    ];
-    const statusIdx = findColumn(statusPatterns);
-    if (statusIdx >= 0) detected.status = csvHeaders[statusIdx];
-
-    return detected;
-  };
-
-  // Data-based detection - analyze actual values when header detection fails
-  const detectByDataPatterns = (
-    csvHeaders: string[],
-    csvRows: ParsedRow[]
-  ): Partial<ColumnMapping> => {
-    const detected: Partial<ColumnMapping> = {};
-    const sampleValues = csvRows.slice(0, 10);
-
-    // Check each column's data
-    csvHeaders.forEach((header) => {
-      const values = sampleValues.map((row) => row[header] || '').filter((v) => v);
-      if (values.length === 0) return;
-
-      // Date detection: DD-MM-YYYY, DD.MM.YYYY, YYYY-MM-DD, or datetime
-      const datePattern = /^(\d{1,2}[-./]\d{1,2}[-./]\d{2,4}|\d{4}[-./]\d{1,2}[-./]\d{1,2})/;
-      const dateMatches = values.filter((v) => datePattern.test(v)).length;
-      if (dateMatches >= values.length * 0.8 && !detected.date) {
-        detected.date = header;
+  const runAnalysis = useCallback(
+    async (text: string, overrides?: Partial<ColumnMapping>, analysisFileName?: string) => {
+      if (!workspaceId) {
+        setError('Workspace required to analyze CSV');
         return;
       }
 
-      // Amount detection: numbers with decimals (may use comma as decimal)
-      const amountPattern = /^-?[\d\s.,]+$/;
-      const hasDecimal = values.some((v) => /[.,]\d{2}$/.test(v));
-      const amountMatches = values.filter((v) => amountPattern.test(v) && v.length > 1).length;
-      if (amountMatches >= values.length * 0.8 && hasDecimal && !detected.amount) {
-        detected.amount = header;
-        return;
-      }
+      setIsAnalyzing(true);
+      setError(null);
 
-      // Direction detection: D/C, IN/OUT
-      const dirPattern = /^(D|C|IN|OUT|DEBIT|CREDIT)$/i;
-      const dirMatches = values.filter((v) => dirPattern.test(v.trim())).length;
-      if (dirMatches >= values.length * 0.8 && !detected.direction) {
-        detected.direction = header;
-        return;
-      }
-
-      // Currency detection: 3-letter codes
-      const currPattern = /^[A-Z]{3}$/;
-      const currMatches = values.filter((v) => currPattern.test(v.trim())).length;
-      if (currMatches >= values.length * 0.8 && !detected.currency) {
-        detected.currency = header;
-        return;
-      }
-
-      // IBAN detection: starts with 2 letters + 2 digits
-      const ibanPattern = /^[A-Z]{2}\d{2}/;
-      const ibanMatches = values.filter((v) => ibanPattern.test(v)).length;
-      if (ibanMatches >= values.length * 0.5 && !detected.counterpartyAccount) {
-        detected.counterpartyAccount = header;
-        return;
-      }
-
-      // Status detection: specific keywords
-      const statusPattern = /^(COMPLETED|REFUNDED|PENDING|CANCELLED|FAILED)$/i;
-      const statusMatches = values.filter((v) => statusPattern.test(v.trim())).length;
-      if (statusMatches >= values.length * 0.5 && !detected.status) {
-        detected.status = header;
-        return;
-      }
-    });
-
-    // Find description: longest average text that isn't already mapped
-    const mappedHeaders = new Set(Object.values(detected).filter(Boolean));
-    let bestDescHeader = '';
-    let bestAvgLen = 0;
-
-    csvHeaders.forEach((header) => {
-      if (mappedHeaders.has(header)) return;
-      const values = sampleValues.map((row) => row[header] || '').filter((v) => v);
-      const avgLen = values.reduce((sum, v) => sum + v.length, 0) / (values.length || 1);
-      // Descriptions tend to be longer text with spaces
-      const hasSpaces = values.some((v) => v.includes(' '));
-      if (avgLen > bestAvgLen && avgLen > 10 && hasSpaces) {
-        bestAvgLen = avgLen;
-        bestDescHeader = header;
-      }
-    });
-    if (bestDescHeader && !detected.description) {
-      detected.description = bestDescHeader;
-    }
-
-    // Find counterparty name: text column with names (mixed case, no special patterns)
-    if (!detected.counterpartyName) {
-      csvHeaders.forEach((header) => {
-        if (mappedHeaders.has(header) || header === detected.description) return;
-        const values = sampleValues.map((row) => row[header] || '').filter((v) => v);
-        // Names: mixed case text, not too long, may contain spaces
-        const namePattern = /^[A-Za-z].*[a-z]/;
-        const nameMatches = values.filter(
-          (v) => namePattern.test(v) && v.length > 3 && v.length < 100
-        ).length;
-        if (nameMatches >= values.length * 0.5 && !detected.counterpartyName) {
-          detected.counterpartyName = header;
-        }
-      });
-    }
-
-    return detected;
-  };
-
-  const parseAmount = (value: string, direction?: string): number => {
-    if (!value || typeof value !== 'string') {
-      return 0;
-    }
-
-    const trimmed = value.trim();
-    if (!trimmed) return 0;
-
-    const hasNegativeSign = trimmed.startsWith('-') || trimmed.includes('−'); // Handle both - and −
-
-    // Count occurrences of separators to detect format
-    const commaCount = (trimmed.match(/,/g) || []).length;
-    const dotCount = (trimmed.match(/\./g) || []).length;
-    const commaPos = trimmed.lastIndexOf(',');
-    const dotPos = trimmed.lastIndexOf('.');
-
-    let cleaned = trimmed;
-
-    // Detect format based on separator positions and counts
-    if (commaCount >= 1 && dotCount >= 1) {
-      // Both separators present - determine which is decimal
-      if (commaPos > dotPos) {
-        // European: 1.234,56 - comma is decimal
-        const parts = trimmed.split(',');
-        const integerPart = parts[0].replace(/[^\d]/g, '');
-        // Only take first 2 digits after comma as decimal
-        const decimalPart = (parts[1]?.replace(/[^\d]/g, '') || '00').substring(0, 2);
-        cleaned = `${integerPart}.${decimalPart}`;
-      } else {
-        // American: 1,234.56 - dot is decimal
-        const parts = trimmed.split('.');
-        const integerPart = parts[0].replace(/[^\d]/g, '');
-        const decimalPart = (parts[1]?.replace(/[^\d]/g, '') || '00').substring(0, 2);
-        cleaned = `${integerPart}.${decimalPart}`;
-      }
-    } else if (commaCount === 1 && dotCount === 0) {
-      // Only comma - check if it's thousands or decimal
-      const parts = trimmed.split(',');
-      const afterComma = parts[1]?.replace(/[^\d]/g, '') || '';
-      if (afterComma.length <= 2) {
-        // Likely decimal: 1234,56
-        cleaned = `${parts[0].replace(/[^\d]/g, '')}.${afterComma.padEnd(2, '0').substring(0, 2)}`;
-      } else {
-        // Likely thousands separator: 1,234 (no decimal)
-        cleaned = trimmed.replace(/[^\d]/g, '');
-      }
-    } else if (dotCount === 1 && commaCount === 0) {
-      // Only dot - check if it's thousands or decimal
-      const parts = trimmed.split('.');
-      const afterDot = parts[1]?.replace(/[^\d]/g, '') || '';
-      if (afterDot.length <= 2) {
-        // Likely decimal: 1234.56
-        const integerPart = parts[0].replace(/[^\d]/g, '');
-        cleaned = `${integerPart}.${afterDot.padEnd(2, '0').substring(0, 2)}`;
-      } else if (afterDot.length === 3 && parts[0].replace(/[^\d]/g, '').length <= 3) {
-        // Likely thousands: 1.234 (European thousands separator)
-        cleaned = trimmed.replace(/[^\d]/g, '');
-      } else {
-        // Ambiguous - treat as decimal
-        cleaned = `${parts[0].replace(/[^\d]/g, '')}.${afterDot.substring(0, 2)}`;
-      }
-    } else if (dotCount > 1) {
-      // Multiple dots - European thousands separators: 1.234.567
-      cleaned = trimmed.replace(/[^\d,]/g, '');
-      if (cleaned.includes(',')) {
-        const parts = cleaned.split(',');
-        cleaned = `${parts[0]}.${(parts[1] || '00').substring(0, 2)}`;
-      }
-    } else {
-      // No separators or only spaces - just digits
-      cleaned = trimmed.replace(/[^\d]/g, '');
-    }
-
-    let amount = parseFloat(cleaned) || 0;
-
-    // Apply direction
-    if (direction) {
-      const dir = direction.toUpperCase().trim();
-      if (dir === 'D' || dir === 'OUT' || dir === 'DEBIT') {
-        amount = -Math.abs(amount);
-      } else if (dir === 'C' || dir === 'IN' || dir === 'CREDIT') {
-        amount = Math.abs(amount);
-      }
-    } else if (hasNegativeSign) {
-      amount = -Math.abs(amount);
-    }
-
-    return amount;
-  };
-
-  const parseDate = (value: string): string => {
-    if (!value || typeof value !== 'string') {
-      return new Date().toISOString().split('T')[0]; // Default to today
-    }
-
-    const trimmed = value.trim();
-    const currentYear = new Date().getFullYear();
-
-    // Try YYYY-MM-DD format first (ISO format)
-    const isoMatch = trimmed.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/);
-    if (isoMatch) {
-      const [, year, month, day] = isoMatch;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Try DD-MM-YYYY or DD/MM/YYYY with 4-digit year
-    const ddmmyyyyMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-    if (ddmmyyyyMatch) {
-      const [, day, month, year] = ddmmyyyyMatch;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Try DD-MM-YY or DD/MM/YY with 2-digit year
-    const ddmmyyMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2})$/);
-    if (ddmmyyMatch) {
-      const [, day, month, yy] = ddmmyyMatch;
-      // Assume 20xx for years 00-50, 19xx for 51-99
-      const year = parseInt(yy, 10) <= 50 ? `20${yy}` : `19${yy}`;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Try DD-MM or DD/MM (no year - use current year)
-    const ddmmMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})$/);
-    if (ddmmMatch) {
-      const [, day, month] = ddmmMatch;
-      return `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Try -MM-DD format (missing year at start)
-    const missingYearMatch = trimmed.match(/^-?(\d{1,2})[./-](\d{1,2})$/);
-    if (missingYearMatch) {
-      const [, month, day] = missingYearMatch;
-      return `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-
-    // Try JavaScript Date parsing as last resort
-    const date = new Date(trimmed);
-    if (!isNaN(date.getTime()) && date.getFullYear() >= 1900 && date.getFullYear() <= 2100) {
-      return date.toISOString().split('T')[0];
-    }
-
-    // Final fallback: return today's date with a warning logged
-    console.warn(`[CSV Import] Could not parse date: "${value}", using today's date`);
-    return new Date().toISOString().split('T')[0];
-  };
-
-  const generateTransactions = (
-    csvRows: ParsedRow[],
-    columnMapping: Partial<ColumnMapping>
-  ): PreviewTransaction[] => {
-    if (!columnMapping.date || !columnMapping.description || !columnMapping.amount) {
-      return [];
-    }
-
-    return csvRows
-      .map((row, index) => {
-        // Get status if available
-        const status = columnMapping.status ? row[columnMapping.status]?.toUpperCase() : undefined;
-
-        // Skip refunded/cancelled transactions
-        if (status === 'REFUNDED' || status === 'CANCELLED' || status === 'FAILED') {
-          return null;
-        }
-
-        // Build description from multiple sources for better context
-        let description = row[columnMapping.description!] || '';
-
-        // For Wise: if description is empty but we have counterparty, use that
-        if (!description && columnMapping.counterpartyName) {
-          description = row[columnMapping.counterpartyName] || '';
-        }
-
-        // If still empty, try to build from counterparty name
-        if (!description) {
-          description = '(no description)';
-        }
-
-        // Get currency - prefer source currency for Wise
-        let currency = columnMapping.currency ? row[columnMapping.currency] : undefined;
-        if (!currency) {
-          // Default based on common patterns
-          currency = 'EUR';
-        }
-
-        return {
-          id: `row-${index}`,
-          date: parseDate(row[columnMapping.date!]),
-          description,
-          amount: parseAmount(
-            row[columnMapping.amount!],
-            columnMapping.direction ? row[columnMapping.direction] : undefined
-          ),
-          balance: columnMapping.balance ? parseAmount(row[columnMapping.balance]) : undefined,
-          reference: columnMapping.reference ? row[columnMapping.reference] : undefined,
-          currency,
-          counterpartyName: columnMapping.counterpartyName
-            ? row[columnMapping.counterpartyName]
-            : undefined,
-          fee: columnMapping.fee ? parseAmount(row[columnMapping.fee]) : undefined,
-          category: columnMapping.category ? row[columnMapping.category] : undefined,
-          status,
-          originalRow: row,
-        };
-      })
-      .filter((tx): tx is NonNullable<typeof tx> => tx !== null);
-  };
-
-  // Fetch AI category predictions for transactions
-  const predictCategories = async (txns: PreviewTransaction[]): Promise<void> => {
-    if (!workspaceId || txns.length === 0) return;
-
-    setPredictingCategories(true);
-    try {
-      // Batch in chunks of 50 to avoid timeouts
-      const BATCH_SIZE = 50;
-      const allPredictions: CategoryPrediction[] = [];
-
-      for (let i = 0; i < txns.length; i += BATCH_SIZE) {
-        const batch = txns.slice(i, i + BATCH_SIZE);
-        const response = await fetch('/api/transactions/predict-categories', {
+      try {
+        const response = await fetch('/api/transactions/import/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             workspaceId,
-            transactions: batch.map((tx) => ({
-              id: tx.id,
-              description: tx.description,
-              amount: tx.amount,
-              date: tx.date,
-            })),
+            fileName: analysisFileName || file?.name,
+            csvText: text,
+            mappingOverrides: overrides,
           }),
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          allPredictions.push(...data.predictions);
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          setError(data.error || 'Failed to analyze CSV');
+          return;
         }
-      }
 
-      // Update transactions with predictions
-      if (allPredictions.length > 0) {
-        const predictionMap = new Map(allPredictions.map((p) => [p.id, p]));
-        setTransactions((prev) =>
-          prev.map((tx) => {
-            const prediction = predictionMap.get(tx.id);
-            if (prediction && prediction.categoryId) {
-              return {
-                ...tx,
-                predictedCategoryId: prediction.categoryId,
-                predictedCategoryName: prediction.categoryName || undefined,
-                predictedConfidence: prediction.confidence,
-              };
-            }
-            return tx;
-          })
+        const data: AnalyzeResponse = await response.json();
+        const resolvedMapping = data.mapping || {};
+        const resolvedHasAmount =
+          resolvedMapping.amount || resolvedMapping.debit || resolvedMapping.credit;
+
+        setHeaders(data.headers || []);
+        setRows(data.rows || []);
+        setMapping(resolvedMapping);
+        setTransactions(data.transactions || []);
+        setExcludedRows(data.excluded || []);
+        setAnalysisStats(data.stats || null);
+        setStep('preview');
+        setShowMappingEditor(
+          !resolvedMapping.date || !resolvedMapping.description || !resolvedHasAmount
         );
+        setSelectedIds(new Set());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to analyze CSV');
+      } finally {
+        setIsAnalyzing(false);
       }
-    } catch (error) {
-      console.error('Failed to predict categories:', error);
-    } finally {
-      setPredictingCategories(false);
-    }
-  };
+    },
+    [workspaceId, file?.name]
+  );
 
   const handleFileSelect = useCallback(
     async (selectedFile: File) => {
       setError(null);
       setFile(selectedFile);
-      setIsAnalyzing(true);
-
-      try {
-        const text = await selectedFile.text();
-        const { headers: csvHeaders, rows: csvRows } = parseCSV(text);
-
-        setHeaders(csvHeaders);
-        setRows(csvRows);
-
-        // Multi-layer detection strategy for maximum accuracy
-        let detected: Partial<ColumnMapping> = {};
-
-        // Layer 1: Try AI normalization (primary - analyzes headers + sample data)
-        console.log('[CSV Import] Attempting AI-based header detection...');
-        const aiDetected = await normalizeHeadersWithAI(csvHeaders, csvRows);
-        if (aiDetected) {
-          console.log('[CSV Import] AI detection successful:', aiDetected);
-          detected = { ...detected, ...aiDetected };
-        } else {
-          console.log('[CSV Import] AI detection failed or returned incomplete results');
-        }
-
-        // Layer 2: Pattern-based detection (fills gaps with header pattern matching)
-        const patternDetected = autoDetectMapping(csvHeaders);
-        console.log('[CSV Import] Pattern detection results:', patternDetected);
-
-        // Merge: AI results take priority, pattern fills gaps
-        detected = {
-          date: detected.date || patternDetected.date,
-          description: detected.description || patternDetected.description,
-          amount: detected.amount || patternDetected.amount,
-          balance: detected.balance || patternDetected.balance,
-          reference: detected.reference || patternDetected.reference,
-          direction: detected.direction || patternDetected.direction,
-          currency: detected.currency || patternDetected.currency,
-          counterpartyName: detected.counterpartyName || patternDetected.counterpartyName,
-          counterpartyAccount: detected.counterpartyAccount || patternDetected.counterpartyAccount,
-          fee: detected.fee || patternDetected.fee,
-          category: detected.category || patternDetected.category,
-          status: detected.status || patternDetected.status,
-        };
-
-        // Layer 3: Data-based detection (last resort - analyzes actual cell values)
-        if (!detected.date || !detected.amount) {
-          console.log('[CSV Import] Required fields missing, trying data-based detection...');
-          const dataDetected = detectByDataPatterns(csvHeaders, csvRows);
-          console.log('[CSV Import] Data-based detection results:', dataDetected);
-
-          detected = {
-            date: detected.date || dataDetected.date,
-            description: detected.description || dataDetected.description,
-            amount: detected.amount || dataDetected.amount,
-            balance: detected.balance || dataDetected.balance,
-            reference: detected.reference || dataDetected.reference,
-            direction: detected.direction || dataDetected.direction,
-            currency: detected.currency || dataDetected.currency,
-            counterpartyName: detected.counterpartyName || dataDetected.counterpartyName,
-            counterpartyAccount: detected.counterpartyAccount || dataDetected.counterpartyAccount,
-            fee: detected.fee || dataDetected.fee,
-            category: detected.category || dataDetected.category,
-            status: detected.status || dataDetected.status,
-          };
-        }
-
-        // If no description but have counterparty name, use that
-        if (!detected.description && detected.counterpartyName) {
-          detected.description = detected.counterpartyName;
-        }
-
-        console.log('[CSV Import] Final mapping:', detected);
-        setMapping(detected);
-
-        // If we have all required fields, generate preview and go straight to preview
-        if (detected.date && detected.description && detected.amount) {
-          const txns = generateTransactions(csvRows, detected);
-          setTransactions(txns);
-          setStep('preview');
-          // Start AI category prediction in background
-          predictCategories(txns);
-        } else {
-          // Show mapping editor if we couldn't detect all fields
-          setShowMappingEditor(true);
-          setStep('preview');
-          setTransactions([]);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to parse CSV');
-      } finally {
-        setIsAnalyzing(false);
-      }
+      setImportResult(null);
+      setImportProgress(null);
+      const text = await selectedFile.text();
+      setFileText(text);
+      await runAnalysis(text, undefined, selectedFile.name);
     },
-    [workspaceId]
+    [runAnalysis]
   );
 
   const handleDrop = useCallback(
@@ -967,10 +269,11 @@ export default function CsvImportPage() {
     const newMapping = { ...mapping, [field]: value || undefined };
     setMapping(newMapping);
 
-    // Regenerate transactions with new mapping
-    if (newMapping.date && newMapping.description && newMapping.amount) {
-      const txns = generateTransactions(rows, newMapping);
-      setTransactions(txns);
+    if (fileText) {
+      const cleanedOverrides = Object.fromEntries(
+        Object.entries(newMapping).filter(([, v]) => v)
+      ) as Partial<ColumnMapping>;
+      runAnalysis(fileText, cleanedOverrides);
     }
   };
 
@@ -1089,7 +392,8 @@ export default function CsvImportPage() {
     }
   };
 
-  const isMappingValid = mapping.date && mapping.description && mapping.amount;
+  const hasAmountField = mapping.amount || mapping.debit || mapping.credit;
+  const isMappingValid = Boolean(mapping.date && mapping.description && hasAmountField);
 
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${Math.round(seconds)}s`;
@@ -1148,7 +452,7 @@ export default function CsvImportPage() {
         {[...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS].map((field) => (
           <div key={field} className="space-y-1">
             <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-              {field.charAt(0).toUpperCase() + field.slice(1)}
+              {FIELD_LABELS[field] || field}
               {REQUIRED_COLUMNS.includes(field as (typeof REQUIRED_COLUMNS)[number]) && (
                 <span className="text-destructive">*</span>
               )}
@@ -1210,7 +514,8 @@ export default function CsvImportPage() {
           <FileText className="h-5 w-5 text-muted-foreground" />
           <span className="font-medium">{file?.name}</span>
           <span className="text-sm text-muted-foreground">
-            ({transactions.length} transactions)
+            ({transactions.length} transactions
+            {analysisStats ? `, ${analysisStats.excluded} filtered out` : ''})
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -1227,10 +532,13 @@ export default function CsvImportPage() {
             onClick={() => {
               setStep('upload');
               setFile(null);
+              setFileText('');
               setHeaders([]);
               setRows([]);
               setMapping({});
               setTransactions([]);
+              setExcludedRows([]);
+              setAnalysisStats(null);
               setShowMappingEditor(false);
               setSelectedIds(new Set());
             }}
@@ -1245,13 +553,26 @@ export default function CsvImportPage() {
       {/* Mapping editor (collapsible) */}
       {showMappingEditor && renderMappingEditor()}
 
+      {analysisStats && (
+        <div className="text-sm text-muted-foreground">
+          {analysisStats.included} included · {analysisStats.excluded} filtered ·{' '}
+          {analysisStats.totalRows} total
+        </div>
+      )}
+      {excludedRows.length > 0 && (
+        <div className="text-xs text-muted-foreground">
+          Skipped rows: {excludedRows.slice(0, 3).map((ex) => ex.reason).join('; ')}
+          {excludedRows.length > 3 ? '…' : ''}
+        </div>
+      )}
+
       {/* Transactions table */}
       {!isMappingValid ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <AlertCircle className="h-10 w-10 text-muted-foreground" />
           <p className="mt-4 font-medium">Column mapping incomplete</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Please map Date, Description, and Amount columns
+            Please map Date, Description, and Amount (or Debit/Credit) columns
           </p>
         </div>
       ) : transactions.length === 0 ? (
@@ -1317,9 +638,6 @@ export default function CsvImportPage() {
                       <span className="flex items-center gap-1.5">
                         <Sparkles className="h-3.5 w-3.5 text-primary" />
                         Category
-                        {predictingCategories && (
-                          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                        )}
                       </span>
                     </th>
                     {mapping.balance && (
@@ -1385,8 +703,6 @@ export default function CsvImportPage() {
                                 </span>
                               )}
                           </div>
-                        ) : predictingCategories ? (
-                          <span className="text-xs text-muted-foreground">...</span>
                         ) : tx.predictedCategoryName ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                             <Tag className="h-3 w-3" />
@@ -1501,11 +817,14 @@ export default function CsvImportPage() {
           onClick={() => {
             setStep('upload');
             setFile(null);
+            setFileText('');
             setHeaders([]);
             setRows([]);
             setMapping({});
             setTransactions([]);
             setImportResult(null);
+            setExcludedRows([]);
+            setAnalysisStats(null);
             setShowMappingEditor(false);
             setSelectedIds(new Set());
           }}
