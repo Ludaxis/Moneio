@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-  createAmountParser,
-  detectAmountConfig,
-  type AmountParserConfig,
-} from './amount-parser';
+import { createAmountParser, detectAmountConfig, type AmountParserConfig } from './amount-parser';
 
 describe('AmountParser', () => {
   describe('single column parsing', () => {
