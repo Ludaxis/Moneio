@@ -17,14 +17,60 @@ export async function POST(request: Request) {
 
     // Get date ranges
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Parse specific month/year from question (e.g., "November 2025", "nov 2025", "december")
+    const monthNames = [
+      'january', 'february', 'march', 'april', 'may', 'june',
+      'july', 'august', 'september', 'october', 'november', 'december',
+    ];
+    const shortMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+    let queryMonth = now.getMonth();
+    let queryYear = now.getFullYear();
+    let specificPeriod = false;
+
+    // Check for month name in question
+    for (let i = 0; i < monthNames.length; i++) {
+      if (q.includes(monthNames[i]) || q.includes(shortMonths[i])) {
+        queryMonth = i;
+        specificPeriod = true;
+        break;
+      }
+    }
+
+    // Check for year in question (e.g., "2025", "2024")
+    const yearMatch = q.match(/\b(202[0-9])\b/);
+    if (yearMatch) {
+      queryYear = parseInt(yearMatch[1]);
+      specificPeriod = true;
+    }
+
+    // Handle "last month", "this month", "this year"
+    if (q.includes('last month')) {
+      queryMonth = now.getMonth() - 1;
+      queryYear = queryMonth < 0 ? now.getFullYear() - 1 : now.getFullYear();
+      queryMonth = queryMonth < 0 ? 11 : queryMonth;
+      specificPeriod = true;
+    } else if (q.includes('this year')) {
+      // Will be handled separately for full year queries
+    }
+
+    const startOfMonth = specificPeriod
+      ? new Date(queryYear, queryMonth, 1)
+      : new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = specificPeriod
+      ? new Date(queryYear, queryMonth + 1, 0, 23, 59, 59)
+      : now;
+    const periodLabel = specificPeriod
+      ? `${monthNames[queryMonth]} ${queryYear}`
+      : 'this month';
 
     // Detect query type and respond quickly
     if (q.includes('cashflow') || q.includes('cash flow')) {
       const transactions = await prisma.bankTransaction.findMany({
         where: {
           workspaceId,
-          postedAt: { gte: startOfMonth },
+          postedAt: { gte: startOfMonth, lte: endOfMonth },
         },
         select: { amount: true, currency: true },
       });
@@ -41,7 +87,7 @@ export async function POST(request: Request) {
       const currency = transactions[0]?.currency || 'EUR';
 
       return NextResponse.json({
-        answer: `Your cash flow this month is ${formatCurrency(cashflow, currency)}. Income: ${formatCurrency(income, currency)}, Expenses: ${formatCurrency(expenses, currency)}.`,
+        answer: `Your cash flow for ${periodLabel} is ${formatCurrency(cashflow, currency)}. Income: ${formatCurrency(income, currency)}, Expenses: ${formatCurrency(expenses, currency)}.`,
       });
     }
 
@@ -117,11 +163,11 @@ export async function POST(request: Request) {
         });
       }
 
-      // General spending this month
+      // General spending for the period
       const transactions = await prisma.bankTransaction.findMany({
         where: {
           workspaceId,
-          postedAt: { gte: startOfMonth },
+          postedAt: { gte: startOfMonth, lte: endOfMonth },
           amount: { lt: 0 },
         },
         select: { amount: true, currency: true },
@@ -131,7 +177,7 @@ export async function POST(request: Request) {
       const currency = transactions[0]?.currency || 'EUR';
 
       return NextResponse.json({
-        answer: `Your total spending this month is ${formatCurrency(total, currency)} across ${transactions.length} transactions.`,
+        answer: `Your total spending for ${periodLabel} is ${formatCurrency(total, currency)} across ${transactions.length} transactions.`,
       });
     }
 
@@ -139,7 +185,7 @@ export async function POST(request: Request) {
       const transactions = await prisma.bankTransaction.findMany({
         where: {
           workspaceId,
-          postedAt: { gte: startOfMonth },
+          postedAt: { gte: startOfMonth, lte: endOfMonth },
           amount: { gt: 0 },
         },
         select: { amount: true, currency: true },
@@ -149,7 +195,7 @@ export async function POST(request: Request) {
       const currency = transactions[0]?.currency || 'EUR';
 
       return NextResponse.json({
-        answer: `Your total income this month is ${formatCurrency(total, currency)} from ${transactions.length} transactions.`,
+        answer: `Your total income for ${periodLabel} is ${formatCurrency(total, currency)} from ${transactions.length} transactions.`,
       });
     }
 
@@ -249,7 +295,7 @@ export async function POST(request: Request) {
       const transactions = await prisma.bankTransaction.findMany({
         where: {
           workspaceId,
-          postedAt: { gte: startOfMonth },
+          postedAt: { gte: startOfMonth, lte: endOfMonth },
           amount: { lt: 0 },
         },
         select: {
@@ -264,7 +310,7 @@ export async function POST(request: Request) {
 
       if (transactions.length === 0) {
         return NextResponse.json({
-          answer: 'No expenses found this month.',
+          answer: `No expenses found for ${periodLabel}.`,
         });
       }
 
@@ -277,15 +323,15 @@ export async function POST(request: Request) {
         .join(', ');
 
       return NextResponse.json({
-        answer: `Your biggest expenses this month: ${list}`,
+        answer: `Your biggest expenses for ${periodLabel}: ${list}`,
       });
     }
 
-    // Default: return summary
+    // Default: return summary for the period
     const transactions = await prisma.bankTransaction.findMany({
       where: {
         workspaceId,
-        postedAt: { gte: startOfMonth },
+        postedAt: { gte: startOfMonth, lte: endOfMonth },
       },
       select: { amount: true, currency: true },
     });
@@ -299,7 +345,7 @@ export async function POST(request: Request) {
     const currency = transactions[0]?.currency || 'EUR';
 
     return NextResponse.json({
-      answer: `This month: ${transactions.length} transactions, ${formatCurrency(income, currency)} income, ${formatCurrency(expenses, currency)} expenses. Ask about cashflow, spending, subscriptions, invoices, or runway.`,
+      answer: `${periodLabel}: ${transactions.length} transactions, ${formatCurrency(income, currency)} income, ${formatCurrency(expenses, currency)} expenses. Ask about cashflow, spending, subscriptions, invoices, or runway.`,
     });
   } catch (error) {
     console.error('[Voice Query] Error:', error);
