@@ -150,7 +150,7 @@ const QUERY_PATTERNS: QueryPattern[] = [
   {
     type: 'cashflow',
     patterns: [
-      /(?:what is|what's|show) (?:me )?(?:my )?cash\s*flow/i,
+      /(?:what is|what's|whats|show) (?:me )?(?:my )?cash\s*flow/i,
       /money (?:in|coming in) (?:and|vs|versus) (?:out|going out)/i,
       /income (?:vs|versus|and) expenses?/i,
     ],
@@ -183,10 +183,12 @@ const QUERY_PATTERNS: QueryPattern[] = [
   {
     type: 'runway',
     patterns: [
-      /(?:how much|what is|what's) (?:my )?runway/i,
+      /(?:how much|what is|what's|whats) (?:my )?(?:cash )?runway/i,
+      /(?:what is|what's|whats) (?:my )?(?:current )?(?:cash )?runway/i,
       /how long (?:will|can) (?:my )?(?:money|cash|funds?) last/i,
       /(?:when will i|will i) run out of (?:money|cash|funds?)/i,
       /months? of runway/i,
+      /(?:cash|business) runway/i,
     ],
   },
 
@@ -196,7 +198,7 @@ const QUERY_PATTERNS: QueryPattern[] = [
     patterns: [
       /am i (?:profitable|making money|in profit)/i,
       /(?:is|am) (?:my business|i) (?:profitable|making money)/i,
-      /(?:what is|what's) my (?:profit|net income)/i,
+      /(?:what is|what's|whats) my (?:profit|net income)/i,
     ],
   },
 
