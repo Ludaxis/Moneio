@@ -1,6 +1,6 @@
 import { prisma } from '@moneio/db';
 
-import { verifyToken } from '../token/route';
+import { verifyMcpToken } from '@/lib/mcp-auth';
 
 // MCP SSE endpoint for ElevenLabs
 // Implements Model Context Protocol over Server-Sent Events
@@ -13,7 +13,10 @@ const TOOLS = [
       type: 'object',
       properties: {
         workspaceId: { type: 'string', description: 'Workspace ID' },
-        period: { type: 'string', description: 'Period: this_month, last_month, this_year, all_time' },
+        period: {
+          type: 'string',
+          description: 'Period: this_month, last_month, this_year, all_time',
+        },
       },
       required: ['workspaceId'],
     },
@@ -420,11 +423,12 @@ function getWorkspaceId(request: Request): string | null {
   // Check for signed token (secure method)
   const token = url.searchParams.get('token') || request.headers.get('x-mcp-token');
   if (token) {
-    const verified = verifyToken(token);
+    const verified = verifyMcpToken(token);
     if (verified) {
       return verified.workspaceId;
     }
-    return null; // Invalid token
+    // Invalid token - return null but don't block connection
+    // Tool calls will fail without valid workspace
   }
 
   return null;
@@ -498,7 +502,7 @@ export async function GET(request: Request) {
   });
 }
 
-// POST handles JSON-RPC requests
+// POST handles JSON-RPC requests (Streamable HTTP transport)
 export async function POST(request: Request) {
   try {
     const workspaceId = getWorkspaceId(request);
@@ -515,6 +519,10 @@ export async function POST(request: Request) {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id, x-mcp-token',
+        'Access-Control-Expose-Headers': 'Mcp-Session-Id',
       },
     });
   } catch {
@@ -534,7 +542,10 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers':
+        'Content-Type, Accept, MCP-Protocol-Version, Mcp-Session-Id, x-mcp-token, Authorization',
+      'Access-Control-Expose-Headers': 'Mcp-Session-Id',
+      'Access-Control-Max-Age': '86400',
     },
   });
 }

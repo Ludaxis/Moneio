@@ -32,7 +32,7 @@ export function VoiceAssistant({
     'Give me a moment while I look that up.',
     'Let me check the numbers for you.',
     'One sec—pulling your data now.',
-    'Hang tight, I am fetching that info.'
+    'Hang tight, I am fetching that info.',
   ];
 
   const [status, setStatus] = useState<ConversationStatus>('idle');

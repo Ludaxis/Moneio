@@ -1,40 +1,8 @@
-import crypto from 'crypto';
-
 import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 
+import { signMcpToken } from '@/lib/mcp-auth';
 import { createClient } from '@/lib/supabase/server';
-
-// Generate a signed token for MCP access
-// Token contains workspaceId and expires in 1 hour
-
-const SECRET = process.env.MCP_TOKEN_SECRET || process.env.NEXTAUTH_SECRET || 'mcp-secret-key';
-
-function signToken(data: { workspaceId: string; userId: string; expiresAt: number }): string {
-  const payload = JSON.stringify(data);
-  const signature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
-  const token = Buffer.from(payload).toString('base64') + '.' + signature;
-  return token;
-}
-
-export function verifyToken(token: string): { workspaceId: string; userId: string } | null {
-  try {
-    const [payloadBase64, signature] = token.split('.');
-    if (!payloadBase64 || !signature) return null;
-
-    const payload = Buffer.from(payloadBase64, 'base64').toString('utf8');
-    const expectedSignature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
-
-    if (signature !== expectedSignature) return null;
-
-    const data = JSON.parse(payload);
-    if (data.expiresAt < Date.now()) return null;
-
-    return { workspaceId: data.workspaceId, userId: data.userId };
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(request: Request) {
   try {
@@ -67,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Generate signed token (expires in 1 hour)
-    const token = signToken({
+    const token = signMcpToken({
       workspaceId,
       userId: user.id,
       expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
