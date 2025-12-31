@@ -7,6 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { classifyQueryWithLlm } from './llm-query-classifier';
 import {
   formatPeriod,
   getPeriodDateRange,
@@ -238,8 +239,23 @@ export class FinancialChatService {
   async chat(request: ChatRequest, context: FinancialContext): Promise<ChatResponse> {
     const conversationId = request.conversationId || uuidv4();
 
-    // Parse the question
-    const parsedQuery = parseQuery(request.message);
+    // Parse the question using LLM with fallback to regex
+    let parsedQuery: ParsedQuery;
+    try {
+      parsedQuery = await classifyQueryWithLlm(request.message);
+      // If LLM returns unknown with low confidence, try regex as fallback
+      if (parsedQuery.type === 'unknown' && parsedQuery.confidence < 0.5) {
+        const regexResult = parseQuery(request.message);
+        if (regexResult.type !== 'unknown') {
+          parsedQuery = regexResult;
+          console.log('[Chat] LLM uncertain, using regex fallback:', parsedQuery.type);
+        }
+      }
+    } catch (error) {
+      // LLM failed, use regex fallback
+      console.warn('[Chat] LLM classification failed, using regex:', error);
+      parsedQuery = parseQuery(request.message);
+    }
 
     // Execute the appropriate query
     const result = await this.executeQuery(parsedQuery, context);
