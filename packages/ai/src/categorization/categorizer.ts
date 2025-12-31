@@ -217,22 +217,6 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
     'service revenue',
   ];
 
-  // Categories that indicate expenses
-  private readonly expenseCategories: string[] = [
-    'operating expenses',
-    'professional services',
-    'software & subscriptions',
-    'subscriptions',
-    'office expenses',
-    'utilities',
-    'rent',
-    'marketing',
-    'travel',
-    'meals',
-    'entertainment',
-    'bank fees',
-  ];
-
   private readonly patterns: Map<RegExp, string[]> = new Map([
     // AI & Tech Services (EXPENSES) - expanded list
     [
@@ -313,15 +297,6 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
       const nameLower = categoryName.toLowerCase();
       return this.incomeCategories.some(
         (inc) => nameLower.includes(inc) || inc.includes(nameLower)
-      );
-    };
-
-    // Helper to check if a category is an expense category
-    const isExpenseCategory = (categoryName: string): boolean => {
-      const nameLower = categoryName.toLowerCase();
-      return (
-        this.expenseCategories.some((exp) => nameLower.includes(exp) || exp.includes(nameLower)) ||
-        !isIncomeCategory(categoryName)
       );
     };
 
@@ -423,42 +398,28 @@ export class HeuristicCategorizer implements TransactionCategorizerAdapter {
       }
     }
 
-    // Smart fallback based on transaction type (expense vs income)
+    // For unknown transactions, prefer "Uncategorized" category
+    // This is better UX than guessing wrong - user can manually categorize
     let fallbackCategory: Category | undefined;
 
-    if (isExpense) {
-      // For expenses, find an expense category (not income/revenue)
-      fallbackCategory = categories.find(
-        (c) =>
-          c.name.toLowerCase() !== 'uncategorized' &&
-          !isIncomeCategory(c.name) &&
-          (c.type === 'expense' || isExpenseCategory(c.name))
-      );
-    } else if (isIncome) {
-      // For income, find an income/revenue category
-      fallbackCategory = categories.find(
-        (c) => c.name.toLowerCase() !== 'uncategorized' && isIncomeCategory(c.name)
-      );
-    }
+    // First, try to find an "Uncategorized" category
+    fallbackCategory = categories.find(
+      (c) => c.name.toLowerCase() === 'uncategorized' || c.name.toLowerCase() === 'other'
+    );
 
-    // Ultimate fallback
+    // If no "Uncategorized" exists, use the first category but with very low confidence
     if (!fallbackCategory) {
-      fallbackCategory =
-        categories.find((c) => c.name.toLowerCase() !== 'uncategorized') || categories[0];
+      fallbackCategory = categories[0];
     }
 
     return {
       data: {
         categoryId: fallbackCategory.id,
         categoryName: fallbackCategory.name,
-        confidence: 40,
-        reasoning: isExpense
-          ? 'No specific pattern matched - categorized as expense'
-          : isIncome
-            ? 'No specific pattern matched - categorized as income'
-            : 'No specific pattern matched',
+        confidence: 20, // Low confidence to indicate this needs review
+        reasoning: 'No pattern matched - requires manual categorization',
       },
-      confidence: 40,
+      confidence: 20,
       evidence: [],
       modelInfo: { provider: 'heuristic', model: 'default-fallback', version: '2.0' },
     };

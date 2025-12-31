@@ -589,42 +589,81 @@ export default function CsvImportPage() {
   };
 
   const parseAmount = (value: string, direction?: string): number => {
-    const hasNegativeSign = value.trim().startsWith('-') || value.includes('−'); // Handle both - and −
+    if (!value || typeof value !== 'string') {
+      return 0;
+    }
 
-    // Detect European format: "1 234,56" or "1.234,56" (comma as decimal)
-    // vs American format: "1,234.56" (dot as decimal)
-    const commaPos = value.lastIndexOf(',');
-    const dotPos = value.lastIndexOf('.');
+    const trimmed = value.trim();
+    if (!trimmed) return 0;
 
-    let cleaned = value;
+    const hasNegativeSign = trimmed.startsWith('-') || trimmed.includes('−'); // Handle both - and −
 
-    if (commaPos > dotPos && commaPos !== -1) {
-      // European format: comma is decimal separator
-      // Remove everything except digits and the last comma, then convert comma to dot
-      const parts = value.split(',');
-      const integerPart = parts[0].replace(/[^\d]/g, ''); // Remove all non-digits from integer part
-      const decimalPart = parts[1]?.replace(/[^\d]/g, '') || '00';
-      cleaned = `${integerPart}.${decimalPart}`;
-    } else if (dotPos > commaPos && dotPos !== -1) {
-      // American format: dot is decimal separator
-      const parts = value.split('.');
-      const integerPart = parts[0].replace(/[^\d]/g, '');
-      const decimalPart = parts[1]?.replace(/[^\d]/g, '') || '00';
-      cleaned = `${integerPart}.${decimalPart}`;
-    } else if (commaPos !== -1) {
-      // Only comma, treat as decimal
-      const parts = value.split(',');
-      const integerPart = parts[0].replace(/[^\d]/g, '');
-      const decimalPart = parts[1]?.replace(/[^\d]/g, '') || '00';
-      cleaned = `${integerPart}.${decimalPart}`;
+    // Count occurrences of separators to detect format
+    const commaCount = (trimmed.match(/,/g) || []).length;
+    const dotCount = (trimmed.match(/\./g) || []).length;
+    const commaPos = trimmed.lastIndexOf(',');
+    const dotPos = trimmed.lastIndexOf('.');
+
+    let cleaned = trimmed;
+
+    // Detect format based on separator positions and counts
+    if (commaCount >= 1 && dotCount >= 1) {
+      // Both separators present - determine which is decimal
+      if (commaPos > dotPos) {
+        // European: 1.234,56 - comma is decimal
+        const parts = trimmed.split(',');
+        const integerPart = parts[0].replace(/[^\d]/g, '');
+        // Only take first 2 digits after comma as decimal
+        const decimalPart = (parts[1]?.replace(/[^\d]/g, '') || '00').substring(0, 2);
+        cleaned = `${integerPart}.${decimalPart}`;
+      } else {
+        // American: 1,234.56 - dot is decimal
+        const parts = trimmed.split('.');
+        const integerPart = parts[0].replace(/[^\d]/g, '');
+        const decimalPart = (parts[1]?.replace(/[^\d]/g, '') || '00').substring(0, 2);
+        cleaned = `${integerPart}.${decimalPart}`;
+      }
+    } else if (commaCount === 1 && dotCount === 0) {
+      // Only comma - check if it's thousands or decimal
+      const parts = trimmed.split(',');
+      const afterComma = parts[1]?.replace(/[^\d]/g, '') || '';
+      if (afterComma.length <= 2) {
+        // Likely decimal: 1234,56
+        cleaned = `${parts[0].replace(/[^\d]/g, '')}.${afterComma.padEnd(2, '0').substring(0, 2)}`;
+      } else {
+        // Likely thousands separator: 1,234 (no decimal)
+        cleaned = trimmed.replace(/[^\d]/g, '');
+      }
+    } else if (dotCount === 1 && commaCount === 0) {
+      // Only dot - check if it's thousands or decimal
+      const parts = trimmed.split('.');
+      const afterDot = parts[1]?.replace(/[^\d]/g, '') || '';
+      if (afterDot.length <= 2) {
+        // Likely decimal: 1234.56
+        const integerPart = parts[0].replace(/[^\d]/g, '');
+        cleaned = `${integerPart}.${afterDot.padEnd(2, '0').substring(0, 2)}`;
+      } else if (afterDot.length === 3 && parts[0].replace(/[^\d]/g, '').length <= 3) {
+        // Likely thousands: 1.234 (European thousands separator)
+        cleaned = trimmed.replace(/[^\d]/g, '');
+      } else {
+        // Ambiguous - treat as decimal
+        cleaned = `${parts[0].replace(/[^\d]/g, '')}.${afterDot.substring(0, 2)}`;
+      }
+    } else if (dotCount > 1) {
+      // Multiple dots - European thousands separators: 1.234.567
+      cleaned = trimmed.replace(/[^\d,]/g, '');
+      if (cleaned.includes(',')) {
+        const parts = cleaned.split(',');
+        cleaned = `${parts[0]}.${(parts[1] || '00').substring(0, 2)}`;
+      }
     } else {
-      // No comma or dot - just digits (or spaces as thousands separator)
-      cleaned = value.replace(/[^\d]/g, '');
-      // If it looks like cents (more than 2 digits and no decimal was present), assume whole number
+      // No separators or only spaces - just digits
+      cleaned = trimmed.replace(/[^\d]/g, '');
     }
 
     let amount = parseFloat(cleaned) || 0;
 
+    // Apply direction
     if (direction) {
       const dir = direction.toUpperCase().trim();
       if (dir === 'D' || dir === 'OUT' || dir === 'DEBIT') {
@@ -640,18 +679,59 @@ export default function CsvImportPage() {
   };
 
   const parseDate = (value: string): string => {
-    const date = new Date(value);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
+    if (!value || typeof value !== 'string') {
+      return new Date().toISOString().split('T')[0]; // Default to today
     }
 
-    const match = value.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-    if (match) {
-      const [, day, month, year] = match;
+    const trimmed = value.trim();
+    const currentYear = new Date().getFullYear();
+
+    // Try YYYY-MM-DD format first (ISO format)
+    const isoMatch = trimmed.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
 
-    return value;
+    // Try DD-MM-YYYY or DD/MM/YYYY with 4-digit year
+    const ddmmyyyyMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+    if (ddmmyyyyMatch) {
+      const [, day, month, year] = ddmmyyyyMatch;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Try DD-MM-YY or DD/MM/YY with 2-digit year
+    const ddmmyyMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2})$/);
+    if (ddmmyyMatch) {
+      const [, day, month, yy] = ddmmyyMatch;
+      // Assume 20xx for years 00-50, 19xx for 51-99
+      const year = parseInt(yy, 10) <= 50 ? `20${yy}` : `19${yy}`;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Try DD-MM or DD/MM (no year - use current year)
+    const ddmmMatch = trimmed.match(/^(\d{1,2})[./-](\d{1,2})$/);
+    if (ddmmMatch) {
+      const [, day, month] = ddmmMatch;
+      return `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Try -MM-DD format (missing year at start)
+    const missingYearMatch = trimmed.match(/^-?(\d{1,2})[./-](\d{1,2})$/);
+    if (missingYearMatch) {
+      const [, month, day] = missingYearMatch;
+      return `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Try JavaScript Date parsing as last resort
+    const date = new Date(trimmed);
+    if (!isNaN(date.getTime()) && date.getFullYear() >= 1900 && date.getFullYear() <= 2100) {
+      return date.toISOString().split('T')[0];
+    }
+
+    // Final fallback: return today's date with a warning logged
+    console.warn(`[CSV Import] Could not parse date: "${value}", using today's date`);
+    return new Date().toISOString().split('T')[0];
   };
 
   const generateTransactions = (
