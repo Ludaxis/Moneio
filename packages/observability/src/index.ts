@@ -37,6 +37,8 @@ export {
   initializeTracer,
   getTracer,
   isTracerInitialized,
+  isLlmObsEnabled,
+  getDatadogSite,
   startLlmSpan,
   addLlmTelemetry,
   finishSpan,
@@ -45,7 +47,7 @@ export {
   runWithSpan,
   extractSpanMetadata,
 } from './tracer';
-export type { DatadogConfig } from './tracer';
+export type { DatadogConfig, DatadogSite } from './tracer';
 
 // LLM instrumentation
 export {

@@ -24,7 +24,7 @@ import {
   handleSendWeeklyDigest,
 } from './handlers';
 // eslint-disable-next-line import/no-duplicates
-import { flushMetrics, getLlmMetricsSummary } from './lib/datadog';
+import { flushMetrics, getLlmMetricsSummary, getLlmObsConfig } from './lib/datadog';
 import { logger } from './lib/logger';
 import { attachMonitoring, getMetrics, isHealthy } from './lib/monitoring';
 import { QUEUE_NAMES, getQueues, closeQueues } from './lib/queues';
@@ -293,9 +293,16 @@ console.log(`  • SEND_NOTIFICATION  (concurrency: ${config.concurrency.sendNot
 console.log(`  • SEND_WEEKLY_DIGEST (concurrency: ${config.concurrency.sendWeeklyDigest})`);
 console.log('');
 console.log('Observability:');
-console.log(
-  `  • Datadog LLM Observability: ${process.env.DD_ENABLED === 'true' ? 'ENABLED' : 'disabled'}`
-);
+const llmObsConfig = getLlmObsConfig();
+if (llmObsConfig.enabled) {
+  console.log(`  • Datadog LLM Observability: ENABLED`);
+  console.log(`  • Site: ${llmObsConfig.site}`);
+  console.log(`  • ML App: ${llmObsConfig.mlApp}`);
+  console.log(`  • Agentless: ${llmObsConfig.agentless ? 'yes' : 'no'}`);
+} else {
+  console.log(`  • Datadog LLM Observability: disabled`);
+  console.log(`    To enable: DD_LLMOBS_ENABLED=1 DD_LLMOBS_ML_APP=moneio DD_SITE=datadoghq.eu`);
+}
 console.log('');
 console.log('Press Ctrl+C to stop');
 console.log('');
