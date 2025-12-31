@@ -577,10 +577,19 @@ CRITICAL: Respond with ONLY plain text. Do NOT wrap your response in JSON, quote
       response = response.trim();
 
       // Safeguard: If LLM returned JSON despite instructions, extract the text
-      if (response.startsWith('{') && response.includes('"response"')) {
+      // Handle both object {"response": "..."} and array [{"response": "..."}]
+      if (
+        (response.startsWith('{') || response.startsWith('[')) &&
+        response.includes('"response"')
+      ) {
         try {
           const parsed = JSON.parse(response);
-          if (parsed.response) {
+          // Handle array format
+          if (Array.isArray(parsed) && parsed[0]?.response) {
+            response = parsed[0].response;
+          }
+          // Handle object format
+          else if (parsed.response) {
             response = parsed.response;
           }
         } catch {
