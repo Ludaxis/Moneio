@@ -438,7 +438,7 @@ async function detectMappingWithLlm(
 ): Promise<Partial<ColumnMapping> | null> {
   const sampleData = sampleRows.slice(0, 3).map((row) => headers.map((h) => row[h] || '(empty)'));
 
-  const prompt = `Analyze this CSV to map columns to transaction fields.
+  const prompt = `Analyze this bank CSV to map columns to transaction fields. Headers may be in ANY LANGUAGE (English, Estonian, German, etc.) - analyze the DATA to determine column meanings.
 
 HEADERS: ${JSON.stringify(headers)}
 
@@ -446,7 +446,7 @@ SAMPLE DATA (first 3 rows):
 ${sampleData.map((row, i) => `Row ${i + 1}: ${JSON.stringify(row)}`).join('\n')}
 
 Map each header to the appropriate transaction field. Return a JSON object with these possible keys:
-- date: Column containing transaction date (look for dates like "2025-12-27", "01-01-2025", "2025-12-27 10:01:16")
+- date: Column containing transaction date (look for dates like "2025-12-27", "01-01-2025", "02-01-2025", date patterns in data)
 - description: Column with transaction description, narration, or memo
 - amount: Column with the transaction amount (look for numbers like "12.64", "-224,75", "500.00")
 - balance: Column with account balance (NOT transaction ID or reference numbers)
@@ -461,16 +461,18 @@ Map each header to the appropriate transaction field. Return a JSON object with 
 - debit: Column specifically for debit amounts (if amounts are split)
 - credit: Column specifically for credit amounts (if amounts are split)
 
-IMPORTANT RULES:
-1. For amount, look for columns with actual monetary values, NOT dates or IDs
-2. Transaction IDs like "CARD_TRANSACTION-3275710720" are NOT balance values
-3. Dates like "2025-12-27" should ONLY map to "date", NOT "amount"
-4. If there's a "Source amount" or similar, that's likely the amount column
-5. Look for columns named "Summa", "Amount", "Value" for amounts
-6. For Wise exports, use "Source amount (after fees)" or "Target amount (after fees)" for amount
-7. For Wise exports, use "Target name" for counterpartyName/description
+CRITICAL RULES FOR MULTILINGUAL CSVs:
+1. Headers may be in Estonian (kuupäev=date, summa=amount, selgitus=description), German (datum=date, betrag=amount), or other languages
+2. ALWAYS examine the DATA VALUES to determine column type, not just headers
+3. Date columns contain values like "01-01-2025", "2025-12-27", "02-01-2025" (day-month-year OR year-month-day)
+4. Amount columns contain ONLY numbers with optional sign/decimals: "-224,75", "500.00", "12.64"
+5. Look at the SAMPLE DATA rows - if a column has date-formatted values, map it to "date"
+6. For Estonian banks: "Makse kuup" or similar = date, "Summa" = amount, "Selgitus" = description
+7. For Wise exports: "Source amount (after fees)" or "Target amount (after fees)" for amount
+8. Transaction IDs like "CARD_TRANSACTION-3275710720" are NOT balance values
+9. IBAN numbers starting with country codes (EE, DE, GB) indicate account numbers
 
-Return ONLY a valid JSON object mapping field names to header names, nothing else.`;
+Return ONLY a valid JSON object mapping field names to header names. The header names must EXACTLY match headers from the input.`;
 
   try {
     const text = await llmClient.complete(prompt);
@@ -519,6 +521,7 @@ function detectMappingByHeuristics(
   };
 
   // Date patterns (prioritize exact matches)
+  // Include variants for character encoding issues (ä → � or a)
   const datePatterns = [
     'created on',
     'finished on',
@@ -528,8 +531,11 @@ function detectMappingByHeuristics(
     'posted date',
     'date',
     'makse kuupäev',
+    'makse kuup', // Partial match for encoding issues
     'kuupäev',
+    'kuup', // Partial match for encoding issues
     'datum',
+    'päev', // Estonian "day"
   ];
   detected.date = findColumn(datePatterns);
 
@@ -658,6 +664,20 @@ function validateMapping(
     if (!looksLikeDate) {
       console.warn('[CSV Analyze] Date column does not look like dates:', mapping.date);
       delete mapping.date;
+    }
+  }
+
+  // If no date column found, try to find one by analyzing data values
+  if (!mapping.date) {
+    const dateRegex = /^\d{2,4}[-./]\d{1,2}[-./]\d{1,4}$/;
+    for (const header of headers) {
+      const vals = sampleRows.map((row) => row[header]).filter(Boolean);
+      const looksLikeDate = vals.length > 0 && vals.every((v) => dateRegex.test(v.trim()));
+      if (looksLikeDate) {
+        mapping.date = header;
+        console.log('[CSV Analyze] Found date column by data analysis:', header);
+        break;
+      }
     }
   }
 
