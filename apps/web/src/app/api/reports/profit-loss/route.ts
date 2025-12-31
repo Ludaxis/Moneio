@@ -27,8 +27,14 @@ const querySchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   comparative: z.enum(['true', 'false']).optional(),
-  previousStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  previousEndDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  previousStartDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  previousEndDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   monthlyBreakdown: z.enum(['true', 'false']).optional(),
 });
 
@@ -78,7 +84,15 @@ export async function GET(request: Request) {
       );
     }
 
-    const { workspaceId, startDate, endDate, comparative, previousStartDate, previousEndDate, monthlyBreakdown } = parsed.data;
+    const {
+      workspaceId,
+      startDate,
+      endDate,
+      comparative,
+      previousStartDate,
+      previousEndDate,
+      monthlyBreakdown,
+    } = parsed.data;
 
     // Check permission
     const canRead = await hasPermission(user.id, workspaceId, 'gl:read');
@@ -110,11 +124,12 @@ export async function GET(request: Request) {
       baseCurrency,
       options: {
         comparative: comparative === 'true',
-        groupBy: monthlyBreakdown === 'true' ? 'month' as const : undefined,
+        groupBy: monthlyBreakdown === 'true' ? ('month' as const) : undefined,
       },
-      previousPeriod: comparative === 'true' && previousStartDate && previousEndDate
-        ? { start: previousStartDate, end: previousEndDate }
-        : undefined,
+      previousPeriod:
+        comparative === 'true' && previousStartDate && previousEndDate
+          ? { start: previousStartDate, end: previousEndDate }
+          : undefined,
     };
 
     // Generate report
@@ -136,7 +151,9 @@ export async function GET(request: Request) {
         isSubtotal: item.isSubtotal,
       })),
       subtotal: transformMoney(section.subtotal),
-      previousSubtotal: section.previousSubtotal ? transformMoney(section.previousSubtotal) : undefined,
+      previousSubtotal: section.previousSubtotal
+        ? transformMoney(section.previousSubtotal)
+        : undefined,
     });
 
     return NextResponse.json({

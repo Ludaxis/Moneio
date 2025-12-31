@@ -27,7 +27,10 @@ const querySchema = z.object({
   workspaceId: z.string().uuid(),
   asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   comparative: z.enum(['true', 'false']).optional(),
-  previousAsOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  previousAsOfDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 function formatCurrency(amount: number, currency: string): string {
@@ -112,7 +115,7 @@ export async function GET(request: Request) {
     const report = await service.generate(input);
 
     // Transform for JSON response
-    const transformSubsection = (subsection: typeof report.sections.assets.subsections[0]) => ({
+    const transformSubsection = (subsection: (typeof report.sections.assets.subsections)[0]) => ({
       name: subsection.name,
       key: subsection.key,
       items: subsection.items.map((item) => ({

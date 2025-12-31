@@ -24,36 +24,72 @@ import type {
  * Asset subtypes for classification
  */
 const CURRENT_ASSET_SUBTYPES = [
-  'cash', 'bank', 'checking', 'savings',
-  'accounts_receivable', 'receivable', 'ar',
-  'inventory', 'prepaid', 'short_term',
+  'cash',
+  'bank',
+  'checking',
+  'savings',
+  'accounts_receivable',
+  'receivable',
+  'ar',
+  'inventory',
+  'prepaid',
+  'short_term',
 ];
 
 const FIXED_ASSET_SUBTYPES = [
-  'fixed_asset', 'property', 'plant', 'equipment', 'ppe',
-  'vehicle', 'furniture', 'machinery', 'building', 'land',
-  'intangible', 'goodwill', 'patent', 'trademark',
+  'fixed_asset',
+  'property',
+  'plant',
+  'equipment',
+  'ppe',
+  'vehicle',
+  'furniture',
+  'machinery',
+  'building',
+  'land',
+  'intangible',
+  'goodwill',
+  'patent',
+  'trademark',
 ];
 
 /**
  * Liability subtypes for classification
  */
 const CURRENT_LIABILITY_SUBTYPES = [
-  'accounts_payable', 'payable', 'ap',
-  'accrued', 'short_term_debt', 'current_portion',
-  'tax_payable', 'vat_payable', 'wages_payable',
-  'unearned_revenue', 'deferred_revenue',
+  'accounts_payable',
+  'payable',
+  'ap',
+  'accrued',
+  'short_term_debt',
+  'current_portion',
+  'tax_payable',
+  'vat_payable',
+  'wages_payable',
+  'unearned_revenue',
+  'deferred_revenue',
 ];
 
 const LONG_TERM_LIABILITY_SUBTYPES = [
-  'long_term_debt', 'loan', 'mortgage', 'bonds',
-  'deferred_tax', 'pension', 'lease_liability',
+  'long_term_debt',
+  'loan',
+  'mortgage',
+  'bonds',
+  'deferred_tax',
+  'pension',
+  'lease_liability',
 ];
 
 /**
  * Equity subtypes for classification
  */
-const CAPITAL_SUBTYPES = ['capital', 'common_stock', 'preferred_stock', 'paid_in_capital', 'share_capital'];
+const CAPITAL_SUBTYPES = [
+  'capital',
+  'common_stock',
+  'preferred_stock',
+  'paid_in_capital',
+  'share_capital',
+];
 const RETAINED_EARNINGS_SUBTYPES = ['retained_earnings', 'accumulated_profit', 'reserves'];
 
 export class BalanceSheetService {
@@ -161,13 +197,19 @@ export class BalanceSheetService {
     const subsections: BalanceSheetSubsection[] = [];
 
     if (currentAssets.length > 0) {
-      subsections.push(this.buildSubsection('Current Assets', 'current_assets', currentAssets, baseCurrency));
+      subsections.push(
+        this.buildSubsection('Current Assets', 'current_assets', currentAssets, baseCurrency)
+      );
     }
     if (fixedAssets.length > 0) {
-      subsections.push(this.buildSubsection('Fixed Assets', 'fixed_assets', fixedAssets, baseCurrency));
+      subsections.push(
+        this.buildSubsection('Fixed Assets', 'fixed_assets', fixedAssets, baseCurrency)
+      );
     }
     if (otherAssets.length > 0) {
-      subsections.push(this.buildSubsection('Other Assets', 'other_assets', otherAssets, baseCurrency));
+      subsections.push(
+        this.buildSubsection('Other Assets', 'other_assets', otherAssets, baseCurrency)
+      );
     }
 
     const total = createMoney(
@@ -205,13 +247,34 @@ export class BalanceSheetService {
     const subsections: BalanceSheetSubsection[] = [];
 
     if (currentLiabilities.length > 0) {
-      subsections.push(this.buildSubsection('Current Liabilities', 'current_liabilities', currentLiabilities, baseCurrency));
+      subsections.push(
+        this.buildSubsection(
+          'Current Liabilities',
+          'current_liabilities',
+          currentLiabilities,
+          baseCurrency
+        )
+      );
     }
     if (longTermLiabilities.length > 0) {
-      subsections.push(this.buildSubsection('Long-Term Liabilities', 'long_term_liabilities', longTermLiabilities, baseCurrency));
+      subsections.push(
+        this.buildSubsection(
+          'Long-Term Liabilities',
+          'long_term_liabilities',
+          longTermLiabilities,
+          baseCurrency
+        )
+      );
     }
     if (otherLiabilities.length > 0) {
-      subsections.push(this.buildSubsection('Other Liabilities', 'other_liabilities', otherLiabilities, baseCurrency));
+      subsections.push(
+        this.buildSubsection(
+          'Other Liabilities',
+          'other_liabilities',
+          otherLiabilities,
+          baseCurrency
+        )
+      );
     }
 
     const total = createMoney(
@@ -249,13 +312,24 @@ export class BalanceSheetService {
     const subsections: BalanceSheetSubsection[] = [];
 
     if (capital.length > 0) {
-      subsections.push(this.buildSubsection('Share Capital', 'share_capital', capital, baseCurrency));
+      subsections.push(
+        this.buildSubsection('Share Capital', 'share_capital', capital, baseCurrency)
+      );
     }
     if (retainedEarnings.length > 0) {
-      subsections.push(this.buildSubsection('Retained Earnings', 'retained_earnings', retainedEarnings, baseCurrency));
+      subsections.push(
+        this.buildSubsection(
+          'Retained Earnings',
+          'retained_earnings',
+          retainedEarnings,
+          baseCurrency
+        )
+      );
     }
     if (otherEquity.length > 0) {
-      subsections.push(this.buildSubsection('Other Equity', 'other_equity', otherEquity, baseCurrency));
+      subsections.push(
+        this.buildSubsection('Other Equity', 'other_equity', otherEquity, baseCurrency)
+      );
     }
 
     const total = createMoney(
@@ -305,18 +379,18 @@ export class BalanceSheetService {
         balance: createMoney(Math.abs(node.balance), baseCurrency),
         depth,
         isSubtotal: node.children.length > 0,
-        children: node.children.length > 0
-          ? this.flattenToLineItems(node.children, baseCurrency)
-          : undefined,
+        children:
+          node.children.length > 0
+            ? this.flattenToLineItems(node.children, baseCurrency)
+            : undefined,
       };
 
       if (node.previousBalance !== undefined) {
         item.previousBalance = createMoney(Math.abs(node.previousBalance), baseCurrency);
         const change = node.balance - node.previousBalance;
         item.change = createMoney(change, baseCurrency);
-        item.changePercentage = node.previousBalance !== 0
-          ? (change / Math.abs(node.previousBalance)) * 100
-          : 0;
+        item.changePercentage =
+          node.previousBalance !== 0 ? (change / Math.abs(node.previousBalance)) * 100 : 0;
       }
 
       return item;

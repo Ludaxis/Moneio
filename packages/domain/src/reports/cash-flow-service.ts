@@ -21,13 +21,28 @@ import type {
  * Account subtypes for cash flow classification
  */
 const INVESTING_ACCOUNT_PATTERNS = [
-  'fixed_asset', 'property', 'plant', 'equipment', 'ppe',
-  'investment', 'securities', 'intangible', 'acquisition',
+  'fixed_asset',
+  'property',
+  'plant',
+  'equipment',
+  'ppe',
+  'investment',
+  'securities',
+  'intangible',
+  'acquisition',
 ];
 
 const FINANCING_ACCOUNT_PATTERNS = [
-  'loan', 'debt', 'mortgage', 'bonds', 'capital', 'stock',
-  'dividend', 'equity', 'share', 'treasury',
+  'loan',
+  'debt',
+  'mortgage',
+  'bonds',
+  'capital',
+  'stock',
+  'dividend',
+  'equity',
+  'share',
+  'treasury',
 ];
 
 const CASH_ACCOUNT_PATTERNS = ['cash', 'bank', 'checking', 'savings', 'petty_cash'];
@@ -121,9 +136,11 @@ export class CashFlowService {
       const description = this.getLineDescription(account);
 
       const targetMap =
-        classification === 'operating' ? operating :
-        classification === 'investing' ? investing :
-        financing;
+        classification === 'operating'
+          ? operating
+          : classification === 'investing'
+            ? investing
+            : financing;
 
       const existing = targetMap.get(description) || 0;
       targetMap.set(description, existing + netAmount);
@@ -290,7 +307,10 @@ export class CashFlowService {
     if (accountName.toLowerCase().includes('loan') || accountName.toLowerCase().includes('debt')) {
       return amount > 0 ? 'Proceeds from Borrowings' : 'Repayment of Borrowings';
     }
-    if (accountName.toLowerCase().includes('capital') || accountName.toLowerCase().includes('stock')) {
+    if (
+      accountName.toLowerCase().includes('capital') ||
+      accountName.toLowerCase().includes('stock')
+    ) {
       return amount > 0 ? 'Proceeds from Equity' : 'Share Repurchase';
     }
     return accountName;

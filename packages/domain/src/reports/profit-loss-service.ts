@@ -98,7 +98,9 @@ export class ProfitLossService {
     previousBalances: Map<UUID, number> | undefined,
     baseCurrency: CurrencyCode
   ): ProfitLossStatement['sections'] {
-    const classifyNode = (node: AccountTreeNode): 'revenue' | 'cogs' | 'operatingExpenses' | 'otherIncome' | 'otherExpenses' => {
+    const classifyNode = (
+      node: AccountTreeNode
+    ): 'revenue' | 'cogs' | 'operatingExpenses' | 'otherIncome' | 'otherExpenses' => {
       const account = node.account;
       const subType = account.subType?.toLowerCase() || '';
 
@@ -162,7 +164,11 @@ export class ProfitLossService {
     return {
       revenue: buildSection('Revenue', 'revenue', sections.revenue),
       costOfGoodsSold: buildSection('Cost of Goods Sold', 'cogs', sections.cogs),
-      operatingExpenses: buildSection('Operating Expenses', 'operatingExpenses', sections.operatingExpenses),
+      operatingExpenses: buildSection(
+        'Operating Expenses',
+        'operatingExpenses',
+        sections.operatingExpenses
+      ),
       otherIncome: buildSection('Other Income', 'otherIncome', sections.otherIncome),
       otherExpenses: buildSection('Other Expenses', 'otherExpenses', sections.otherExpenses),
     };
@@ -182,18 +188,18 @@ export class ProfitLossService {
         amount: createMoney(Math.abs(node.balance), baseCurrency),
         depth,
         isSubtotal: node.children.length > 0,
-        children: node.children.length > 0
-          ? this.flattenToLineItems(node.children, baseCurrency)
-          : undefined,
+        children:
+          node.children.length > 0
+            ? this.flattenToLineItems(node.children, baseCurrency)
+            : undefined,
       };
 
       if (node.previousBalance !== undefined) {
         item.previousAmount = createMoney(Math.abs(node.previousBalance), baseCurrency);
         const change = node.balance - node.previousBalance;
         item.change = createMoney(change, baseCurrency);
-        item.changePercentage = node.previousBalance !== 0
-          ? (change / Math.abs(node.previousBalance)) * 100
-          : 0;
+        item.changePercentage =
+          node.previousBalance !== 0 ? (change / Math.abs(node.previousBalance)) * 100 : 0;
       }
 
       return item;
@@ -239,7 +245,10 @@ export class ProfitLossService {
       const prevOtherExp = sections.otherExpenses.previousSubtotal?.amount || 0;
 
       summaries.previousGrossProfit = createMoney(prevRevenue - prevCogs, baseCurrency);
-      summaries.previousOperatingIncome = createMoney(prevRevenue - prevCogs - prevOpex, baseCurrency);
+      summaries.previousOperatingIncome = createMoney(
+        prevRevenue - prevCogs - prevOpex,
+        baseCurrency
+      );
       summaries.previousNetIncome = createMoney(
         prevRevenue - prevCogs - prevOpex + prevOtherInc - prevOtherExp,
         baseCurrency

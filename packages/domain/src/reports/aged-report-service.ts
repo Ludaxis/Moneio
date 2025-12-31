@@ -58,15 +58,16 @@ export class AgedReportService {
       baseCurrency
     );
 
-    const overduePercentage = totalOutstanding.amount > 0
-      ? (totalOverdue.amount / totalOutstanding.amount) * 100
-      : 0;
+    const overduePercentage =
+      totalOutstanding.amount > 0 ? (totalOverdue.amount / totalOutstanding.amount) * 100 : 0;
 
-    const averageDaysOutstanding = agingItems.length > 0
-      ? Math.round(
-          agingItems.reduce((sum, item) => sum + Math.max(0, item.daysOverdue), 0) / agingItems.length
-        )
-      : 0;
+    const averageDaysOutstanding =
+      agingItems.length > 0
+        ? Math.round(
+            agingItems.reduce((sum, item) => sum + Math.max(0, item.daysOverdue), 0) /
+              agingItems.length
+          )
+        : 0;
 
     const metadata: ReportMetadata = {
       generatedAt: new Date().toISOString(),
@@ -130,38 +131,40 @@ export class AgedReportService {
       grouped.set(key, existing);
     }
 
-    return Array.from(grouped.entries()).map(([_key, counterpartyItems]): AgingByCounterparty => {
-      const bucketTotals: Record<string, Money> = {};
+    return Array.from(grouped.entries())
+      .map(([_key, counterpartyItems]): AgingByCounterparty => {
+        const bucketTotals: Record<string, Money> = {};
 
-      // Initialize all buckets to zero
-      for (const bucket of buckets) {
-        bucketTotals[bucket.label] = createMoney(0, baseCurrency);
-      }
-
-      // Sum items into buckets
-      for (const item of counterpartyItems) {
-        const bucketAmount = bucketTotals[item.bucket];
-        if (bucketAmount) {
-          bucketTotals[item.bucket] = createMoney(
-            bucketAmount.amount + item.outstandingAmount.amount,
-            baseCurrency
-          );
+        // Initialize all buckets to zero
+        for (const bucket of buckets) {
+          bucketTotals[bucket.label] = createMoney(0, baseCurrency);
         }
-      }
 
-      const totalOutstanding = createMoney(
-        counterpartyItems.reduce((sum, item) => sum + item.outstandingAmount.amount, 0),
-        baseCurrency
-      );
+        // Sum items into buckets
+        for (const item of counterpartyItems) {
+          const bucketAmount = bucketTotals[item.bucket];
+          if (bucketAmount) {
+            bucketTotals[item.bucket] = createMoney(
+              bucketAmount.amount + item.outstandingAmount.amount,
+              baseCurrency
+            );
+          }
+        }
 
-      return {
-        counterpartyId: counterpartyItems[0].counterpartyId,
-        counterpartyName: counterpartyItems[0].counterpartyName,
-        items: counterpartyItems.sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
-        bucketTotals,
-        totalOutstanding,
-      };
-    }).sort((a, b) => b.totalOutstanding.amount - a.totalOutstanding.amount);
+        const totalOutstanding = createMoney(
+          counterpartyItems.reduce((sum, item) => sum + item.outstandingAmount.amount, 0),
+          baseCurrency
+        );
+
+        return {
+          counterpartyId: counterpartyItems[0].counterpartyId,
+          counterpartyName: counterpartyItems[0].counterpartyName,
+          items: counterpartyItems.sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
+          bucketTotals,
+          totalOutstanding,
+        };
+      })
+      .sort((a, b) => b.totalOutstanding.amount - a.totalOutstanding.amount);
   }
 
   private calculateBucketSummary(

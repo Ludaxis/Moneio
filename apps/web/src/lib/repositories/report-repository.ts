@@ -27,22 +27,21 @@ export function createPrismaReportRepository(prisma: PrismaClient): ReportReposi
         orderBy: { accountCode: 'asc' },
       });
 
-      return accounts.map((account): GLAccountData => ({
-        id: account.id,
-        accountCode: account.accountCode,
-        accountName: account.accountName,
-        accountType: account.accountType as AccountType,
-        normalBalance: account.normalBalance as 'DEBIT' | 'CREDIT',
-        parentId: account.parentId || undefined,
-        subType: account.subType || undefined,
-        isActive: account.isActive,
-      }));
+      return accounts.map(
+        (account): GLAccountData => ({
+          id: account.id,
+          accountCode: account.accountCode,
+          accountName: account.accountName,
+          accountType: account.accountType as AccountType,
+          normalBalance: account.normalBalance as 'DEBIT' | 'CREDIT',
+          parentId: account.parentId || undefined,
+          subType: account.subType || undefined,
+          isActive: account.isActive,
+        })
+      );
     },
 
-    async getGLAccountBalances(
-      workspaceId: UUID,
-      asOfDate: string
-    ): Promise<GLAccountBalance[]> {
+    async getGLAccountBalances(workspaceId: UUID, asOfDate: string): Promise<GLAccountBalance[]> {
       const asOfDateObj = new Date(asOfDate);
       asOfDateObj.setHours(23, 59, 59, 999);
 
@@ -81,9 +80,8 @@ export function createPrismaReportRepository(prisma: PrismaClient): ReportReposi
         );
 
         // Calculate balance based on normal balance type
-        const balance = account.normalBalance === 'DEBIT'
-          ? debitTotal - creditTotal
-          : creditTotal - debitTotal;
+        const balance =
+          account.normalBalance === 'DEBIT' ? debitTotal - creditTotal : creditTotal - debitTotal;
 
         return {
           accountId: account.id,
@@ -141,9 +139,8 @@ export function createPrismaReportRepository(prisma: PrismaClient): ReportReposi
         );
 
         // For P&L (income/expense), we want the net movement
-        const balance = account.normalBalance === 'DEBIT'
-          ? debitTotal - creditTotal
-          : creditTotal - debitTotal;
+        const balance =
+          account.normalBalance === 'DEBIT' ? debitTotal - creditTotal : creditTotal - debitTotal;
 
         return {
           accountId: account.id,
@@ -196,18 +193,20 @@ export function createPrismaReportRepository(prisma: PrismaClient): ReportReposi
         ],
       });
 
-      return lines.map((line): JournalLineData => ({
-        entryId: line.journalEntry.id,
-        entryNumber: line.journalEntry.entryNumber,
-        entryDate: line.journalEntry.entryDate.toISOString().split('T')[0],
-        description: line.description || line.journalEntry.description,
-        accountId: line.glAccountId,
-        debitAmount: Number(line.debitAmount),
-        creditAmount: Number(line.creditAmount),
-        referenceType: line.journalEntry.referenceType || undefined,
-        referenceId: line.journalEntry.referenceId || undefined,
-        status: line.journalEntry.status,
-      }));
+      return lines.map(
+        (line): JournalLineData => ({
+          entryId: line.journalEntry.id,
+          entryNumber: line.journalEntry.entryNumber,
+          entryDate: line.journalEntry.entryDate.toISOString().split('T')[0],
+          description: line.description || line.journalEntry.description,
+          accountId: line.glAccountId,
+          debitAmount: Number(line.debitAmount),
+          creditAmount: Number(line.creditAmount),
+          referenceType: line.journalEntry.referenceType || undefined,
+          referenceId: line.journalEntry.referenceId || undefined,
+          status: line.journalEntry.status,
+        })
+      );
     },
 
     async getJournalLinesForAccount(
@@ -246,19 +245,21 @@ export function createPrismaReportRepository(prisma: PrismaClient): ReportReposi
         orderBy: { issueDate: 'asc' },
       });
 
-      return invoices.map((invoice): InvoiceData => ({
-        id: invoice.id,
-        invoiceNumber: invoice.invoiceNumber || undefined,
-        merchantId: invoice.merchant?.id,
-        merchantName: invoice.merchant?.name,
-        issueDate: (invoice.issueDate || new Date()).toISOString().split('T')[0],
-        dueDate: invoice.dueDate?.toISOString().split('T')[0],
-        total: Number(invoice.total),
-        paidAmount: invoice.status === 'paid' ? Number(invoice.total) : 0,
-        currency: invoice.currency as CurrencyCode,
-        status: invoice.status,
-        isReceivable: type === 'receivables',
-      }));
+      return invoices.map(
+        (invoice): InvoiceData => ({
+          id: invoice.id,
+          invoiceNumber: invoice.invoiceNumber || undefined,
+          merchantId: invoice.merchant?.id,
+          merchantName: invoice.merchant?.name,
+          issueDate: (invoice.issueDate || new Date()).toISOString().split('T')[0],
+          dueDate: invoice.dueDate?.toISOString().split('T')[0],
+          total: Number(invoice.total),
+          paidAmount: invoice.status === 'paid' ? Number(invoice.total) : 0,
+          currency: invoice.currency as CurrencyCode,
+          status: invoice.status,
+          isReceivable: type === 'receivables',
+        })
+      );
     },
 
     async getTransactionsForPeriod(
@@ -369,10 +370,7 @@ export function createPrismaReportRepository(prisma: PrismaClient): ReportReposi
         : creditTotal - debitTotal;
     },
 
-    async getCashAccountsBalance(
-      workspaceId: UUID,
-      asOfDate: string
-    ): Promise<number> {
+    async getCashAccountsBalance(workspaceId: UUID, asOfDate: string): Promise<number> {
       const asOfDateObj = new Date(asOfDate);
       asOfDateObj.setHours(23, 59, 59, 999);
 
@@ -420,9 +418,8 @@ export function createPrismaReportRepository(prisma: PrismaClient): ReportReposi
           0
         );
 
-        const balance = account.normalBalance === 'DEBIT'
-          ? debitTotal - creditTotal
-          : creditTotal - debitTotal;
+        const balance =
+          account.normalBalance === 'DEBIT' ? debitTotal - creditTotal : creditTotal - debitTotal;
 
         totalCash += balance;
       }

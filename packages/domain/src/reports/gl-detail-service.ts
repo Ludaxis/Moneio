@@ -42,13 +42,9 @@ export class GLDetailService {
 
     // Fetch journal lines and opening balances for each account
     const accountDetails: GLAccountDetail[] = await Promise.all(
-      accounts.map((account) => this.buildAccountDetail(
-        workspaceId,
-        account,
-        startDate,
-        endDate,
-        baseCurrency
-      ))
+      accounts.map((account) =>
+        this.buildAccountDetail(workspaceId, account, startDate, endDate, baseCurrency)
+      )
     );
 
     // Filter out accounts with no activity if not requested
@@ -112,9 +108,10 @@ export class GLDetailService {
     let runningBalance = openingBalanceAmount;
     const entries: GLDetailEntry[] = journalLines.map((line): GLDetailEntry => {
       // Calculate balance change based on normal balance
-      const change = account.normalBalance === 'DEBIT'
-        ? line.debitAmount - line.creditAmount
-        : line.creditAmount - line.debitAmount;
+      const change =
+        account.normalBalance === 'DEBIT'
+          ? line.debitAmount - line.creditAmount
+          : line.creditAmount - line.debitAmount;
 
       runningBalance += change;
 

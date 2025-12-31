@@ -95,10 +95,7 @@ export interface ReportRepository {
   // GL Account queries
   getGLAccounts(workspaceId: UUID): Promise<GLAccountData[]>;
 
-  getGLAccountBalances(
-    workspaceId: UUID,
-    asOfDate: string
-  ): Promise<GLAccountBalance[]>;
+  getGLAccountBalances(workspaceId: UUID, asOfDate: string): Promise<GLAccountBalance[]>;
 
   getGLAccountBalancesForPeriod(
     workspaceId: UUID,
@@ -139,17 +136,10 @@ export interface ReportRepository {
   getFxRates(baseCurrency: CurrencyCode): Promise<FxRate[]>;
 
   // Opening balance (sum of all entries before start date)
-  getOpeningBalance(
-    workspaceId: UUID,
-    accountId: UUID,
-    beforeDate: string
-  ): Promise<number>;
+  getOpeningBalance(workspaceId: UUID, accountId: UUID, beforeDate: string): Promise<number>;
 
   // Cash accounts balance
-  getCashAccountsBalance(
-    workspaceId: UUID,
-    asOfDate: string
-  ): Promise<number>;
+  getCashAccountsBalance(workspaceId: UUID, asOfDate: string): Promise<number>;
 }
 
 // ============================================
@@ -225,10 +215,7 @@ export function buildAccountTree(
 /**
  * Filter tree by account type
  */
-export function filterTreeByType(
-  tree: AccountTreeNode[],
-  types: AccountType[]
-): AccountTreeNode[] {
+export function filterTreeByType(tree: AccountTreeNode[], types: AccountType[]): AccountTreeNode[] {
   return tree.filter((node) => types.includes(node.account.accountType));
 }
 

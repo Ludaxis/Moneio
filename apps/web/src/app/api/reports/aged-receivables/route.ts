@@ -101,7 +101,9 @@ export async function GET(request: Request) {
     });
 
     // Transform for JSON response
-    const transformBucketSummary = (summary: Record<string, { amount: number; currency: string }>) => {
+    const transformBucketSummary = (
+      summary: Record<string, { amount: number; currency: string }>
+    ) => {
       const result: Record<string, ReturnType<typeof transformMoney>> = {};
       for (const [key, value] of Object.entries(summary)) {
         result[key] = transformMoney(value);
