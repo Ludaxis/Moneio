@@ -30,11 +30,17 @@
     "signIn": "Logi sisse",
     "signOut": "Logi välja",
     "signUp": "Registreeru",
+    "signInDescription": "Jätkamiseks logi oma kontole sisse",
     "email": "E-post",
     "password": "Parool",
     "forgotPassword": "Unustasid parooli?",
     "magicLink": "Saada maagiline link",
-    "checkEmail": "Kontrolli oma e-posti maagilise lingi saamiseks"
+    "checkEmail": "Kontrolli oma e-posti maagilise lingi saamiseks",
+    "continueWithGoogle": "Jätka Google'iga",
+    "continueWithEmail": "Jätka e-postiga",
+    "authFailed": "Autentimine ebaõnnestus. Palun proovi uuesti.",
+    "unexpectedError": "Tekkis ootamatu viga. Palun proovi uuesti.",
+    "termsNotice": "Jätkates nõustud meie kasutustingimuste ja privaatsuspoliitikaga"
   },
   "navigation": {
     "dashboard": "Töölaud",
