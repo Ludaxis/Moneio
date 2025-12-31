@@ -1,5 +1,6 @@
 import { TransactionCategorizer, HeuristicCategorizer, createLlmClient } from '@moneio/ai';
 import { prisma } from '@moneio/db';
+import { findMatchingRuleForPrismaTransaction } from '@moneio/domain';
 import { Job } from 'bullmq';
 
 import type { CategorizationJobData, CategorizationResult } from '../lib/queues';
@@ -7,10 +8,13 @@ import type { CategorizationJobData, CategorizationResult } from '../lib/queues'
 /**
  * CATEGORIZATION handler
  *
- * Suggest categories for bank transactions using AI
+ * Suggest categories for bank transactions using rules + AI
+ * Priority: Rules (deterministic) → AI (with heuristic fallback)
+ *
  * - Fetch transaction details
- * - Get workspace categories
- * - Call LLM (with heuristic fallback) for categorization
+ * - Get workspace rules (sorted by priority)
+ * - Apply rules first (100% confidence, instant)
+ * - For unmatched: call LLM or heuristic
  * - Store as AI suggestions (pending, reviewable)
  */
 export async function handleCategorization(
@@ -35,16 +39,25 @@ export async function handleCategorization(
       return { success: true, categorized: 0, suggestions: [] };
     }
 
-    await job.updateProgress(25);
+    await job.updateProgress(20);
 
     // Get categories for the workspace
     const categories = await prisma.category.findMany({
       where: { workspaceId },
     });
 
-    await job.updateProgress(40);
+    // Get active rules for the workspace, sorted by priority (highest first)
+    const rules = await prisma.rule.findMany({
+      where: {
+        workspaceId,
+        isActive: true,
+      },
+      orderBy: { priority: 'desc' },
+    });
 
-    // Build context
+    await job.updateProgress(30);
+
+    // Build context for AI
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
       select: { locale: true },
@@ -67,10 +80,62 @@ export async function handleCategorization(
       : new HeuristicCategorizer();
 
     const suggestions: CategorizationResult['suggestions'] = [];
+    let ruleMatches = 0;
+    let aiMatches = 0;
 
-    // Process sequentially to avoid hammering rate limits
+    // Process each transaction
     for (const tx of transactions) {
-      // Extract reference from rawData if available
+      // Clean up existing pending suggestions for this tx to avoid duplicates
+      await prisma.aiSuggestion.deleteMany({
+        where: {
+          workspaceId,
+          targetId: tx.id,
+          suggestionType: 'categorization',
+        },
+      });
+
+      // STEP 1: Try rules first (fast, deterministic, 100% confidence)
+      const matchedRule = findMatchingRuleForPrismaTransaction(rules, {
+        description: tx.description,
+        amount: tx.amount,
+        rawData: tx.rawData,
+      });
+
+      if (matchedRule) {
+        // Get category name for the matched rule
+        const category = categories.find((c) => c.id === matchedRule.categoryId);
+
+        await prisma.aiSuggestion.create({
+          data: {
+            workspaceId,
+            suggestionType: 'categorization',
+            targetId: tx.id,
+            payloadJson: JSON.parse(
+              JSON.stringify({
+                categoryId: matchedRule.categoryId,
+                categoryName: category?.name || 'Unknown',
+                targetType: 'bank_transaction',
+                reason: `Matched rule: ${matchedRule.name}`,
+                source: 'rule',
+                ruleId: matchedRule.id,
+              })
+            ),
+            confidence: 1.0, // 100% confidence for rule matches
+            status: 'pending',
+          },
+        });
+
+        suggestions.push({
+          transactionId: tx.id,
+          categoryId: matchedRule.categoryId,
+          confidence: 1.0,
+        });
+
+        ruleMatches++;
+        continue;
+      }
+
+      // STEP 2: No rule matched - use AI or heuristic
       const rawData = tx.rawData as { reference?: string } | null;
       const reference = rawData?.reference;
 
@@ -92,15 +157,6 @@ export async function handleCategorization(
         context as any
       );
 
-      // Clean up existing pending suggestions for this tx to avoid duplicates
-      await prisma.aiSuggestion.deleteMany({
-        where: {
-          workspaceId,
-          targetId: tx.id,
-          suggestionType: 'categorization',
-        },
-      });
-
       await prisma.aiSuggestion.create({
         data: {
           workspaceId,
@@ -112,6 +168,7 @@ export async function handleCategorization(
               categoryName: proposal.data.categoryName,
               targetType: 'bank_transaction',
               reason: proposal.data.reasoning,
+              source: llmConfigured ? 'ai' : 'heuristic',
               modelInfo: proposal.modelInfo,
             })
           ),
@@ -125,11 +182,16 @@ export async function handleCategorization(
         categoryId: proposal.data.categoryId,
         confidence: proposal.confidence / 100,
       });
+
+      aiMatches++;
     }
 
     await job.updateProgress(100);
 
-    console.log(`[CATEGORIZATION] Created ${suggestions.length} suggestions`);
+    console.log(
+      `[CATEGORIZATION] Created ${suggestions.length} suggestions ` +
+        `(${ruleMatches} from rules, ${aiMatches} from AI/heuristic)`
+    );
 
     return {
       success: true,

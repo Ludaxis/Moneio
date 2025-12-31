@@ -30,17 +30,26 @@
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "signUp": "Sign Up",
+    "signInDescription": "Sign in to your account to continue",
     "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot Password?",
     "magicLink": "Send Magic Link",
-    "checkEmail": "Check your email for the magic link"
+    "checkEmail": "Check your email for the magic link",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithEmail": "Continue with Email",
+    "authFailed": "Authentication failed. Please try again.",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
+    "termsNotice": "By continuing, you agree to our Terms of Service and Privacy Policy"
   },
   "navigation": {
     "dashboard": "Dashboard",
     "documents": "Documents",
     "invoices": "Invoices",
     "transactions": "Transactions",
+    "subscriptions": "Subscriptions",
+    "insights": "AI Insights",
+    "review": "Review",
     "reports": "Reports",
     "settings": "Settings",
     "chat": "AI Assistant"

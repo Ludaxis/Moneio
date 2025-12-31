@@ -19,6 +19,9 @@ import {
   handleDocPostprocess,
   handleCategorization,
   handleFxFetch,
+  handleInsightGeneration,
+  handleSendNotification,
+  handleSendWeeklyDigest,
 } from './handlers';
 // eslint-disable-next-line import/no-duplicates
 import { flushMetrics, getLlmMetricsSummary } from './lib/datadog';
@@ -39,6 +42,9 @@ const config = {
     docPostprocess: parseInt(process.env.DOC_POSTPROCESS_CONCURRENCY || '2'),
     categorization: parseInt(process.env.CATEGORIZATION_CONCURRENCY || '2'),
     fxFetch: parseInt(process.env.FX_FETCH_CONCURRENCY || '1'),
+    insightGeneration: parseInt(process.env.INSIGHT_GENERATION_CONCURRENCY || '1'),
+    sendNotification: parseInt(process.env.SEND_NOTIFICATION_CONCURRENCY || '2'),
+    sendWeeklyDigest: parseInt(process.env.SEND_WEEKLY_DIGEST_CONCURRENCY || '1'),
   },
 };
 
@@ -112,6 +118,30 @@ const fxFetchWorker = new Worker(QUEUE_NAMES.FX_FETCH, handleFxFetch, {
 });
 workers.push(fxFetchWorker);
 
+// INSIGHT_GENERATION Worker
+const insightGenerationWorker = new Worker(QUEUE_NAMES.INSIGHT_GENERATION, handleInsightGeneration, {
+  connection,
+  concurrency: config.concurrency.insightGeneration,
+  ...workerSettings,
+});
+workers.push(insightGenerationWorker);
+
+// SEND_NOTIFICATION Worker
+const sendNotificationWorker = new Worker(QUEUE_NAMES.SEND_NOTIFICATION, handleSendNotification, {
+  connection,
+  concurrency: config.concurrency.sendNotification,
+  ...workerSettings,
+});
+workers.push(sendNotificationWorker);
+
+// SEND_WEEKLY_DIGEST Worker
+const sendWeeklyDigestWorker = new Worker(QUEUE_NAMES.SEND_WEEKLY_DIGEST, handleSendWeeklyDigest, {
+  connection,
+  concurrency: config.concurrency.sendWeeklyDigest,
+  ...workerSettings,
+});
+workers.push(sendWeeklyDigestWorker);
+
 // ============================================================
 // Attach Monitoring to All Workers
 // ============================================================
@@ -131,6 +161,8 @@ async function scheduleRecurringJobs() {
     return;
   }
 
+  // Note: insightGeneration and sendWeeklyDigest are destructured for future use
+  // when we implement workspace-level scheduled jobs
   const { fxFetch } = getQueues();
 
   // Schedule daily FX updates for common currencies (reduced from hourly)
@@ -150,7 +182,12 @@ async function scheduleRecurringJobs() {
     );
   }
 
+  // Note: Insight generation and weekly digest jobs are triggered per-workspace
+  // They should be scheduled by the web app when a workspace is accessed
+  // or via a separate scheduler that iterates through active workspaces
+
   console.log('[SCHEDULER] Recurring jobs scheduled (daily FX updates)');
+  console.log('[SCHEDULER] Insight generation and weekly digest triggered per-workspace via API');
 }
 
 // ============================================================
@@ -236,17 +273,20 @@ logger.info(
 );
 
 console.log('');
-console.log('═══════════════════════════════════════════');
-console.log('       Moneio Worker Service Started       ');
-console.log('═══════════════════════════════════════════');
+console.log('═══════════════════════════════════════════════════');
+console.log('         Moneio Worker Service Started             ');
+console.log('═══════════════════════════════════════════════════');
 console.log('');
 console.log('Workers:');
-console.log(`  • DOC_NORMALIZE   (concurrency: ${config.concurrency.docNormalize})`);
-console.log(`  • DOC_OCR         (concurrency: ${config.concurrency.docOcr})`);
-console.log(`  • DOC_EXTRACT     (concurrency: ${config.concurrency.docExtract})`);
-console.log(`  • DOC_POSTPROCESS (concurrency: ${config.concurrency.docPostprocess})`);
-console.log(`  • CATEGORIZATION  (concurrency: ${config.concurrency.categorization})`);
-console.log(`  • FX_FETCH        (concurrency: ${config.concurrency.fxFetch})`);
+console.log(`  • DOC_NORMALIZE      (concurrency: ${config.concurrency.docNormalize})`);
+console.log(`  • DOC_OCR            (concurrency: ${config.concurrency.docOcr})`);
+console.log(`  • DOC_EXTRACT        (concurrency: ${config.concurrency.docExtract})`);
+console.log(`  • DOC_POSTPROCESS    (concurrency: ${config.concurrency.docPostprocess})`);
+console.log(`  • CATEGORIZATION     (concurrency: ${config.concurrency.categorization})`);
+console.log(`  • FX_FETCH           (concurrency: ${config.concurrency.fxFetch})`);
+console.log(`  • INSIGHT_GENERATION (concurrency: ${config.concurrency.insightGeneration})`);
+console.log(`  • SEND_NOTIFICATION  (concurrency: ${config.concurrency.sendNotification})`);
+console.log(`  • SEND_WEEKLY_DIGEST (concurrency: ${config.concurrency.sendWeeklyDigest})`);
 console.log('');
 console.log('Observability:');
 console.log(
