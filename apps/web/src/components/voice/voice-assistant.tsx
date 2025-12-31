@@ -287,7 +287,10 @@ export function VoiceAssistant({
                 {status === 'error' && 'Error'}
               </span>
             </div>
-            <button onClick={handleClose} className="rounded-md p-1 transition-colors hover:bg-muted">
+            <button
+              onClick={handleClose}
+              className="rounded-md p-1 transition-colors hover:bg-muted"
+            >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
@@ -376,7 +379,7 @@ export function VoiceAssistant({
           <p className="mt-3 text-center text-xs text-muted-foreground">
             {status === 'idle' && 'Tap to start a voice conversation'}
             {status === 'connecting' && 'Establishing connection...'}
-            {status === 'connected' && !isSpeaking && 'Speak now - I\'m listening'}
+            {status === 'connected' && !isSpeaking && "Speak now - I'm listening"}
             {status === 'connected' && isSpeaking && 'Tap to end conversation'}
             {status === 'error' && 'Tap to try again'}
           </p>
