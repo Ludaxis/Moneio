@@ -54,9 +54,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsed = querySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
-      lookbackMonths: searchParams.get('lookbackMonths'),
-      minSeverity: searchParams.get('minSeverity'),
-      type: searchParams.get('type'),
+      lookbackMonths: searchParams.get('lookbackMonths') || undefined,
+      minSeverity: searchParams.get('minSeverity') || undefined,
+      type: searchParams.get('type') || undefined,
     });
 
     if (!parsed.success) {

@@ -196,10 +196,16 @@ interface ForecastReport {
   };
 }
 
+interface AgingBucket {
+  label: string;
+  minDays: number;
+  maxDays: number | null;
+}
+
 interface AgedReceivablesReport {
   type: string;
   asOfDate: string;
-  buckets: string[];
+  buckets: Array<string | AgingBucket>;
   byCounterparty: Array<{
     counterpartyId: string;
     counterpartyName: string;
@@ -1575,12 +1581,14 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
         </div>
         <div className="grid grid-cols-2 divide-x divide-y divide-border md:grid-cols-5 md:divide-y-0">
           {(report.buckets || []).map((bucket) => {
-            const value = report.bucketSummary[bucket];
-            const bucketStr = String(bucket || '');
-            const isOverdue = bucketStr.includes('Overdue') || bucketStr.includes('+');
+            // bucket can be a string or an object with {label, minDays, maxDays}
+            const bucketLabel =
+              typeof bucket === 'string' ? bucket : bucket?.label || String(bucket);
+            const value = report.bucketSummary[bucketLabel];
+            const isOverdue = bucketLabel.includes('Overdue') || bucketLabel.includes('+');
             return (
-              <div key={bucket} className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">{bucket}</p>
+              <div key={bucketLabel} className="p-4 text-center">
+                <p className="text-sm text-muted-foreground">{bucketLabel}</p>
                 <p
                   className={cn(
                     'mt-1 text-lg font-semibold',
