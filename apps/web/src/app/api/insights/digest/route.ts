@@ -104,17 +104,50 @@ export async function GET(request: Request) {
     const subscriptions = trackSubscriptions(patterns);
 
     // Get recent insights (last 7 days)
+    // Handle case where Insight table doesn't exist (migration not run)
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const dbInsights = await prisma.insight.findMany({
-      where: {
-        workspaceId,
-        createdAt: { gte: oneWeekAgo },
-        dismissedAt: null,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    let dbInsights: Array<{
+      id: string;
+      workspaceId: string;
+      type: string;
+      severity: string;
+      title: string;
+      message: string;
+      data: unknown;
+      actionUrl: string | null;
+      actionLabel: string | null;
+      createdAt: Date;
+      readAt: Date | null;
+      dismissedAt: Date | null;
+      expiresAt: Date | null;
+    }> = [];
+
+    try {
+      dbInsights = await prisma.insight.findMany({
+        where: {
+          workspaceId,
+          createdAt: { gte: oneWeekAgo },
+          dismissedAt: null,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (dbError) {
+      // If table doesn't exist, continue with empty insights
+      const errorMessage = String(dbError);
+      if (
+        errorMessage.includes('does not exist') ||
+        errorMessage.includes('P2021') ||
+        errorMessage.includes('relation') ||
+        errorMessage.includes('Insight')
+      ) {
+        console.warn('Insight table not found, continuing with empty insights');
+        // Continue with empty array initialized above
+      } else {
+        throw dbError;
+      }
+    }
 
     // Convert to domain Insight type
     const insights: Insight[] = dbInsights.map((i) => ({

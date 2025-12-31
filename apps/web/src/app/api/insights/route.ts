@@ -106,39 +106,74 @@ export async function GET(request: Request) {
     }
 
     // Get insights with pagination
-    const [insights, totalCount] = await Promise.all([
-      prisma.insight.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.insight.count({ where }),
-    ]);
+    // Handle case where Insight table doesn't exist (migration not run)
+    let insights: Array<{
+      id: string;
+      workspaceId: string;
+      type: string;
+      severity: string;
+      title: string;
+      message: string;
+      data: unknown;
+      actionUrl: string | null;
+      actionLabel: string | null;
+      createdAt: Date;
+      readAt: Date | null;
+      dismissedAt: Date | null;
+      expiresAt: Date | null;
+    }> = [];
+    let totalCount = 0;
+    let allInsights: typeof insights = [];
 
-    // Get summary (for all non-dismissed insights)
-    const allInsights = await prisma.insight.findMany({
-      where: {
-        workspaceId,
-        dismissedAt: null,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-      },
-      select: {
-        id: true,
-        workspaceId: true,
-        type: true,
-        severity: true,
-        title: true,
-        message: true,
-        data: true,
-        actionUrl: true,
-        actionLabel: true,
-        createdAt: true,
-        readAt: true,
-        dismissedAt: true,
-        expiresAt: true,
-      },
-    });
+    try {
+      [insights, totalCount] = await Promise.all([
+        prisma.insight.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+          skip: offset,
+        }),
+        prisma.insight.count({ where }),
+      ]);
+
+      // Get summary (for all non-dismissed insights)
+      allInsights = await prisma.insight.findMany({
+        where: {
+          workspaceId,
+          dismissedAt: null,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        select: {
+          id: true,
+          workspaceId: true,
+          type: true,
+          severity: true,
+          title: true,
+          message: true,
+          data: true,
+          actionUrl: true,
+          actionLabel: true,
+          createdAt: true,
+          readAt: true,
+          dismissedAt: true,
+          expiresAt: true,
+        },
+      });
+    } catch (dbError) {
+      // If table doesn't exist, return empty results
+      const errorMessage = String(dbError);
+      if (
+        errorMessage.includes('does not exist') ||
+        errorMessage.includes('P2021') ||
+        errorMessage.includes('relation') ||
+        errorMessage.includes('Insight')
+      ) {
+        console.warn('Insight table not found, returning empty results');
+        // Continue with empty arrays initialized above
+      } else {
+        throw dbError;
+      }
+    }
 
     // Convert to domain type for summary calculation
     const domainInsights: Insight[] = allInsights.map((i) => ({
