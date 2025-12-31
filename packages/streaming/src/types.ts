@@ -2,8 +2,8 @@
  * Core streaming types
  */
 
-import type { TopicName } from './topics';
 import type { BaseEvent } from './schemas/events';
+import type { TopicName } from './topics';
 
 /**
  * Message to be sent to a topic
