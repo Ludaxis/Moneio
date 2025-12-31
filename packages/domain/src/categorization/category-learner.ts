@@ -57,7 +57,7 @@ export interface MappingLookupResult {
 export function normalizeMerchantName(name: string): string {
   if (!name) return '';
 
-  let normalized = name
+  const normalized = name
     // Convert to lowercase
     .toLowerCase()
     // Remove common suffixes
