@@ -9,8 +9,9 @@
  * - Cash flow forecast
  */
 
-import type { TransactionInput } from '../transactions/recurring-detector';
 import type { Subscription } from '../subscriptions/subscription-tracker';
+import type { TransactionInput } from '../transactions/recurring-detector';
+
 import type { Insight } from './insight-types';
 
 /**
