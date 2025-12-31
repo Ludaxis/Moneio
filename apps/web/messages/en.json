@@ -47,6 +47,9 @@
     "documents": "Documents",
     "invoices": "Invoices",
     "transactions": "Transactions",
+    "subscriptions": "Subscriptions",
+    "insights": "AI Insights",
+    "review": "Review",
     "reports": "Reports",
     "settings": "Settings",
     "chat": "AI Assistant"

@@ -14,6 +14,9 @@ export const QUEUE_NAMES = {
   DOC_POSTPROCESS: 'doc-postprocess',
   CATEGORIZATION: 'categorization',
   FX_FETCH: 'fx-fetch',
+  INSIGHT_GENERATION: 'insight-generation',
+  SEND_NOTIFICATION: 'send-notification',
+  SEND_WEEKLY_DIGEST: 'send-weekly-digest',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -54,6 +57,22 @@ export interface CategorizationJobData {
 export interface FxFetchJobData {
   baseCurrency: string;
   workspaceId?: string;
+}
+
+export interface InsightGenerationJobData {
+  workspaceId: string;
+  triggeredBy: 'scheduled' | 'manual' | 'transaction_import';
+}
+
+export interface SendNotificationJobData {
+  userId: string;
+  type: 'insight_alert' | 'weekly_digest' | 'invoice_reminder';
+  payload: Record<string, unknown>;
+}
+
+export interface SendWeeklyDigestJobData {
+  workspaceId: string;
+  userId: string;
 }
 
 // ============================================================
@@ -101,6 +120,19 @@ export interface FxFetchResult extends JobResult {
   ratesCount: number;
 }
 
+export interface InsightGenerationResult extends JobResult {
+  insightsGenerated: number;
+  anomaliesDetected?: number;
+  subscriptionsAnalyzed?: number;
+}
+
+export interface NotificationResult extends JobResult {
+  sent?: boolean;
+  channel?: 'email' | 'push' | 'in_app';
+  reason?: string;
+  digestPeriod?: { start: Date; end: Date };
+}
+
 // ============================================================
 // Queue Configuration
 // ============================================================
@@ -134,6 +166,9 @@ let queues: {
   docPostprocess?: Queue<DocPostprocessJobData>;
   categorization?: Queue<CategorizationJobData>;
   fxFetch?: Queue<FxFetchJobData>;
+  insightGeneration?: Queue<InsightGenerationJobData>;
+  sendNotification?: Queue<SendNotificationJobData>;
+  sendWeeklyDigest?: Queue<SendWeeklyDigestJobData>;
 } = {};
 
 export function getQueues() {
@@ -154,6 +189,15 @@ export function getQueues() {
   }
   if (!queues.fxFetch) {
     queues.fxFetch = createQueue<FxFetchJobData>(QUEUE_NAMES.FX_FETCH);
+  }
+  if (!queues.insightGeneration) {
+    queues.insightGeneration = createQueue<InsightGenerationJobData>(QUEUE_NAMES.INSIGHT_GENERATION);
+  }
+  if (!queues.sendNotification) {
+    queues.sendNotification = createQueue<SendNotificationJobData>(QUEUE_NAMES.SEND_NOTIFICATION);
+  }
+  if (!queues.sendWeeklyDigest) {
+    queues.sendWeeklyDigest = createQueue<SendWeeklyDigestJobData>(QUEUE_NAMES.SEND_WEEKLY_DIGEST);
   }
 
   return queues as Required<typeof queues>;
@@ -193,6 +237,21 @@ export async function enqueueCategorization(data: CategorizationJobData) {
 export async function enqueueFxFetch(data: FxFetchJobData) {
   const { fxFetch } = getQueues();
   return fxFetch.add(`fx:${data.baseCurrency}`, data);
+}
+
+export async function enqueueInsightGeneration(data: InsightGenerationJobData) {
+  const { insightGeneration } = getQueues();
+  return insightGeneration.add(`insight:${data.workspaceId}`, data);
+}
+
+export async function enqueueSendNotification(data: SendNotificationJobData) {
+  const { sendNotification } = getQueues();
+  return sendNotification.add(`notify:${data.userId}:${data.type}`, data);
+}
+
+export async function enqueueSendWeeklyDigest(data: SendWeeklyDigestJobData) {
+  const { sendWeeklyDigest } = getQueues();
+  return sendWeeklyDigest.add(`digest:${data.workspaceId}:${data.userId}`, data);
 }
 
 // ============================================================

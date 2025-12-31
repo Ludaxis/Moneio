@@ -25,8 +25,9 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  workspaceMembers WorkspaceMember[]
-  auditLogs        AuditLog[]
+  workspaceMembers        WorkspaceMember[]
+  auditLogs               AuditLog[]
+  notificationPreferences NotificationPreference?
 
   @@map("users")
 }
@@ -57,6 +58,7 @@ model Workspace {
   accountingPeriods          AccountingPeriod[]
   glBalances                 GLBalance[]
   plaidItems                 PlaidItem[]
+  insights                   Insight[]
 
   @@map("workspaces")
 }
@@ -617,4 +619,48 @@ model FxRate {
   @@unique([workspaceId, baseCurrency, quoteCurrency, effectiveDate])
   @@index([workspaceId, effectiveDate])
   @@map("fx_rates")
+}
+
+// ============================================================
+// Proactive Insights Tables
+// ============================================================
+
+model Insight {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  type        String    @db.VarChar(50) // anomaly_spending, anomaly_income, subscription_change, etc.
+  severity    String    @default("info") @db.VarChar(20) // info, warning, alert, positive
+  title       String
+  message     String    @db.Text
+  data        Json?
+  actionUrl   String?   @map("action_url")
+  actionLabel String?   @map("action_label")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  readAt      DateTime? @map("read_at")
+  dismissedAt DateTime? @map("dismissed_at")
+  expiresAt   DateTime? @map("expires_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@index([workspaceId, type])
+  @@index([workspaceId, severity])
+  @@map("insights")
+}
+
+model NotificationPreference {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  weeklyDigest     Boolean  @default(true) @map("weekly_digest")
+  anomalyAlerts    Boolean  @default(true) @map("anomaly_alerts")
+  invoiceReminders Boolean  @default(true) @map("invoice_reminders")
+  taxDeadlines     Boolean  @default(true) @map("tax_deadlines")
+  emailEnabled     Boolean  @default(true) @map("email_enabled")
+  pushEnabled      Boolean  @default(false) @map("push_enabled")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }
