@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@11labs/react": "^0.2.0",
+    "@elevenlabs/react": "^0.12.3",
     "@moneio/ai": "workspace:*",
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",

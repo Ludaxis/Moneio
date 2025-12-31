@@ -56,6 +56,9 @@ importers:
       '@11labs/react':
         specifier: ^0.2.0
         version: 0.2.0(@types/dom-mediacapture-record@1.0.22)(react@18.3.1)
+      '@elevenlabs/react':
+        specifier: ^0.12.3
+        version: 0.12.3(@types/dom-mediacapture-record@1.0.22)(react@18.3.1)
       '@moneio/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -489,6 +492,17 @@ packages:
   '@datadog/wasm-js-rewriter@5.0.1':
     resolution: {integrity: sha512-EzbV3Lrdt3udQEsbDOVC5gB1y7yxfpBbrSIk4jaEsGjyj0Dbv2HGj7tZjs+qXzIzNonHc8h5El2bYZOGfC2wwg==}
     engines: {node: '>= 10'}
+
+  '@elevenlabs/client@0.12.2':
+    resolution: {integrity: sha512-QWllhDndFfKmftlktNoa35+AF3gOCbSHowYhR42ZHb5u32lFbMPbh2BALCrpFa3edqCHSXtzG6zzLSAGjkhvHQ==}
+
+  '@elevenlabs/react@0.12.3':
+    resolution: {integrity: sha512-fQJlabwuvQziBCCNcxlXZt5GVxcPHjwb46NtSEbLJY0zaOUtWJynRX4kPfbz7ChqnMe7FAHYnrq2XsaSzpQXLQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+
+  '@elevenlabs/types@0.4.0':
+    resolution: {integrity: sha512-6CQb4r9DjepILhLybDxW0h8rvbsR8jPAp74HvFGYuvYdXcQRTkYTD9BQ4PV6VcuC1iqx0UljzJj8js3ADQ8EXw==}
 
   '@emnapi/core@1.7.1':
     resolution: {integrity: sha512-o1uhUASyo921r2XtHYOHy7gdkGLge8ghBEQHMWmyJFoXlpU58kIrhhN3w26lpQb6dspetweapMn2CSNwQ8I4wg==}
@@ -4432,6 +4446,22 @@ snapshots:
       module-details-from-path: 1.0.4
       node-gyp-build: 4.8.4
     optional: true
+
+  '@elevenlabs/client@0.12.2(@types/dom-mediacapture-record@1.0.22)':
+    dependencies:
+      '@elevenlabs/types': 0.4.0
+      livekit-client: 2.16.1(@types/dom-mediacapture-record@1.0.22)
+    transitivePeerDependencies:
+      - '@types/dom-mediacapture-record'
+
+  '@elevenlabs/react@0.12.3(@types/dom-mediacapture-record@1.0.22)(react@18.3.1)':
+    dependencies:
+      '@elevenlabs/client': 0.12.2(@types/dom-mediacapture-record@1.0.22)
+      react: 18.3.1
+    transitivePeerDependencies:
+      - '@types/dom-mediacapture-record'
+
+  '@elevenlabs/types@0.4.0': {}
 
   '@emnapi/core@1.7.1':
     dependencies:

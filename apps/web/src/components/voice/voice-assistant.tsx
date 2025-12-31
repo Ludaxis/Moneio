@@ -1,36 +1,9 @@
 'use client';
 
+import { useConversation } from '@elevenlabs/react';
 import { cn } from '@moneio/ui';
-import { Mic, MicOff, Volume2, Loader2, X } from 'lucide-react';
-import { useState, useRef, useCallback, useEffect } from 'react';
-
-// Web Speech API types (not included in standard lib.dom.d.ts)
-interface SpeechRecognitionEvent extends Event {
-  resultIndex: number;
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  start(): void;
-  stop(): void;
-  abort(): void;
-}
-
-declare global {
-  interface Window {
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
+import { Mic, MicOff, Volume2, X } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface VoiceAssistantProps {
   workspaceId: string;
@@ -39,15 +12,15 @@ interface VoiceAssistantProps {
   className?: string;
 }
 
-type VoiceState = 'idle' | 'listening' | 'processing' | 'speaking';
+type ConversationStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
 /**
- * Voice Assistant Component
+ * Voice Assistant Component using ElevenLabs Conversational AI
  *
- * Provides voice-driven interaction with the financial assistant:
- * 1. Press to speak (uses Web Speech API for STT)
- * 2. Sends transcript to chat API
- * 3. Speaks response using ElevenLabs TTS
+ * Real-time voice conversation with low latency:
+ * - Uses ElevenLabs agent for STT + LLM + TTS
+ * - Client tools provide access to financial data
+ * - WebRTC connection for instant responses
  */
 export function VoiceAssistant({
   workspaceId,
@@ -55,315 +28,360 @@ export function VoiceAssistant({
   onResponse,
   className,
 }: VoiceAssistantProps) {
-  const [state, setState] = useState<VoiceState>('idle');
-  const [transcript, setTranscript] = useState('');
-  const [response, setResponse] = useState('');
+  const [status, setStatus] = useState<ConversationStatus>('idle');
+  const [lastTranscript, setLastTranscript] = useState('');
+  const [lastResponse, setLastResponse] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Check for browser support
-  const isSpeechSupported = typeof window !== 'undefined' && 'webkitSpeechRecognition' in window;
-
-  // Initialize speech recognition
-  useEffect(() => {
-    if (!isSpeechSupported) return;
-
-    const SpeechRecognition = window.webkitSpeechRecognition;
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = false;
-    recognitionRef.current.interimResults = true;
-    recognitionRef.current.lang = 'en-US';
-
-    recognitionRef.current.onresult = (event) => {
-      const current = event.resultIndex;
-      const result = event.results[current];
-      const text = result[0].transcript;
-
-      setTranscript(text);
-
-      if (result.isFinal) {
-        handleTranscriptComplete(text);
-      }
-    };
-
-    recognitionRef.current.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      setError(`Speech error: ${event.error}`);
-      setState('idle');
-    };
-
-    recognitionRef.current.onend = () => {
-      if (state === 'listening') {
-        setState('idle');
-      }
-    };
-
-    return () => {
-      recognitionRef.current?.abort();
-    };
-  }, [isSpeechSupported]);
-
-  // Handle completed transcript
-  const handleTranscriptComplete = useCallback(
-    async (text: string) => {
-      if (!text.trim()) {
-        setState('idle');
-        return;
-      }
-
-      onTranscript?.(text);
-      setState('processing');
-
-      try {
-        // Send to chat API
-        const chatResponse = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            workspaceId,
-            message: text,
-            conversationId,
-          }),
-        });
-
-        if (!chatResponse.ok) {
-          throw new Error('Chat API failed');
-        }
-
-        const data = await chatResponse.json();
-        // data.message is an object with {id, role, content, timestamp, metadata}
-        const responseContent =
-          typeof data.message === 'string' ? data.message : data.message?.content || '';
-        setResponse(responseContent);
-        setConversationId(data.conversationId);
-        onResponse?.(responseContent);
-
-        // Speak the response using ElevenLabs
-        if (responseContent) {
-          await speakResponse(responseContent);
-        }
-      } catch (err) {
-        console.error('Chat error:', err);
-        setError('Failed to get response');
-        setState('idle');
+  // ElevenLabs Conversational AI hook with client tools for financial data
+  const conversation = useConversation({
+    onConnect: () => {
+      console.log('[Voice] Connected to ElevenLabs agent');
+      setStatus('connected');
+      setError(null);
+    },
+    onDisconnect: () => {
+      console.log('[Voice] Disconnected from ElevenLabs agent');
+      setStatus('idle');
+    },
+    onMessage: (message) => {
+      console.log('[Voice] Message:', message);
+      // Handle transcriptions and responses
+      if (message.source === 'user') {
+        setLastTranscript(message.message);
+        onTranscript?.(message.message);
+      } else if (message.source === 'ai') {
+        setLastResponse(message.message);
+        onResponse?.(message.message);
       }
     },
-    [workspaceId, conversationId, onTranscript, onResponse]
-  );
+    onError: (err) => {
+      console.error('[Voice] Error:', err);
+      setError(typeof err === 'string' ? err : 'Connection error');
+      setStatus('error');
+    },
+    // Client tools - the agent can call these to get financial data
+    clientTools: {
+      // Get spending summary
+      getSpending: async (params: { period?: string; merchant?: string; category?: string }) => {
+        console.log('[Voice Tool] getSpending called with:', params);
+        try {
+          const queryParams = new URLSearchParams({ workspaceId });
+          if (params.period) queryParams.set('period', params.period);
+          if (params.merchant) queryParams.set('merchant', params.merchant);
+          if (params.category) queryParams.set('category', params.category);
 
-  // Speak response using ElevenLabs
-  const speakResponse = useCallback(async (text: string) => {
-    setState('speaking');
+          const response = await fetch(`/api/insights/spending?${queryParams}`);
+          if (!response.ok) throw new Error('Failed to fetch spending');
+          const data = await response.json();
+          return JSON.stringify(data);
+        } catch (err) {
+          console.error('[Voice Tool] getSpending error:', err);
+          return JSON.stringify({ error: 'Unable to fetch spending data' });
+        }
+      },
 
+      // Get cashflow summary
+      getCashflow: async (params: { period?: string }) => {
+        console.log('[Voice Tool] getCashflow called with:', params);
+        try {
+          const queryParams = new URLSearchParams({ workspaceId });
+          if (params.period) queryParams.set('period', params.period);
+
+          const response = await fetch(`/api/insights/cashflow?${queryParams}`);
+          if (!response.ok) throw new Error('Failed to fetch cashflow');
+          const data = await response.json();
+          return JSON.stringify(data);
+        } catch (err) {
+          console.error('[Voice Tool] getCashflow error:', err);
+          return JSON.stringify({ error: 'Unable to fetch cashflow data' });
+        }
+      },
+
+      // Get cash runway
+      getRunway: async () => {
+        console.log('[Voice Tool] getRunway called');
+        try {
+          const response = await fetch(`/api/insights/runway?workspaceId=${workspaceId}`);
+          if (!response.ok) throw new Error('Failed to fetch runway');
+          const data = await response.json();
+          return JSON.stringify(data);
+        } catch (err) {
+          console.error('[Voice Tool] getRunway error:', err);
+          return JSON.stringify({ error: 'Unable to fetch runway data' });
+        }
+      },
+
+      // Get subscriptions
+      getSubscriptions: async () => {
+        console.log('[Voice Tool] getSubscriptions called');
+        try {
+          const response = await fetch(`/api/insights/subscriptions?workspaceId=${workspaceId}`);
+          if (!response.ok) throw new Error('Failed to fetch subscriptions');
+          const data = await response.json();
+          return JSON.stringify(data);
+        } catch (err) {
+          console.error('[Voice Tool] getSubscriptions error:', err);
+          return JSON.stringify({ error: 'Unable to fetch subscriptions' });
+        }
+      },
+
+      // Get pending invoices
+      getPendingInvoices: async () => {
+        console.log('[Voice Tool] getPendingInvoices called');
+        try {
+          const response = await fetch(
+            `/api/invoices?workspaceId=${workspaceId}&status=pending,overdue`
+          );
+          if (!response.ok) throw new Error('Failed to fetch invoices');
+          const data = await response.json();
+          return JSON.stringify(data);
+        } catch (err) {
+          console.error('[Voice Tool] getPendingInvoices error:', err);
+          return JSON.stringify({ error: 'Unable to fetch invoices' });
+        }
+      },
+
+      // Get largest expenses
+      getLargestExpenses: async (params: { period?: string; limit?: number }) => {
+        console.log('[Voice Tool] getLargestExpenses called with:', params);
+        try {
+          const queryParams = new URLSearchParams({ workspaceId });
+          if (params.period) queryParams.set('period', params.period);
+          if (params.limit) queryParams.set('limit', params.limit.toString());
+
+          const response = await fetch(`/api/insights/largest-expenses?${queryParams}`);
+          if (!response.ok) throw new Error('Failed to fetch largest expenses');
+          const data = await response.json();
+          return JSON.stringify(data);
+        } catch (err) {
+          console.error('[Voice Tool] getLargestExpenses error:', err);
+          return JSON.stringify({ error: 'Unable to fetch largest expenses' });
+        }
+      },
+    },
+  });
+
+  // Check for microphone permission on mount
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.permissions) {
+      navigator.permissions
+        .query({ name: 'microphone' as PermissionName })
+        .then((result) => {
+          setHasMicPermission(result.state === 'granted');
+        })
+        .catch(() => {
+          // Permission API not supported, will check when starting
+          setHasMicPermission(null);
+        });
+    }
+  }, []);
+
+  // Request microphone permission
+  const requestMicPermission = useCallback(async () => {
     try {
-      const response = await fetch('/api/voice/speak', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setHasMicPermission(true);
+      return true;
+    } catch {
+      setError('Microphone access denied');
+      setHasMicPermission(false);
+      return false;
+    }
+  }, []);
 
-      if (!response.ok) {
-        // Fallback to browser TTS
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.onend = () => setState('idle');
-        speechSynthesis.speak(utterance);
+  // Start conversation
+  const startConversation = useCallback(async () => {
+    setError(null);
+    setLastTranscript('');
+    setLastResponse('');
+    setIsExpanded(true);
+    setStatus('connecting');
+
+    // Ensure microphone permission
+    if (hasMicPermission !== true) {
+      const granted = await requestMicPermission();
+      if (!granted) {
+        setStatus('error');
         return;
       }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      if (audioRef.current) {
-        audioRef.current.src = audioUrl;
-        audioRef.current.onended = () => {
-          setState('idle');
-          URL.revokeObjectURL(audioUrl);
-        };
-        await audioRef.current.play();
-      }
-    } catch (err) {
-      console.error('TTS error:', err);
-      // Fallback to browser TTS
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = () => setState('idle');
-      speechSynthesis.speak(utterance);
     }
-  }, []);
-
-  // Start listening
-  const startListening = useCallback(() => {
-    if (!recognitionRef.current) return;
-
-    setError(null);
-    setTranscript('');
-    setState('listening');
-    setIsExpanded(true);
 
     try {
-      recognitionRef.current.start();
-    } catch {
-      setState('idle');
+      // Get agent ID from environment or use default
+      const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
+
+      if (!agentId) {
+        throw new Error('ElevenLabs agent ID not configured');
+      }
+
+      await conversation.startSession({
+        agentId,
+        connectionType: 'webrtc',
+      });
+    } catch (err) {
+      console.error('[Voice] Failed to start conversation:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect');
+      setStatus('error');
     }
-  }, []);
+  }, [conversation, hasMicPermission, requestMicPermission]);
 
-  // Stop listening
-  const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
-  }, []);
-
-  // Stop speaking
-  const stopSpeaking = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+  // End conversation
+  const endConversation = useCallback(async () => {
+    try {
+      await conversation.endSession();
+    } catch (err) {
+      console.error('[Voice] Failed to end conversation:', err);
     }
-    speechSynthesis.cancel();
-    setState('idle');
-  }, []);
+    setStatus('idle');
+  }, [conversation]);
 
-  // Close expanded view
+  // Close the expanded view
   const handleClose = useCallback(() => {
-    stopListening();
-    stopSpeaking();
+    endConversation();
     setIsExpanded(false);
-    setTranscript('');
-    setResponse('');
-  }, [stopListening, stopSpeaking]);
+    setLastTranscript('');
+    setLastResponse('');
+    setError(null);
+  }, [endConversation]);
 
-  if (!isSpeechSupported) {
-    return null; // Don't render if not supported
-  }
+  // Determine if agent is speaking
+  const isSpeaking = conversation.isSpeaking;
 
   return (
-    <>
-      {/* Hidden audio element for ElevenLabs playback */}
-      <audio ref={audioRef} className="hidden" />
-
-      {/* Floating Voice Button */}
-      <div className={cn('fixed bottom-24 right-6 z-50', className)}>
-        {!isExpanded ? (
-          <button
-            onClick={startListening}
-            className={cn(
-              'flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all',
-              'bg-primary text-primary-foreground hover:bg-primary/90',
-              'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2'
-            )}
-            title="Voice Assistant"
-          >
-            <Mic className="h-6 w-6" />
-          </button>
-        ) : (
-          <div className="w-80 rounded-2xl border border-border bg-card p-4 shadow-xl">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'h-3 w-3 rounded-full',
-                    state === 'listening' && 'bg-danger-500 animate-pulse',
-                    state === 'processing' && 'bg-yellow-500 animate-pulse',
-                    state === 'speaking' && 'bg-success-500 animate-pulse',
-                    state === 'idle' && 'bg-muted'
-                  )}
-                />
-                <span className="text-sm font-medium text-foreground">
-                  {state === 'listening' && 'Listening...'}
-                  {state === 'processing' && 'Thinking...'}
-                  {state === 'speaking' && 'Speaking...'}
-                  {state === 'idle' && 'Voice Assistant'}
-                </span>
-              </div>
-              <button
-                onClick={handleClose}
-                className="p-1 rounded-md hover:bg-muted transition-colors"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
+    <div className={cn('fixed bottom-24 right-6 z-50', className)}>
+      {!isExpanded ? (
+        <button
+          onClick={startConversation}
+          className={cn(
+            'flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all',
+            'bg-primary text-primary-foreground hover:bg-primary/90',
+            'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2'
+          )}
+          title="Voice Assistant"
+        >
+          <Mic className="h-6 w-6" />
+        </button>
+      ) : (
+        <div className="w-80 rounded-2xl border border-border bg-card p-4 shadow-xl">
+          {/* Header */}
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'h-3 w-3 rounded-full',
+                  status === 'connecting' && 'animate-pulse bg-yellow-500',
+                  status === 'connected' && !isSpeaking && 'animate-pulse bg-danger-500',
+                  status === 'connected' && isSpeaking && 'animate-pulse bg-success-500',
+                  status === 'idle' && 'bg-muted',
+                  status === 'error' && 'bg-danger-500'
+                )}
+              />
+              <span className="text-sm font-medium text-foreground">
+                {status === 'connecting' && 'Connecting...'}
+                {status === 'connected' && !isSpeaking && 'Listening...'}
+                {status === 'connected' && isSpeaking && 'Speaking...'}
+                {status === 'idle' && 'Voice Assistant'}
+                {status === 'error' && 'Error'}
+              </span>
             </div>
-
-            {/* Transcript */}
-            {transcript && (
-              <div className="mb-3 p-2 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground mb-1">You said:</p>
-                <p className="text-sm text-foreground">{transcript}</p>
-              </div>
-            )}
-
-            {/* Response */}
-            {response && (
-              <div className="mb-3 p-2 rounded-lg bg-primary/10">
-                <p className="text-xs text-muted-foreground mb-1">Response:</p>
-                <p className="text-sm text-foreground">{response}</p>
-              </div>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div className="mb-3 p-2 rounded-lg bg-danger-50 dark:bg-danger-950">
-                <p className="text-sm text-danger-600 dark:text-danger-400">{error}</p>
-              </div>
-            )}
-
-            {/* Controls */}
-            <div className="flex items-center justify-center gap-3">
-              {state === 'idle' && (
-                <button
-                  onClick={startListening}
-                  className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-full',
-                    'bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
-                  )}
-                >
-                  <Mic className="h-5 w-5" />
-                </button>
-              )}
-
-              {state === 'listening' && (
-                <button
-                  onClick={stopListening}
-                  className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-full',
-                    'bg-danger-500 text-white hover:bg-danger-600 transition-colors animate-pulse'
-                  )}
-                >
-                  <MicOff className="h-5 w-5" />
-                </button>
-              )}
-
-              {state === 'processing' && (
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
-                </div>
-              )}
-
-              {state === 'speaking' && (
-                <button
-                  onClick={stopSpeaking}
-                  className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-full',
-                    'bg-success-500 text-white hover:bg-success-600 transition-colors'
-                  )}
-                >
-                  <Volume2 className="h-5 w-5 animate-pulse" />
-                </button>
-              )}
-            </div>
-
-            {/* Hint */}
-            <p className="mt-3 text-xs text-center text-muted-foreground">
-              {state === 'idle' && 'Tap to ask about your finances'}
-              {state === 'listening' && 'Speak now...'}
-              {state === 'processing' && 'Processing your request...'}
-              {state === 'speaking' && 'Tap to stop'}
-            </p>
+            <button onClick={handleClose} className="rounded-md p-1 transition-colors hover:bg-muted">
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
           </div>
-        )}
-      </div>
-    </>
+
+          {/* Transcript */}
+          {lastTranscript && (
+            <div className="mb-3 rounded-lg bg-muted/50 p-2">
+              <p className="mb-1 text-xs text-muted-foreground">You said:</p>
+              <p className="text-sm text-foreground">{lastTranscript}</p>
+            </div>
+          )}
+
+          {/* Response */}
+          {lastResponse && (
+            <div className="mb-3 rounded-lg bg-primary/10 p-2">
+              <p className="mb-1 text-xs text-muted-foreground">Response:</p>
+              <p className="text-sm text-foreground">{lastResponse}</p>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="mb-3 rounded-lg bg-danger-50 p-2 dark:bg-danger-950">
+              <p className="text-sm text-danger-600 dark:text-danger-400">{error}</p>
+            </div>
+          )}
+
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-3">
+            {status === 'idle' && (
+              <button
+                onClick={startConversation}
+                className={cn(
+                  'flex h-12 w-12 items-center justify-center rounded-full',
+                  'bg-primary text-primary-foreground transition-colors hover:bg-primary/90'
+                )}
+              >
+                <Mic className="h-5 w-5" />
+              </button>
+            )}
+
+            {status === 'connecting' && (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+              </div>
+            )}
+
+            {status === 'connected' && !isSpeaking && (
+              <button
+                onClick={endConversation}
+                className={cn(
+                  'flex h-12 w-12 items-center justify-center rounded-full',
+                  'animate-pulse bg-danger-500 text-white transition-colors hover:bg-danger-600'
+                )}
+              >
+                <MicOff className="h-5 w-5" />
+              </button>
+            )}
+
+            {status === 'connected' && isSpeaking && (
+              <button
+                onClick={endConversation}
+                className={cn(
+                  'flex h-12 w-12 items-center justify-center rounded-full',
+                  'bg-success-500 text-white transition-colors hover:bg-success-600'
+                )}
+              >
+                <Volume2 className="h-5 w-5 animate-pulse" />
+              </button>
+            )}
+
+            {status === 'error' && (
+              <button
+                onClick={startConversation}
+                className={cn(
+                  'flex h-12 w-12 items-center justify-center rounded-full',
+                  'bg-primary text-primary-foreground transition-colors hover:bg-primary/90'
+                )}
+              >
+                <Mic className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Hint */}
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            {status === 'idle' && 'Tap to start a voice conversation'}
+            {status === 'connecting' && 'Establishing connection...'}
+            {status === 'connected' && !isSpeaking && 'Speak now - I\'m listening'}
+            {status === 'connected' && isSpeaking && 'Tap to end conversation'}
+            {status === 'error' && 'Tap to try again'}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
