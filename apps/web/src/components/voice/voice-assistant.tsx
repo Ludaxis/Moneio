@@ -62,103 +62,37 @@ export function VoiceAssistant({
       setError(typeof err === 'string' ? err : 'Connection error');
       setStatus('error');
     },
-    // Client tools - the agent can call these to get financial data
+    // Single powerful tool that queries the financial database via chat API
     clientTools: {
-      // Get spending summary
-      getSpending: async (params: { period?: string; merchant?: string; category?: string }) => {
-        console.log('[Voice Tool] getSpending called with:', params);
+      // Query financial data - full database access through chat API
+      queryFinancialData: async (params: { question: string }) => {
+        console.log('[Voice Tool] queryFinancialData called with:', params.question);
         try {
-          const queryParams = new URLSearchParams({ workspaceId });
-          if (params.period) queryParams.set('period', params.period);
-          if (params.merchant) queryParams.set('merchant', params.merchant);
-          if (params.category) queryParams.set('category', params.category);
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              workspaceId,
+              message: params.question,
+            }),
+          });
 
-          const response = await fetch(`/api/insights/spending?${queryParams}`);
-          if (!response.ok) throw new Error('Failed to fetch spending');
+          if (!response.ok) {
+            throw new Error('Failed to query financial data');
+          }
+
           const data = await response.json();
-          return JSON.stringify(data);
+          // Extract the response content
+          const answer =
+            typeof data.message === 'string'
+              ? data.message
+              : data.message?.content || 'No data found';
+
+          console.log('[Voice Tool] queryFinancialData response:', answer);
+          return answer;
         } catch (err) {
-          console.error('[Voice Tool] getSpending error:', err);
-          return JSON.stringify({ error: 'Unable to fetch spending data' });
-        }
-      },
-
-      // Get cashflow summary
-      getCashflow: async (params: { period?: string }) => {
-        console.log('[Voice Tool] getCashflow called with:', params);
-        try {
-          const queryParams = new URLSearchParams({ workspaceId });
-          if (params.period) queryParams.set('period', params.period);
-
-          const response = await fetch(`/api/insights/cashflow?${queryParams}`);
-          if (!response.ok) throw new Error('Failed to fetch cashflow');
-          const data = await response.json();
-          return JSON.stringify(data);
-        } catch (err) {
-          console.error('[Voice Tool] getCashflow error:', err);
-          return JSON.stringify({ error: 'Unable to fetch cashflow data' });
-        }
-      },
-
-      // Get cash runway
-      getRunway: async () => {
-        console.log('[Voice Tool] getRunway called');
-        try {
-          const response = await fetch(`/api/insights/runway?workspaceId=${workspaceId}`);
-          if (!response.ok) throw new Error('Failed to fetch runway');
-          const data = await response.json();
-          return JSON.stringify(data);
-        } catch (err) {
-          console.error('[Voice Tool] getRunway error:', err);
-          return JSON.stringify({ error: 'Unable to fetch runway data' });
-        }
-      },
-
-      // Get subscriptions
-      getSubscriptions: async () => {
-        console.log('[Voice Tool] getSubscriptions called');
-        try {
-          const response = await fetch(`/api/insights/subscriptions?workspaceId=${workspaceId}`);
-          if (!response.ok) throw new Error('Failed to fetch subscriptions');
-          const data = await response.json();
-          return JSON.stringify(data);
-        } catch (err) {
-          console.error('[Voice Tool] getSubscriptions error:', err);
-          return JSON.stringify({ error: 'Unable to fetch subscriptions' });
-        }
-      },
-
-      // Get pending invoices
-      getPendingInvoices: async () => {
-        console.log('[Voice Tool] getPendingInvoices called');
-        try {
-          const response = await fetch(
-            `/api/invoices?workspaceId=${workspaceId}&status=pending,overdue`
-          );
-          if (!response.ok) throw new Error('Failed to fetch invoices');
-          const data = await response.json();
-          return JSON.stringify(data);
-        } catch (err) {
-          console.error('[Voice Tool] getPendingInvoices error:', err);
-          return JSON.stringify({ error: 'Unable to fetch invoices' });
-        }
-      },
-
-      // Get largest expenses
-      getLargestExpenses: async (params: { period?: string; limit?: number }) => {
-        console.log('[Voice Tool] getLargestExpenses called with:', params);
-        try {
-          const queryParams = new URLSearchParams({ workspaceId });
-          if (params.period) queryParams.set('period', params.period);
-          if (params.limit) queryParams.set('limit', params.limit.toString());
-
-          const response = await fetch(`/api/insights/largest-expenses?${queryParams}`);
-          if (!response.ok) throw new Error('Failed to fetch largest expenses');
-          const data = await response.json();
-          return JSON.stringify(data);
-        } catch (err) {
-          console.error('[Voice Tool] getLargestExpenses error:', err);
-          return JSON.stringify({ error: 'Unable to fetch largest expenses' });
+          console.error('[Voice Tool] queryFinancialData error:', err);
+          return 'Sorry, I was unable to retrieve that financial information. Please try again.';
         }
       },
     },
