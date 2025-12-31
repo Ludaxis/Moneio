@@ -23,7 +23,7 @@ type ConversationStatus = 'idle' | 'connecting' | 'connected' | 'error';
  * - WebRTC connection for instant responses
  */
 export function VoiceAssistant({
-  workspaceId,
+  workspaceId: _workspaceId,
   onTranscript,
   onResponse,
   className,
