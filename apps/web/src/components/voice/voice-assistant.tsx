@@ -42,9 +42,7 @@ export function VoiceAssistant({
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null);
 
-  // ElevenLabs Conversational AI hook
-  // Tools are configured as webhooks in ElevenLabs dashboard (not client-side)
-  // This avoids timeout issues by using server-to-server calls
+  // ElevenLabs Conversational AI hook with client tool for financial data
   const conversation = useConversation({
     onConnect: () => {
       console.log('[Voice] Connected to ElevenLabs agent');
@@ -74,6 +72,33 @@ export function VoiceAssistant({
       console.error('[Voice] Error:', err);
       setError(typeof err === 'string' ? err : 'Connection error');
       setStatus('error');
+    },
+    // Client tool - calls fast voice query API directly
+    clientTools: {
+      queryFinancialData: async (params: { question: string }) => {
+        console.log('[Voice Tool] queryFinancialData called with:', params.question);
+        try {
+          const response = await fetch('/api/voice/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              workspaceId,
+              question: params.question,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to query financial data');
+          }
+
+          const data = await response.json();
+          console.log('[Voice Tool] Response:', data.answer);
+          return data.answer;
+        } catch (err) {
+          console.error('[Voice Tool] Error:', err);
+          return 'Sorry, I was unable to retrieve that financial information.';
+        }
+      },
     },
   });
 
@@ -130,26 +155,9 @@ export function VoiceAssistant({
         throw new Error('ElevenLabs agent ID not configured');
       }
 
-      // Get a signed MCP token (secure - verified server-side)
-      const tokenResponse = await fetch('/api/mcp/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workspaceId }),
-      });
-
-      if (!tokenResponse.ok) {
-        throw new Error('Failed to get MCP token');
-      }
-
-      const { token } = await tokenResponse.json();
-
       await conversation.startSession({
         agentId,
         connectionType: 'webrtc',
-        // Pass signed token - ElevenLabs forwards to MCP server
-        dynamicVariables: {
-          mcpToken: token,
-        },
       });
     } catch (err) {
       console.error('[Voice] Failed to start conversation:', err);
