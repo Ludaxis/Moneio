@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState, useCallback } from 'react';
 
 import {
-  AIInsightsBanner,
+  SmartAISummary,
+  InsightFeedWidget,
   BalanceCard,
   RunwayWidget,
   CashflowChart,
@@ -186,8 +187,8 @@ export default function DashboardPage() {
         <DateRangePicker value={dateRange} onChange={setDateRange} />
       </div>
 
-      {/* AI Insights Banner */}
-      {workspaceId && <AIInsightsBanner workspaceId={workspaceId} />}
+      {/* Smart AI Summary - Comprehensive Financial Insights */}
+      {workspaceId && <SmartAISummary workspaceId={workspaceId} />}
 
       {/* Balance Cards Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -262,6 +263,9 @@ export default function DashboardPage() {
         <div className="space-y-6">
           {/* Forecast Chart */}
           {workspaceId && <ForecastChart workspaceId={workspaceId} months={6} />}
+
+          {/* AI Insight Feed */}
+          {workspaceId && <InsightFeedWidget workspaceId={workspaceId} />}
 
           {/* Runway Widget */}
           {workspaceId && <RunwayWidget workspaceId={workspaceId} />}

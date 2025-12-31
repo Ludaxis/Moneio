@@ -125,17 +125,17 @@ export function TopExpensesWidget({
 
             return (
               <div key={expense.categoryId} className="group">
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div
-                      className="h-3 w-3 rounded-full"
+                      className="h-3 w-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: chartPalette[index % chartPalette.length] }}
                     />
-                    <span className="text-sm font-medium text-foreground">
-                      {expense.categoryName}
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {expense.categoryName || 'Uncategorized'}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({expense.transactionCount} txns)
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      ({expense.transactionCount})
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

@@ -9,6 +9,8 @@ export { DateRangePicker, getDefaultDateRange, type DateRange } from './date-ran
 
 // New AI-powered dashboard components
 export { AIInsightsBanner } from './ai-insights-banner';
+export { SmartAISummary } from './smart-ai-summary';
+export { InsightFeedWidget } from './insight-feed-widget';
 export { BalanceCard } from './balance-card';
 export { TrendBadge } from './trend-badge';
 export { RunwayWidget } from './runway-widget';
