@@ -20,10 +20,33 @@ export async function POST(request: Request) {
 
     // Parse specific month/year from question (e.g., "November 2025", "nov 2025", "december")
     const monthNames = [
-      'january', 'february', 'march', 'april', 'may', 'june',
-      'july', 'august', 'september', 'october', 'november', 'december',
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
     ];
-    const shortMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const shortMonths = [
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'may',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'oct',
+      'nov',
+      'dec',
+    ];
 
     let queryMonth = now.getMonth();
     let queryYear = now.getFullYear();
@@ -58,12 +81,8 @@ export async function POST(request: Request) {
     const startOfMonth = specificPeriod
       ? new Date(queryYear, queryMonth, 1)
       : new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = specificPeriod
-      ? new Date(queryYear, queryMonth + 1, 0, 23, 59, 59)
-      : now;
-    const periodLabel = specificPeriod
-      ? `${monthNames[queryMonth]} ${queryYear}`
-      : 'this month';
+    const endOfMonth = specificPeriod ? new Date(queryYear, queryMonth + 1, 0, 23, 59, 59) : now;
+    const periodLabel = specificPeriod ? `${monthNames[queryMonth]} ${queryYear}` : 'this month';
 
     // Detect query type and respond quickly
     if (q.includes('cashflow') || q.includes('cash flow')) {
