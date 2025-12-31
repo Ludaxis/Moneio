@@ -67,14 +67,16 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
       const [healthRes, forecastRes, cashflowRes, subscriptionsRes] = await Promise.all([
         fetch(`/api/reports/health-score?workspaceId=${workspaceId}`),
         fetch(`/api/reports/forecast?workspaceId=${workspaceId}&months=6`),
-        fetch(`/api/reports/cashflow?workspaceId=${workspaceId}&startDate=${getDateMonthsAgo(3)}&endDate=${getTodayDate()}`),
+        fetch(
+          `/api/reports/cashflow?workspaceId=${workspaceId}&startDate=${getDateMonthsAgo(3)}&endDate=${getTodayDate()}`
+        ),
         fetch(`/api/insights/subscriptions?workspaceId=${workspaceId}`).catch(() => null),
       ]);
 
       const insights: CashFlowInsight[] = [];
       let cashflowStatus: SmartSummary['cashflowStatus'] = 'stable';
       let headline = 'Your finances at a glance';
-      let subtext = 'Here\'s what\'s happening with your money';
+      let subtext = "Here's what's happening with your money";
       let quickTip = 'Keep tracking your expenses for better insights.';
 
       // Default metrics
@@ -170,7 +172,10 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
           }
 
           // Runway warning
-          if (forecast.summary.monthsUntilNegative !== null && forecast.summary.monthsUntilNegative <= 6) {
+          if (
+            forecast.summary.monthsUntilNegative !== null &&
+            forecast.summary.monthsUntilNegative <= 6
+          ) {
             insights.push({
               id: 'runway-warning',
               type: 'alert',
@@ -179,7 +184,8 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
               description: `At current spending, cash could run out in ${forecast.summary.monthsUntilNegative} months.`,
               action: { label: 'View forecast', href: '/reports?tab=forecast' },
             });
-            quickTip = 'Consider reducing non-essential expenses or increasing income to extend your runway.';
+            quickTip =
+              'Consider reducing non-essential expenses or increasing income to extend your runway.';
           }
 
           // Trend insight
@@ -271,7 +277,8 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
           description: 'Continue monitoring your finances to build a complete picture.',
           action: { label: 'Import transactions', href: '/transactions/import' },
         });
-        quickTip = 'Import more transactions to unlock deeper AI insights about your spending patterns.';
+        quickTip =
+          'Import more transactions to unlock deeper AI insights about your spending patterns.';
       }
 
       // Limit to top 4 insights
@@ -448,7 +455,9 @@ export function SmartAISummary({ workspaceId }: SmartAISummaryProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-foreground line-clamp-1">{insight.title}</p>
+                  <p className="text-sm font-medium text-foreground line-clamp-1">
+                    {insight.title}
+                  </p>
                   {insight.metric && (
                     <span className="flex-shrink-0 text-xs font-semibold text-foreground/80 tabular-nums">
                       {insight.metric}
