@@ -87,8 +87,8 @@ export interface StreamCategorizerConfig {
 /**
  * Common patterns for heuristic matching
  */
-const HEURISTIC_PATTERNS: Map<RegExp, { keywords: string[]; type: 'expense' | 'income' }> =
-  new Map([
+const HEURISTIC_PATTERNS: Map<RegExp, { keywords: string[]; type: 'expense' | 'income' }> = new Map(
+  [
     // Software & Subscriptions
     [
       /openai|anthropic|supabase|stripe|github|aws|azure|digitalocean|cloudflare|vercel|netlify|heroku|mongodb|neon|upstash|railway|render/i,
@@ -130,13 +130,14 @@ const HEURISTIC_PATTERNS: Map<RegExp, { keywords: string[]; type: 'expense' | 'i
       { keywords: ['income', 'revenue', 'sales'], type: 'income' },
     ],
     // Transfers
-    [
-      /transfer|zelle|venmo|paypal|wise|revolut/i,
-      { keywords: ['transfer'], type: 'expense' },
-    ],
+    [/transfer|zelle|venmo|paypal|wise|revolut/i, { keywords: ['transfer'], type: 'expense' }],
     // Business entities (Estonian, German, etc.)
-    [/\b(OÜ|AS|Ltd|LLC|Inc|Corp|GmbH|BV|SA|Oy|AB)\b/i, { keywords: ['business', 'operating'], type: 'expense' }],
-  ]);
+    [
+      /\b(OÜ|AS|Ltd|LLC|Inc|Corp|GmbH|BV|SA|Oy|AB)\b/i,
+      { keywords: ['business', 'operating'], type: 'expense' },
+    ],
+  ]
+);
 
 /**
  * Stream Categorizer - categorizes rows as they're imported
@@ -319,7 +320,10 @@ export class StreamCategorizer {
     for (const [pattern, { keywords, type }] of HEURISTIC_PATTERNS) {
       if (pattern.test(row.description)) {
         // Check type compatibility
-        if ((isExpense && type === 'income') || (isIncome && type === 'expense' && type !== 'expense')) {
+        if (
+          (isExpense && type === 'income') ||
+          (isIncome && type === 'expense' && type !== 'expense')
+        ) {
           continue;
         }
 
@@ -339,7 +343,8 @@ export class StreamCategorizer {
 
     // Default fallback based on amount sign
     const fallbackCategory = this.categories.find(
-      (c) => c.type === (isExpense ? 'expense' : 'income') && c.name.toLowerCase() !== 'uncategorized'
+      (c) =>
+        c.type === (isExpense ? 'expense' : 'income') && c.name.toLowerCase() !== 'uncategorized'
     );
 
     if (fallbackCategory) {

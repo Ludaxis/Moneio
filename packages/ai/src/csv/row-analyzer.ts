@@ -86,10 +86,7 @@ export class AiRowAnalyzer {
   /**
    * Analyze a single row to determine if it's a valid transaction
    */
-  async analyzeRow(
-    row: Record<string, string>,
-    context: RowAnalysisContext
-  ): Promise<RowAnalysis> {
+  async analyzeRow(row: Record<string, string>, context: RowAnalysisContext): Promise<RowAnalysis> {
     const prompt = this.buildPrompt(row, context);
 
     try {

@@ -63,9 +63,7 @@ export class InMemoryHeaderLearningStore implements HeaderLearningStore {
     const existing = this.learnings.get(key) || [];
 
     // Find and update existing or add new
-    const existingIdx = existing.findIndex(
-      (l) => l.correctedType === mapping.correctedType
-    );
+    const existingIdx = existing.findIndex((l) => l.correctedType === mapping.correctedType);
 
     if (existingIdx >= 0) {
       existing[existingIdx].frequency += 1;

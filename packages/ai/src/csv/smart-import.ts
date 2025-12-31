@@ -14,7 +14,11 @@ import type { LlmClient } from '../extraction/invoice-extractor';
 import type { ModelInfo } from '../types';
 
 import { CsvHeaderNormalizer, type CsvNormalizationResult } from './csv-header-normalizer';
-import { HeaderLearner, InMemoryHeaderLearningStore, type HeaderLearningStore } from './header-learner';
+import {
+  HeaderLearner,
+  InMemoryHeaderLearningStore,
+  type HeaderLearningStore,
+} from './header-learner';
 import { AiRowAnalyzer, type RowAnalysis, type RowAnalysisContext } from './row-analyzer';
 import {
   StreamCategorizer,
@@ -121,10 +125,7 @@ export class SmartCsvImporter {
   private readonly streamCategorizer: StreamCategorizer;
   private readonly config: SmartImportConfig;
 
-  constructor(
-    llmClient: LlmClient | undefined,
-    config: SmartImportConfig
-  ) {
+  constructor(llmClient: LlmClient | undefined, config: SmartImportConfig) {
     this.config = config;
 
     // Initialize header normalizer (requires LLM)
@@ -226,11 +227,27 @@ export class SmartCsvImporter {
 
     // Check for turnover/balance keywords
     const turnoverKeywords = [
-      'turnover', 'käive', 'umsatz', 'оборот',
-      'opening balance', 'closing balance', 'algsaldo', 'lõppsaldo',
-      'anfangssaldo', 'endsaldo', 'beginning balance', 'ending balance',
-      'total', 'subtotal', 'sum', 'kokku', 'summe', 'итого',
-      'balance forward', 'carried forward', 'brought forward',
+      'turnover',
+      'käive',
+      'umsatz',
+      'оборот',
+      'opening balance',
+      'closing balance',
+      'algsaldo',
+      'lõppsaldo',
+      'anfangssaldo',
+      'endsaldo',
+      'beginning balance',
+      'ending balance',
+      'total',
+      'subtotal',
+      'sum',
+      'kokku',
+      'summe',
+      'итого',
+      'balance forward',
+      'carried forward',
+      'brought forward',
     ];
 
     const isTurnoverRow = turnoverKeywords.some((kw) => values.includes(kw));
@@ -350,7 +367,9 @@ export class SmartCsvImporter {
         stats.validTransactions++;
 
         // Extract transaction data
-        const description = descCol ? row[descCol] : Object.values(row).find((v) => v?.length > 10) || '';
+        const description = descCol
+          ? row[descCol]
+          : Object.values(row).find((v) => v?.length > 10) || '';
         const amountStr = amountCol ? row[amountCol] : '';
         const amount = this.parseAmount(amountStr);
 
@@ -383,7 +402,7 @@ export class SmartCsvImporter {
             date: dateCol ? row[dateCol] : '',
             description,
             amount,
-            balance: balanceCol ? this.parseAmount(row[balanceCol]) ?? undefined : undefined,
+            balance: balanceCol ? (this.parseAmount(row[balanceCol]) ?? undefined) : undefined,
             reference: refCol ? row[refCol] : undefined,
             categoryId: categorization.categoryId ?? undefined,
             categoryName: categorization.categoryName ?? undefined,
