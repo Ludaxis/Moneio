@@ -571,10 +571,24 @@ INSTRUCTIONS:
 9. End with a brief relevant follow-up suggestion when appropriate
 10. Be warm and professional, like a helpful financial advisor
 
-Respond directly to the user (no quotes or "Response:" prefix):`;
+CRITICAL: Respond with ONLY plain text. Do NOT wrap your response in JSON, quotes, or any object format like {"response": "..."}. Just write the message directly as plain text.`;
 
-      const response = await llmClient.complete(prompt);
-      return response.trim();
+      let response = await llmClient.complete(prompt);
+      response = response.trim();
+
+      // Safeguard: If LLM returned JSON despite instructions, extract the text
+      if (response.startsWith('{') && response.includes('"response"')) {
+        try {
+          const parsed = JSON.parse(response);
+          if (parsed.response) {
+            response = parsed.response;
+          }
+        } catch {
+          // Not valid JSON, use as-is
+        }
+      }
+
+      return response;
     } catch (error) {
       console.error('[Chat] LLM response generation failed:', error);
       // Fallback to template-based response
