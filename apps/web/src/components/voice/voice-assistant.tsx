@@ -155,33 +155,43 @@ export function VoiceAssistant({
     [workspaceId, conversationId, onTranscript, onResponse]
   );
 
-  // Speak response using browser TTS (instant) or ElevenLabs (high quality)
+  // Speak response using ElevenLabs
   const speakResponse = useCallback(async (text: string) => {
     setState('speaking');
 
-    // Use browser TTS for instant response
-    const utterance = new SpeechSynthesisUtterance(text);
+    try {
+      const response = await fetch('/api/voice/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
 
-    // Try to find a good English voice
-    const voices = speechSynthesis.getVoices();
-    const preferredVoice = voices.find(
-      (v) =>
-        v.lang.startsWith('en') &&
-        (v.name.includes('Samantha') || // macOS
-          v.name.includes('Google') || // Chrome
-          v.name.includes('Microsoft') || // Edge
-          v.name.includes('Female'))
-    );
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+      if (!response.ok) {
+        // Fallback to browser TTS
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = () => setState('idle');
+        speechSynthesis.speak(utterance);
+        return;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.onended = () => {
+          setState('idle');
+          URL.revokeObjectURL(audioUrl);
+        };
+        await audioRef.current.play();
+      }
+    } catch (err) {
+      console.error('TTS error:', err);
+      // Fallback to browser TTS
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = () => setState('idle');
+      speechSynthesis.speak(utterance);
     }
-
-    utterance.rate = 1.1; // Slightly faster
-    utterance.pitch = 1.0;
-    utterance.onend = () => setState('idle');
-    utterance.onerror = () => setState('idle');
-
-    speechSynthesis.speak(utterance);
   }, []);
 
   // Start listening
