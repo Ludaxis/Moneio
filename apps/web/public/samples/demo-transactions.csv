@@ -1,0 +1,101 @@
+Date,Description,Amount,Currency,Category,Counterparty,Reference,Balance
+2025-01-02,Monthly Salary,8500.00,EUR,Income,TechCorp Inc,SAL-2025-001,8500.00
+2025-01-03,Office Rent,-2200.00,EUR,Rent,WeWork Amsterdam,RENT-JAN-25,6300.00
+2025-01-03,AWS Cloud Services,-487.32,EUR,Software & Hosting,Amazon Web Services,AWS-INV-98234,5812.68
+2025-01-04,Google Workspace,-14.40,EUR,Software & Hosting,Google LLC,GWS-2025-01,5798.28
+2025-01-04,Figma Subscription,-15.00,EUR,Software & Hosting,Figma Inc,FIG-PRO-2025,5783.28
+2025-01-05,Client Payment - Website,3500.00,EUR,Income,Acme Corp,INV-2024-089,9283.28
+2025-01-05,Notion Team Plan,-96.00,EUR,Software & Hosting,Notion Labs,NOT-TEAM-01,9187.28
+2025-01-06,Coffee Meeting,-24.50,EUR,Meals & Entertainment,Starbucks,POS-8847234,9162.78
+2025-01-06,LinkedIn Premium,-29.99,EUR,Marketing,LinkedIn Corp,LI-PREM-2025,9132.79
+2025-01-07,Electricity Bill,-156.78,EUR,Utilities,Vattenfall,ELEC-2025-01,8976.01
+2025-01-07,Internet Service,-59.99,EUR,Utilities,KPN Business,KPN-BUS-JAN,8916.02
+2025-01-08,Slack Business,-12.50,EUR,Software & Hosting,Slack Technologies,SLK-BUS-01,8903.52
+2025-01-08,Office Supplies,-89.45,EUR,Office Expenses,Staples,STP-ORD-7823,8814.07
+2025-01-09,GitHub Team,-21.00,EUR,Software & Hosting,GitHub Inc,GH-TEAM-2025,8793.07
+2025-01-09,Business Lunch,-67.80,EUR,Meals & Entertainment,Restaurant De Kas,POS-9923847,8725.27
+2025-01-10,Client Payment - Consulting,2800.00,EUR,Income,StartupXYZ,INV-2024-092,11525.27
+2025-01-10,Zoom Pro,-15.99,EUR,Software & Hosting,Zoom Video,ZM-PRO-JAN,11509.28
+2025-01-11,OpenAI API,-124.56,EUR,Software & Hosting,OpenAI,OAI-API-2025,11384.72
+2025-01-11,Train Ticket Amsterdam-Rotterdam,-23.40,EUR,Travel,NS Dutch Railways,NS-TKT-98234,11361.32
+2025-01-12,Dropbox Business,-12.99,EUR,Software & Hosting,Dropbox Inc,DBX-BUS-01,11348.33
+2025-01-12,Team Dinner,-234.50,EUR,Meals & Entertainment,Brasserie Harkema,POS-1123847,11113.83
+2025-01-13,Adobe Creative Cloud,-59.99,EUR,Software & Hosting,Adobe Inc,ADO-CC-2025,11053.84
+2025-01-13,Phone Bill,-45.00,EUR,Utilities,T-Mobile Business,TMO-BUS-JAN,11008.84
+2025-01-14,Anthropic API,-89.23,EUR,Software & Hosting,Anthropic,ANT-API-2025,10919.61
+2025-01-14,Taxi to Client,-32.50,EUR,Travel,Uber,UBR-8847234,10887.11
+2025-01-15,VAT Payment,-1850.00,EUR,Taxes,Belastingdienst,VAT-Q4-2024,9037.11
+2025-01-15,Vercel Pro,-20.00,EUR,Software & Hosting,Vercel Inc,VRC-PRO-01,9017.11
+2025-01-16,Client Payment - App Development,5200.00,EUR,Income,FinTech Solutions,INV-2025-001,14217.11
+2025-01-16,1Password Business,-7.99,EUR,Software & Hosting,1Password,1PW-BUS-JAN,14209.12
+2025-01-17,Accounting Software,-35.00,EUR,Software & Hosting,Exact Online,EXO-PRO-2025,14174.12
+2025-01-17,Coffee Beans Office,-42.30,EUR,Office Expenses,Moyee Coffee,MOY-ORD-234,14131.82
+2025-01-18,Stripe Fees,-156.78,EUR,Bank Fees,Stripe,STR-FEE-JAN,13975.04
+2025-01-18,Domain Renewals,-89.99,EUR,Software & Hosting,Cloudflare,CF-DOM-2025,13885.05
+2025-01-19,Health Insurance,-245.00,EUR,Insurance,CZ Zorgverzekering,CZ-PREM-JAN,13640.05
+2025-01-19,Gym Membership,-49.99,EUR,Health & Wellness,Basic-Fit,BF-MEM-JAN,13590.06
+2025-01-20,Freelancer Payment,-1200.00,EUR,Contractors,Maria Designer,FRL-PAY-001,12390.06
+2025-01-20,Miro Team,-10.00,EUR,Software & Hosting,Miro,MIR-TEAM-01,12380.06
+2025-01-21,Client Payment - Maintenance,950.00,EUR,Income,E-Commerce BV,INV-2025-003,13330.06
+2025-01-21,Grammarly Business,-15.00,EUR,Software & Hosting,Grammarly Inc,GRM-BUS-01,13315.06
+2025-01-22,Legal Consultation,-350.00,EUR,Professional Services,Baker McKenzie,LEG-CON-001,12965.06
+2025-01-22,Postage & Shipping,-28.45,EUR,Office Expenses,PostNL,PNL-SHP-9823,12936.61
+2025-01-23,Calendly Pro,-12.00,EUR,Software & Hosting,Calendly,CAL-PRO-JAN,12924.61
+2025-01-23,Client Lunch,-89.00,EUR,Meals & Entertainment,Ron Gastrobar,POS-2234567,12835.61
+2025-01-24,Heroku Hosting,-50.00,EUR,Software & Hosting,Salesforce,HRK-DYN-JAN,12785.61
+2025-01-24,Uber Rides,-67.80,EUR,Travel,Uber,UBR-MULTI-01,12717.81
+2025-01-25,Monthly Salary,8500.00,EUR,Income,TechCorp Inc,SAL-2025-002,21217.81
+2025-01-25,Pension Contribution,-425.00,EUR,Insurance,ABN AMRO Pension,PEN-CON-JAN,20792.81
+2025-01-26,HubSpot CRM,-45.00,EUR,Software & Hosting,HubSpot,HS-CRM-JAN,20747.81
+2025-01-26,Business Cards,-75.00,EUR,Marketing,Vistaprint,VP-ORD-2345,20672.81
+2025-01-27,Mailchimp,-29.99,EUR,Marketing,Mailchimp,MC-PRO-JAN,20642.82
+2025-01-27,Co-working Day Pass,-35.00,EUR,Office Expenses,Spaces,SPC-DAY-001,20607.82
+2025-01-28,Client Payment - SEO Audit,1800.00,EUR,Income,Marketing Agency,INV-2025-005,22407.82
+2025-01-28,Sentry Error Tracking,-26.00,EUR,Software & Hosting,Sentry,SNT-TEAM-01,22381.82
+2025-01-29,Water Bill,-34.56,EUR,Utilities,Waternet,WAT-2025-01,22347.26
+2025-01-29,Canva Pro,-12.99,EUR,Software & Hosting,Canva,CNV-PRO-JAN,22334.27
+2025-01-30,Equipment Purchase,-899.00,EUR,Equipment,Apple Store,APL-MBP-001,21435.27
+2025-01-30,AppleCare+,-12.49,EUR,Insurance,Apple Inc,APC-PLUS-01,21422.78
+2025-01-31,Bank Service Fee,-9.95,EUR,Bank Fees,ABN AMRO,ABN-FEE-JAN,21412.83
+2025-01-31,Interest Received,12.34,EUR,Income,ABN AMRO,INT-2025-01,21425.17
+2025-02-01,Office Rent,-2200.00,EUR,Rent,WeWork Amsterdam,RENT-FEB-25,19225.17
+2025-02-01,AWS Cloud Services,-512.45,EUR,Software & Hosting,Amazon Web Services,AWS-INV-98567,18712.72
+2025-02-02,Google Workspace,-14.40,EUR,Software & Hosting,Google LLC,GWS-2025-02,18698.32
+2025-02-02,Figma Subscription,-15.00,EUR,Software & Hosting,Figma Inc,FIG-PRO-2025-02,18683.32
+2025-02-03,Client Payment - Branding,4200.00,EUR,Income,Fashion Startup,INV-2025-007,22883.32
+2025-02-03,Notion Team Plan,-96.00,EUR,Software & Hosting,Notion Labs,NOT-TEAM-02,22787.32
+2025-02-04,LinkedIn Ads,-250.00,EUR,Marketing,LinkedIn Corp,LI-ADS-FEB,22537.32
+2025-02-04,Google Ads,-180.00,EUR,Marketing,Google LLC,GADS-FEB-25,22357.32
+2025-02-05,Electricity Bill,-162.34,EUR,Utilities,Vattenfall,ELEC-2025-02,22194.98
+2025-02-05,Internet Service,-59.99,EUR,Utilities,KPN Business,KPN-BUS-FEB,22134.99
+2025-02-06,Slack Business,-12.50,EUR,Software & Hosting,Slack Technologies,SLK-BUS-02,22122.49
+2025-02-06,Standing Desk,-549.00,EUR,Equipment,IKEA Business,IKEA-ORD-789,21573.49
+2025-02-07,GitHub Team,-21.00,EUR,Software & Hosting,GitHub Inc,GH-TEAM-FEB,21552.49
+2025-02-07,Client Dinner,-156.00,EUR,Meals & Entertainment,Ciel Bleu,POS-3345678,21396.49
+2025-02-08,Monthly Salary,8500.00,EUR,Income,TechCorp Inc,SAL-2025-003,29896.49
+2025-02-08,Zoom Pro,-15.99,EUR,Software & Hosting,Zoom Video,ZM-PRO-FEB,29880.50
+2025-02-09,OpenAI API,-198.34,EUR,Software & Hosting,OpenAI,OAI-API-FEB,29682.16
+2025-02-09,Flight Amsterdam-London,-234.00,EUR,Travel,KLM,KLM-TKT-2345,29448.16
+2025-02-10,Hotel London,-189.00,EUR,Travel,Premier Inn,HTL-LON-001,29259.16
+2025-02-10,Dropbox Business,-12.99,EUR,Software & Hosting,Dropbox Inc,DBX-BUS-02,29246.17
+2025-02-11,Adobe Creative Cloud,-59.99,EUR,Software & Hosting,Adobe Inc,ADO-CC-FEB,29186.18
+2025-02-11,Phone Bill,-45.00,EUR,Utilities,T-Mobile Business,TMO-BUS-FEB,29141.18
+2025-02-12,Client Payment - Workshop,2500.00,EUR,Income,Corporate Training,INV-2025-009,31641.18
+2025-02-12,Anthropic API,-156.78,EUR,Software & Hosting,Anthropic,ANT-API-FEB,31484.40
+2025-02-13,Conference Ticket,-450.00,EUR,Professional Development,Web Summit,WS-TKT-2025,31034.40
+2025-02-13,Vercel Pro,-20.00,EUR,Software & Hosting,Vercel Inc,VRC-PRO-02,31014.40
+2025-02-14,1Password Business,-7.99,EUR,Software & Hosting,1Password,1PW-BUS-FEB,31006.41
+2025-02-14,Valentine Flowers Office,-65.00,EUR,Office Expenses,Bloomon,BLM-ORD-234,30941.41
+2025-02-15,Stripe Fees,-189.23,EUR,Bank Fees,Stripe,STR-FEE-FEB,30752.18
+2025-02-15,SSL Certificate,-79.00,EUR,Software & Hosting,DigiCert,DGC-SSL-2025,30673.18
+2025-02-16,Health Insurance,-245.00,EUR,Insurance,CZ Zorgverzekering,CZ-PREM-FEB,30428.18
+2025-02-16,Gym Membership,-49.99,EUR,Health & Wellness,Basic-Fit,BF-MEM-FEB,30378.19
+2025-02-17,Freelancer Payment,-1500.00,EUR,Contractors,John Developer,FRL-PAY-002,28878.19
+2025-02-17,Miro Team,-10.00,EUR,Software & Hosting,Miro,MIR-TEAM-02,28868.19
+2025-02-18,Client Payment - Mobile App,6500.00,EUR,Income,Healthcare Startup,INV-2025-011,35368.19
+2025-02-18,Grammarly Business,-15.00,EUR,Software & Hosting,Grammarly Inc,GRM-BUS-02,35353.19
+2025-02-19,Tax Advisor,-500.00,EUR,Professional Services,Deloitte,TAX-CON-2025,34853.19
+2025-02-19,Printer Ink,-67.89,EUR,Office Expenses,MediaMarkt,MM-ORD-5678,34785.30
+2025-02-20,Calendly Pro,-12.00,EUR,Software & Hosting,Calendly,CAL-PRO-FEB,34773.30
+2025-02-20,Team Building Event,-345.00,EUR,Meals & Entertainment,Escape Room,ESC-GRP-001,34428.30
+2025-02-21,Heroku Hosting,-50.00,EUR,Software & Hosting,Salesforce,HRK-DYN-FEB,34378.30
