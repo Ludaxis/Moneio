@@ -305,7 +305,19 @@ function mappingFromNormalized(
 }
 
 function parseCsv(text: string): { headers: string[]; rows: ParsedRow[] } {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  // Remove BOM (Byte Order Mark) if present - common in Excel exports
+  let cleanText = text;
+  if (cleanText.charCodeAt(0) === 0xfeff) {
+    cleanText = cleanText.slice(1);
+  }
+  // Also handle UTF-8 BOM that appears as characters
+  if (cleanText.startsWith('\ufeff')) {
+    cleanText = cleanText.slice(1);
+  }
+  // Handle common BOM byte sequences that might appear as garbage characters
+  cleanText = cleanText.replace(/^\xef\xbb\xbf/, '');
+
+  const lines = cleanText.split(/\r?\n/).filter((line) => line.trim().length > 0);
   if (lines.length < 2) {
     return { headers: [], rows: [] };
   }
