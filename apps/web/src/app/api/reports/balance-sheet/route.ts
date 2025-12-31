@@ -103,7 +103,11 @@ export async function GET(request: Request) {
 
     // If no GL accounts, return empty Balance Sheet
     if (glAccountCount === 0) {
-      const emptyMoney = { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) };
+      const emptyMoney = {
+        amount: 0,
+        currency: baseCurrency,
+        formatted: formatCurrency(0, baseCurrency),
+      };
       const emptySection = {
         name: '',
         key: '',
@@ -136,7 +140,8 @@ export async function GET(request: Request) {
           quickRatio: 0,
           debtToEquity: 0,
         },
-        _notice: 'No GL accounts configured. Set up your Chart of Accounts to generate Balance Sheet reports.',
+        _notice:
+          'No GL accounts configured. Set up your Chart of Accounts to generate Balance Sheet reports.',
       });
     }
 

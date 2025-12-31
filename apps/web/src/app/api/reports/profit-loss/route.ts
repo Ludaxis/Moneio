@@ -136,17 +136,34 @@ export async function GET(request: Request) {
         sections: {
           revenue: { ...emptySection, name: 'Revenue', key: 'revenue' },
           costOfGoodsSold: { ...emptySection, name: 'Cost of Goods Sold', key: 'cogs' },
-          operatingExpenses: { ...emptySection, name: 'Operating Expenses', key: 'operatingExpenses' },
+          operatingExpenses: {
+            ...emptySection,
+            name: 'Operating Expenses',
+            key: 'operatingExpenses',
+          },
           otherIncome: { ...emptySection, name: 'Other Income', key: 'otherIncome' },
           otherExpenses: { ...emptySection, name: 'Other Expenses', key: 'otherExpenses' },
         },
         summaries: {
-          grossProfit: { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) },
-          operatingIncome: { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) },
-          netIncome: { amount: 0, currency: baseCurrency, formatted: formatCurrency(0, baseCurrency) },
+          grossProfit: {
+            amount: 0,
+            currency: baseCurrency,
+            formatted: formatCurrency(0, baseCurrency),
+          },
+          operatingIncome: {
+            amount: 0,
+            currency: baseCurrency,
+            formatted: formatCurrency(0, baseCurrency),
+          },
+          netIncome: {
+            amount: 0,
+            currency: baseCurrency,
+            formatted: formatCurrency(0, baseCurrency),
+          },
         },
         monthlyBreakdown: [],
-        _notice: 'No GL accounts configured. Set up your Chart of Accounts to generate P&L reports.',
+        _notice:
+          'No GL accounts configured. Set up your Chart of Accounts to generate P&L reports.',
       });
     }
 

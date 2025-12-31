@@ -39,7 +39,14 @@ import {
 
 import { useWorkspace } from '@/lib/workspace';
 
-type ReportTab = 'cashflow' | 'profit-loss' | 'balance-sheet' | 'forecast' | 'aged-ar' | 'vat' | 'general-ledger';
+type ReportTab =
+  | 'cashflow'
+  | 'profit-loss'
+  | 'balance-sheet'
+  | 'forecast'
+  | 'aged-ar'
+  | 'vat'
+  | 'general-ledger';
 
 interface HealthScore {
   overallScore: number;
@@ -317,7 +324,9 @@ export default function ReportsPage() {
   const [profitLossReport, setProfitLossReport] = useState<ProfitLossReport | null>(null);
   const [balanceSheetReport, setBalanceSheetReport] = useState<BalanceSheetReport | null>(null);
   const [forecastReport, setForecastReport] = useState<ForecastReport | null>(null);
-  const [agedReceivablesReport, setAgedReceivablesReport] = useState<AgedReceivablesReport | null>(null);
+  const [agedReceivablesReport, setAgedReceivablesReport] = useState<AgedReceivablesReport | null>(
+    null
+  );
   const [vatReport, setVatReport] = useState<VatReport | null>(null);
   const [generalLedgerReport, setGeneralLedgerReport] = useState<GeneralLedgerReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -512,7 +521,16 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, fetchCashflow, fetchProfitLoss, fetchBalanceSheet, fetchForecast, fetchAgedReceivables, fetchVat, fetchGeneralLedger]);
+  }, [
+    activeTab,
+    fetchCashflow,
+    fetchProfitLoss,
+    fetchBalanceSheet,
+    fetchForecast,
+    fetchAgedReceivables,
+    fetchVat,
+    fetchGeneralLedger,
+  ]);
 
   useEffect(() => {
     if (workspaceId) {
@@ -1341,7 +1359,8 @@ function ForecastReportView({
           </div>
           <p className="mt-1 text-sm text-warning-600">
             Based on current trends, your balance could go negative in{' '}
-            {report.summary.monthsUntilNegative} month{report.summary.monthsUntilNegative > 1 ? 's' : ''}.
+            {report.summary.monthsUntilNegative} month
+            {report.summary.monthsUntilNegative > 1 ? 's' : ''}.
           </p>
         </div>
       )}
@@ -1389,7 +1408,9 @@ function ForecastReportView({
                 <th className="px-4 py-2 text-right font-medium text-muted-foreground">Expenses</th>
                 <th className="px-4 py-2 text-right font-medium text-muted-foreground">Net</th>
                 <th className="px-4 py-2 text-right font-medium text-muted-foreground">Balance</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Confidence</th>
+                <th className="px-4 py-2 text-right font-medium text-muted-foreground">
+                  Confidence
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -1511,7 +1532,9 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
         <div
           className={cn(
             'rounded-lg border p-4',
-            report.totalOverdue.amount > 0 ? 'border-danger-200 bg-danger-50' : 'border-border bg-card'
+            report.totalOverdue.amount > 0
+              ? 'border-danger-200 bg-danger-50'
+              : 'border-border bg-card'
           )}
         >
           <p
@@ -1634,7 +1657,9 @@ function VatReportView({ report }: { report: VatReport }) {
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-success-200 bg-success-50 p-4">
           <p className="text-sm text-success-700">VAT Collected (Output)</p>
-          <p className="mt-1 text-2xl font-bold text-success-700">{report.vatCollected.formatted}</p>
+          <p className="mt-1 text-2xl font-bold text-success-700">
+            {report.vatCollected.formatted}
+          </p>
         </div>
         <div className="rounded-lg border border-danger-200 bg-danger-50 p-4">
           <p className="text-sm text-danger-700">VAT Paid (Input)</p>
@@ -1649,10 +1674,7 @@ function VatReportView({ report }: { report: VatReport }) {
           )}
         >
           <p
-            className={cn(
-              'text-sm',
-              report.netVat.isRefund ? 'text-success-700' : 'text-primary'
-            )}
+            className={cn('text-sm', report.netVat.isRefund ? 'text-success-700' : 'text-primary')}
           >
             {report.netVat.isRefund ? 'VAT Refund Due' : 'VAT Payable'}
           </p>
@@ -1694,7 +1716,9 @@ function VatReportView({ report }: { report: VatReport }) {
                       <td className="px-4 py-2 text-right text-success-600">
                         {rate.collected.formatted}
                       </td>
-                      <td className="px-4 py-2 text-right text-danger-600">{rate.paid.formatted}</td>
+                      <td className="px-4 py-2 text-right text-danger-600">
+                        {rate.paid.formatted}
+                      </td>
                       <td
                         className={cn(
                           'px-4 py-2 text-right font-medium',
@@ -1862,7 +1886,9 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                       {account.accountCode}
                     </span>
                     <span className="font-medium text-foreground">{account.accountName}</span>
-                    <span className={cn('rounded px-2 py-0.5 text-xs', typeColor.bg, typeColor.text)}>
+                    <span
+                      className={cn('rounded px-2 py-0.5 text-xs', typeColor.bg, typeColor.text)}
+                    >
                       {account.accountType}
                     </span>
                   </div>
@@ -1879,9 +1905,7 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                         {account.closingBalance.formatted}
                       </span>
                     </div>
-                    <span className="text-muted-foreground">
-                      {account.entries.length} entries
-                    </span>
+                    <span className="text-muted-foreground">{account.entries.length} entries</span>
                   </div>
                 </button>
 
