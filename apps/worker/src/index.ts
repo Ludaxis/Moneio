@@ -5,6 +5,11 @@
  * AI categorization, and FX rate fetching.
  */
 
+// IMPORTANT: Initialize Datadog first, before any other imports
+// This ensures proper instrumentation of all LLM calls
+// eslint-disable-next-line import/order, import/no-duplicates
+import './lib/datadog';
+
 import { Worker } from 'bullmq';
 
 import {
@@ -18,6 +23,8 @@ import {
   handleSendNotification,
   handleSendWeeklyDigest,
 } from './handlers';
+// eslint-disable-next-line import/no-duplicates
+import { flushMetrics, getLlmMetricsSummary } from './lib/datadog';
 import { logger } from './lib/logger';
 import { attachMonitoring, getMetrics, isHealthy } from './lib/monitoring';
 import { QUEUE_NAMES, getQueues, closeQueues } from './lib/queues';
@@ -112,11 +119,15 @@ const fxFetchWorker = new Worker(QUEUE_NAMES.FX_FETCH, handleFxFetch, {
 workers.push(fxFetchWorker);
 
 // INSIGHT_GENERATION Worker
-const insightGenerationWorker = new Worker(QUEUE_NAMES.INSIGHT_GENERATION, handleInsightGeneration, {
-  connection,
-  concurrency: config.concurrency.insightGeneration,
-  ...workerSettings,
-});
+const insightGenerationWorker = new Worker(
+  QUEUE_NAMES.INSIGHT_GENERATION,
+  handleInsightGeneration,
+  {
+    connection,
+    concurrency: config.concurrency.insightGeneration,
+    ...workerSettings,
+  }
+);
 workers.push(insightGenerationWorker);
 
 // SEND_NOTIFICATION Worker
@@ -194,6 +205,13 @@ async function shutdown(signal: string) {
   const finalMetrics = getMetrics();
   logger.info({ metrics: finalMetrics }, 'Final worker metrics');
 
+  // Flush LLM observability metrics to Datadog
+  const llmMetrics = getLlmMetricsSummary();
+  if (llmMetrics) {
+    logger.info({ llmMetrics }, 'Final LLM metrics');
+  }
+  flushMetrics();
+
   // Close workers
   await Promise.all(workers.map((w) => w.close()));
   logger.info('Workers closed');
@@ -222,12 +240,21 @@ const METRICS_LOG_INTERVAL = 5 * 60 * 1000; // 5 minutes
 setInterval(() => {
   const metrics = getMetrics();
   const health = isHealthy();
+  const llmMetrics = getLlmMetricsSummary();
 
   logger.info(
     {
       uptime: Math.round(metrics.uptime / 1000),
       healthy: health.healthy,
       queues: metrics.queues,
+      llm: llmMetrics
+        ? {
+            totalCalls: llmMetrics.totalCalls,
+            errorRate: llmMetrics.errorRate,
+            avgDuration: Math.round(llmMetrics.avgDuration),
+            totalCost: llmMetrics.totalCost.toFixed(4),
+          }
+        : undefined,
     },
     'Worker metrics'
   );
@@ -264,6 +291,11 @@ console.log(`  • FX_FETCH           (concurrency: ${config.concurrency.fxFetch
 console.log(`  • INSIGHT_GENERATION (concurrency: ${config.concurrency.insightGeneration})`);
 console.log(`  • SEND_NOTIFICATION  (concurrency: ${config.concurrency.sendNotification})`);
 console.log(`  • SEND_WEEKLY_DIGEST (concurrency: ${config.concurrency.sendWeeklyDigest})`);
+console.log('');
+console.log('Observability:');
+console.log(
+  `  • Datadog LLM Observability: ${process.env.DD_ENABLED === 'true' ? 'ENABLED' : 'disabled'}`
+);
 console.log('');
 console.log('Press Ctrl+C to stop');
 console.log('');

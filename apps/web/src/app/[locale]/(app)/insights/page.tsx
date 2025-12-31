@@ -228,9 +228,7 @@ export default function InsightsPage() {
       setInsights((prev) =>
         prev.map((i) => (i.id === insightId ? { ...i, readAt: new Date().toISOString() } : i))
       );
-      setSummary((prev) =>
-        prev ? { ...prev, unread: Math.max(0, prev.unread - 1) } : prev
-      );
+      setSummary((prev) => (prev ? { ...prev, unread: Math.max(0, prev.unread - 1) } : prev));
     } catch (err) {
       console.error('Failed to mark as read:', err);
     }
@@ -600,9 +598,7 @@ export default function InsightsPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium text-foreground">{insight.title}</h3>
-                          {isUnread && (
-                            <span className="h-2 w-2 rounded-full bg-primary" />
-                          )}
+                          {isUnread && <span className="h-2 w-2 rounded-full bg-primary" />}
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">{insight.message}</p>
                       </div>
@@ -636,10 +632,7 @@ export default function InsightsPage() {
                       {insight.actionUrl && (
                         <>
                           <span>•</span>
-                          <a
-                            href={insight.actionUrl}
-                            className="text-primary hover:underline"
-                          >
+                          <a href={insight.actionUrl} className="text-primary hover:underline">
                             {insight.actionLabel || 'View details'}
                           </a>
                         </>

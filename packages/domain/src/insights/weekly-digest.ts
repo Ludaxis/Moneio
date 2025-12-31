@@ -134,10 +134,18 @@ export function generateWeeklyDigest(input: WeeklyDigestInput): WeeklyDigest {
   const topMerchants = calculateTopMerchants(weekTransactions);
 
   // Generate highlights
-  const highlights = generateHighlights(summary, topCategories, topMerchants, subscriptions, currency);
+  const highlights = generateHighlights(
+    summary,
+    topCategories,
+    topMerchants,
+    subscriptions,
+    currency
+  );
 
   // Filter relevant insights (this week only)
-  const weekInsights = insights.filter((insight) => insight.createdAt >= startDate && insight.createdAt <= endDate);
+  const weekInsights = insights.filter(
+    (insight) => insight.createdAt >= startDate && insight.createdAt <= endDate
+  );
 
   // Generate action items
   const actionItems = generateActionItems(weekInsights, subscriptions, summary);
@@ -207,7 +215,8 @@ function calculateSummary(
 
     netChange =
       previousWeekData.netCashflow !== 0
-        ? ((netCashflow - previousWeekData.netCashflow) / Math.abs(previousWeekData.netCashflow)) * 100
+        ? ((netCashflow - previousWeekData.netCashflow) / Math.abs(previousWeekData.netCashflow)) *
+          100
         : netCashflow !== 0
           ? 100
           : 0;
@@ -253,9 +262,7 @@ function determineCurrency(transactions: TransactionInput[]): string {
 /**
  * Calculate top spending categories
  */
-function calculateTopCategories(
-  transactions: TransactionInput[]
-): WeeklyDigest['topCategories'] {
+function calculateTopCategories(transactions: TransactionInput[]): WeeklyDigest['topCategories'] {
   const categoryData = new Map<string, { amount: number; count: number }>();
 
   let totalExpenses = 0;
@@ -290,9 +297,7 @@ function calculateTopCategories(
 /**
  * Calculate top merchants
  */
-function calculateTopMerchants(
-  transactions: TransactionInput[]
-): WeeklyDigest['topMerchants'] {
+function calculateTopMerchants(transactions: TransactionInput[]): WeeklyDigest['topMerchants'] {
   const merchantData = new Map<string, { amount: number; count: number }>();
 
   for (const tx of transactions) {
@@ -478,7 +483,9 @@ function generateSubscriptionsSummary(
   return {
     activeCount: activeSubscriptions.length,
     monthlyTotal: Math.round(monthlyTotal * 100) / 100,
-    upcomingCharges: upcomingCharges.sort((a, b) => a.expectedDate.getTime() - b.expectedDate.getTime()),
+    upcomingCharges: upcomingCharges.sort(
+      (a, b) => a.expectedDate.getTime() - b.expectedDate.getTime()
+    ),
   };
 }
 

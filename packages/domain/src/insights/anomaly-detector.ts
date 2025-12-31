@@ -105,7 +105,10 @@ export function detectAnomalies(input: AnomalyDetectionInput): AnomalyDetectionR
   }
 
   // Group transactions by month
-  const { monthlyData, periodAnalyzed, currency } = groupByMonth(transactions, config.lookbackPeriod);
+  const { monthlyData, periodAnalyzed, currency } = groupByMonth(
+    transactions,
+    config.lookbackPeriod
+  );
   const monthCount = Object.keys(monthlyData).length;
 
   // Determine data quality
@@ -232,9 +235,13 @@ function calculateStatistics(monthlyData: Record<string, MonthlyData>): Statisti
   const spendingValues = Object.values(monthlyData).map((m) => m.spending);
   const incomeValues = Object.values(monthlyData).map((m) => m.income);
 
-  const avgSpending = spendingValues.length > 0 ? spendingValues.reduce((a, b) => a + b, 0) / spendingValues.length : 0;
+  const avgSpending =
+    spendingValues.length > 0
+      ? spendingValues.reduce((a, b) => a + b, 0) / spendingValues.length
+      : 0;
 
-  const avgIncome = incomeValues.length > 0 ? incomeValues.reduce((a, b) => a + b, 0) / incomeValues.length : 0;
+  const avgIncome =
+    incomeValues.length > 0 ? incomeValues.reduce((a, b) => a + b, 0) / incomeValues.length : 0;
 
   const spendingStdDev = calculateStdDev(spendingValues, avgSpending);
   const incomeStdDev = calculateStdDev(incomeValues, avgIncome);
@@ -285,7 +292,10 @@ function detectSpendingAnomalies(
     const deviation = (data.spending - stats.avgSpending) / stats.spendingStdDev;
     const deviationPercent = ((data.spending - stats.avgSpending) / stats.avgSpending) * 100;
 
-    if (Math.abs(deviation) >= config.spendingThreshold && Math.abs(deviationPercent) >= config.minPercentageChange) {
+    if (
+      Math.abs(deviation) >= config.spendingThreshold &&
+      Math.abs(deviationPercent) >= config.minPercentageChange
+    ) {
       const severity = getSeverity(Math.abs(deviation));
       const direction = deviation > 0 ? 'above' : 'below';
 
@@ -325,7 +335,10 @@ function detectIncomeAnomalies(
     const deviation = (data.income - stats.avgIncome) / stats.incomeStdDev;
     const deviationPercent = ((data.income - stats.avgIncome) / stats.avgIncome) * 100;
 
-    if (Math.abs(deviation) >= config.incomeThreshold && Math.abs(deviationPercent) >= config.minPercentageChange) {
+    if (
+      Math.abs(deviation) >= config.incomeThreshold &&
+      Math.abs(deviationPercent) >= config.minPercentageChange
+    ) {
       const severity = getSeverity(Math.abs(deviation));
       const direction = deviation > 0 ? 'above' : 'below';
 
@@ -383,7 +396,12 @@ function detectCategoryAnomalies(
     if (!categoryData.has(monthKey)) {
       const monthStart = new Date(tx.postedAt.getFullYear(), tx.postedAt.getMonth(), 1);
       const monthEnd = new Date(tx.postedAt.getFullYear(), tx.postedAt.getMonth() + 1, 0);
-      categoryData.set(monthKey, { amount: 0, transactionIds: [], start: monthStart, end: monthEnd });
+      categoryData.set(monthKey, {
+        amount: 0,
+        transactionIds: [],
+        start: monthStart,
+        end: monthEnd,
+      });
     }
 
     const monthData = categoryData.get(monthKey)!;
@@ -443,7 +461,10 @@ function detectMerchantAnomalies(
   const anomalies: Anomaly[] = [];
 
   // Group by merchant
-  const merchantData = new Map<string, { amounts: number[]; transactionIds: string[]; dates: Date[] }>();
+  const merchantData = new Map<
+    string,
+    { amounts: number[]; transactionIds: string[]; dates: Date[] }
+  >();
 
   for (const tx of transactions) {
     if (!tx.description) continue;

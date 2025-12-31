@@ -30,7 +30,9 @@ export async function handleInsightGeneration(
 ): Promise<InsightGenerationResult> {
   const { workspaceId, triggeredBy } = job.data;
 
-  console.log(`[INSIGHT_GENERATION] Processing workspace ${workspaceId} (triggered by: ${triggeredBy})`);
+  console.log(
+    `[INSIGHT_GENERATION] Processing workspace ${workspaceId} (triggered by: ${triggeredBy})`
+  );
 
   try {
     await job.updateProgress(10);
@@ -160,7 +162,9 @@ export async function handleInsightGeneration(
 
     await job.updateProgress(100);
 
-    console.log(`[INSIGHT_GENERATION] Generated ${insightsToCreate.length} insights for workspace ${workspaceId}`);
+    console.log(
+      `[INSIGHT_GENERATION] Generated ${insightsToCreate.length} insights for workspace ${workspaceId}`
+    );
 
     return {
       success: true,

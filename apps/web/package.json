@@ -23,6 +23,7 @@
     "@moneio/db": "workspace:*",
     "@moneio/domain": "workspace:*",
     "@moneio/i18n": "workspace:*",
+    "@moneio/observability": "workspace:*",
     "@moneio/ui": "workspace:*",
     "@moneio/utils": "workspace:*",
     "@prisma/client": "^5.22.0",
