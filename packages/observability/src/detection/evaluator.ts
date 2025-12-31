@@ -78,10 +78,9 @@ export class DetectionRuleEvaluator {
       });
     }, intervalMs);
 
-    // Run initial evaluation
-    this.evaluateAllRules().catch((err) => {
-      console.error('[DetectionEvaluator] Initial evaluation error:', err);
-    });
+    // Skip initial evaluation at startup - wait for first interval
+    // This prevents false positives when there's no LLM activity yet
+    console.log('[DetectionEvaluator] Started - first evaluation in', intervalMs, 'ms');
   }
 
   /**
@@ -100,6 +99,13 @@ export class DetectionRuleEvaluator {
   async evaluateAllRules(): Promise<RuleEvaluationResult[]> {
     const metrics = this.metricsCollector.getAggregatedMetrics();
     const results: RuleEvaluationResult[] = [];
+
+    // Skip evaluation when there's no LLM activity yet
+    // This prevents false positives at startup
+    if (metrics.totalCalls === 0) {
+      console.log('[DetectionEvaluator] Skipping evaluation - no LLM calls recorded yet');
+      return results;
+    }
 
     for (const rule of this.rules) {
       const result = this.evaluateRule(rule, metrics);
