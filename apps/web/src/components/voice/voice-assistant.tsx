@@ -23,11 +23,18 @@ type ConversationStatus = 'idle' | 'connecting' | 'connected' | 'error';
  * - WebRTC connection for instant responses
  */
 export function VoiceAssistant({
-  workspaceId: _workspaceId,
+  workspaceId,
   onTranscript,
   onResponse,
   className,
 }: VoiceAssistantProps) {
+  const waitMessages = [
+    'Give me a moment while I look that up.',
+    'Let me check the numbers for you.',
+    'One sec—pulling your data now.',
+    'Hang tight, I am fetching that info.'
+  ];
+
   const [status, setStatus] = useState<ConversationStatus>('idle');
   const [lastTranscript, setLastTranscript] = useState('');
   const [lastResponse, setLastResponse] = useState('');
@@ -54,6 +61,10 @@ export function VoiceAssistant({
       if (message.source === 'user') {
         setLastTranscript(message.message);
         onTranscript?.(message.message);
+
+        // Show a quick acknowledgment while the agent searches
+        const waitMessage = waitMessages[Math.floor(Math.random() * waitMessages.length)];
+        setLastResponse(waitMessage);
       } else if (message.source === 'ai') {
         setLastResponse(message.message);
         onResponse?.(message.message);
@@ -112,23 +123,40 @@ export function VoiceAssistant({
     }
 
     try {
-      // Get agent ID from environment or use default
+      // Get agent ID from environment
       const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
 
       if (!agentId) {
         throw new Error('ElevenLabs agent ID not configured');
       }
 
+      // Get a signed MCP token (secure - verified server-side)
+      const tokenResponse = await fetch('/api/mcp/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to get MCP token');
+      }
+
+      const { token } = await tokenResponse.json();
+
       await conversation.startSession({
         agentId,
         connectionType: 'webrtc',
+        // Pass signed token - ElevenLabs forwards to MCP server
+        dynamicVariables: {
+          mcpToken: token,
+        },
       });
     } catch (err) {
       console.error('[Voice] Failed to start conversation:', err);
       setError(err instanceof Error ? err.message : 'Failed to connect');
       setStatus('error');
     }
-  }, [conversation, hasMicPermission, requestMicPermission]);
+  }, [conversation, hasMicPermission, requestMicPermission, workspaceId]);
 
   // End conversation
   const endConversation = useCallback(async () => {

@@ -1,4 +1,5 @@
 import { prisma } from '@moneio/db';
+import { verifyToken } from '../token/route';
 
 // MCP SSE endpoint for ElevenLabs
 // Implements Model Context Protocol over Server-Sent Events
@@ -411,16 +412,19 @@ async function handleMcpRequest(request: {
   }
 }
 
-// Get workspace ID from URL query param or header
+// Get workspace ID from signed token (secure)
 function getWorkspaceId(request: Request): string | null {
   const url = new URL(request.url);
-  // Check URL query param first
-  const fromQuery = url.searchParams.get('workspaceId');
-  if (fromQuery) return fromQuery;
 
-  // Check header
-  const fromHeader = request.headers.get('x-workspace-id');
-  if (fromHeader) return fromHeader;
+  // Check for signed token (secure method)
+  const token = url.searchParams.get('token') || request.headers.get('x-mcp-token');
+  if (token) {
+    const verified = verifyToken(token);
+    if (verified) {
+      return verified.workspaceId;
+    }
+    return null; // Invalid token
+  }
 
   return null;
 }
