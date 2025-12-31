@@ -62,18 +62,17 @@ export function VoiceAssistant({
       setError(typeof err === 'string' ? err : 'Connection error');
       setStatus('error');
     },
-    // Single powerful tool that queries the financial database via chat API
+    // Fast query tool - uses direct DB queries without LLM delay
     clientTools: {
-      // Query financial data - full database access through chat API
       queryFinancialData: async (params: { question: string }) => {
         console.log('[Voice Tool] queryFinancialData called with:', params.question);
         try {
-          const response = await fetch('/api/chat', {
+          const response = await fetch('/api/voice/query', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               workspaceId,
-              message: params.question,
+              question: params.question,
             }),
           });
 
@@ -82,17 +81,11 @@ export function VoiceAssistant({
           }
 
           const data = await response.json();
-          // Extract the response content
-          const answer =
-            typeof data.message === 'string'
-              ? data.message
-              : data.message?.content || 'No data found';
-
-          console.log('[Voice Tool] queryFinancialData response:', answer);
-          return answer;
+          console.log('[Voice Tool] queryFinancialData response:', data.answer);
+          return data.answer;
         } catch (err) {
           console.error('[Voice Tool] queryFinancialData error:', err);
-          return 'Sorry, I was unable to retrieve that financial information. Please try again.';
+          return 'Sorry, I was unable to retrieve that financial information.';
         }
       },
     },
