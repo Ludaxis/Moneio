@@ -3,13 +3,13 @@ import {
   HeuristicCategorizer,
   createLlmClient,
 } from '@moneio/ai';
+import { prisma } from '@moneio/db';
 import {
   AmountParser,
   createRowFilter,
   detectAmountConfig,
   getDefaultExclusionConfig,
 } from '@moneio/domain';
-import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -233,7 +233,7 @@ export async function POST(request: Request) {
     });
 
     // Step 5: Predict categories heuristically (non-blocking)
-    const predicted = await predictCategories(included, categories, workspace?.locale || 'en', baseCurrency);
+    const predicted = await predictCategories(included, categories, workspace?.locale || 'en', baseCurrency, workspaceId);
     const transactions = included.map((tx) => {
       const pred = predicted.get(tx.id);
       return pred
@@ -767,7 +767,8 @@ async function predictCategories(
   transactions: ParsedTransaction[],
   categories: Array<{ id: string; name: string }>,
   locale: string,
-  currency: string
+  currency: string,
+  wsId: string
 ): Promise<Map<string, { categoryId: string | null; categoryName: string | null; confidence: number }>> {
   const categorizer = new HeuristicCategorizer();
   const results = new Map<
@@ -793,8 +794,9 @@ async function predictCategories(
         bankTx as Parameters<typeof categorizer.categorizeTransaction>[0],
         categories as Parameters<typeof categorizer.categorizeTransaction>[1],
         {
-          workspaceId,
+          workspaceId: wsId,
           locale,
+          baseCurrency: currency,
           merchantNames: [],
         } as Parameters<typeof categorizer.categorizeTransaction>[2]
       );
