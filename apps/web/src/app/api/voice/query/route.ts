@@ -291,7 +291,24 @@ export async function POST(request: Request) {
       });
     }
 
-    if (q.includes('biggest') || q.includes('largest') || q.includes('top')) {
+    if (
+      q.includes('biggest') ||
+      q.includes('largest') ||
+      q.includes('top') ||
+      q.includes('most expensive') ||
+      q.includes('highest') ||
+      q.includes('expensive')
+    ) {
+      // Determine how many results to return
+      const wantsSingle =
+        q.includes('the most') ||
+        q.includes('the biggest') ||
+        q.includes('the largest') ||
+        q.includes('the highest') ||
+        q.includes('what is') ||
+        q.includes('what was');
+      const limit = wantsSingle ? 1 : 5;
+
       const transactions = await prisma.bankTransaction.findMany({
         where: {
           workspaceId,
@@ -303,9 +320,10 @@ export async function POST(request: Request) {
           merchantName: true,
           amount: true,
           currency: true,
+          postedAt: true,
         },
         orderBy: { amount: 'asc' },
-        take: 5,
+        take: limit,
       });
 
       if (transactions.length === 0) {
@@ -315,6 +333,15 @@ export async function POST(request: Request) {
       }
 
       const currency = transactions[0]?.currency || 'EUR';
+
+      if (wantsSingle && transactions.length > 0) {
+        const t = transactions[0];
+        const date = t.postedAt.toISOString().split('T')[0];
+        return NextResponse.json({
+          answer: `Your most expensive expense in ${periodLabel} was ${t.merchantName || t.description} for ${formatCurrency(Math.abs(Number(t.amount)), currency)} on ${date}.`,
+        });
+      }
+
       const list = transactions
         .map(
           (t) =>
