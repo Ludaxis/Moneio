@@ -9,6 +9,7 @@ This plan introduces Confluent Kafka for real-time data streaming while fixing c
 ## Current Issues Identified
 
 ### CSV Import Problems
+
 1. **No turnover/summary row detection** - "Opening Balance", "TOTAL", "Closing Balance" rows imported as transactions
 2. **No separate debit/credit column handling** - Can't process banks that use two amount columns
 3. **Hard-coded bank formats** - No configuration, patterns buried in code
@@ -16,6 +17,7 @@ This plan introduces Confluent Kafka for real-time data streaming while fixing c
 5. **Weak header detection** - Falls through layers but no learning from corrections
 
 ### Categorization Problems
+
 1. **Rules engine exists but NEVER applied** - Users create rules with no effect
 2. **OpenAI disabled** - Commented out, only Gemini works
 3. **Sequential processing** - No parallelization, slow for large imports
@@ -53,29 +55,31 @@ export interface BankFormat {
   country?: string;
   headerPatterns: HeaderPattern[];
   amountConfig: {
-    type: 'single' | 'split';  // split = separate debit/credit columns
+    type: 'single' | 'split'; // split = separate debit/credit columns
     debitPattern?: string;
     creditPattern?: string;
     signConvention?: 'negative-debit' | 'positive-debit';
   };
-  dateFormat: string;  // e.g., 'DD.MM.YYYY', 'YYYY-MM-DD'
-  excludePatterns: string[];  // Patterns to filter out (turnover rows)
+  dateFormat: string; // e.g., 'DD.MM.YYYY', 'YYYY-MM-DD'
+  excludePatterns: string[]; // Patterns to filter out (turnover rows)
   encoding?: string;
 }
 
 export interface HeaderPattern {
   field: 'date' | 'description' | 'amount' | 'debit' | 'credit' | 'balance' | 'reference';
-  patterns: string[];  // Regex patterns
+  patterns: string[]; // Regex patterns
   priority: number;
 }
 ```
 
 **New File:** `packages/domain/src/csv/bank-formats-registry.ts`
+
 - Load formats from JSON config file
 - Provide `detectBankFormat(headers: string[]): BankFormat | null`
 - Provide `getBankFormat(id: string): BankFormat`
 
 **New File:** `packages/domain/config/bank-formats.json`
+
 - Pre-configured formats for: Wise, SEB, Swedbank, LHV, Deutsche Bank, etc.
 - User can add custom formats via API
 
@@ -85,26 +89,39 @@ export interface HeaderPattern {
 
 ```typescript
 export interface RowFilterConfig {
-  excludePatterns: RegExp[];      // Description patterns to exclude
+  excludePatterns: RegExp[]; // Description patterns to exclude
   excludeIfMissingAmount: boolean;
   excludeIfZeroAmount: boolean;
-  turnoverKeywords: string[];     // "Opening", "Closing", "Total", "Balance"
-  summaryRowDetection: boolean;   // Detect rows that sum previous rows
+  turnoverKeywords: string[]; // "Opening", "Closing", "Total", "Balance"
+  summaryRowDetection: boolean; // Detect rows that sum previous rows
 }
 
 export function createRowFilter(config: RowFilterConfig): RowFilter;
-export function isExcludedRow(row: CsvRow, filter: RowFilter): { excluded: boolean; reason?: string };
+export function isExcludedRow(
+  row: CsvRow,
+  filter: RowFilter
+): { excluded: boolean; reason?: string };
 ```
 
 **Default Exclusion Patterns:**
+
 ```typescript
 const DEFAULT_TURNOVER_KEYWORDS = [
-  'opening balance', 'closing balance', 'начальный баланс',
-  'total', 'subtotal', 'sum', 'итого',
-  'balance forward', 'carried forward',
-  'turnover', 'оборот',
-  'period start', 'period end',
-  'statement total', 'account summary'
+  'opening balance',
+  'closing balance',
+  'начальный баланс',
+  'total',
+  'subtotal',
+  'sum',
+  'итого',
+  'balance forward',
+  'carried forward',
+  'turnover',
+  'оборот',
+  'period start',
+  'period end',
+  'statement total',
+  'account summary',
 ];
 ```
 
@@ -134,7 +151,7 @@ export function parseAmount(row: CsvRow, config: AmountParserConfig): number | n
 // Add: Return null instead of now() on parse failure
 export function parseCsvDate(value: string, format?: string): Date | null {
   // ... parsing logic ...
-  if (!parsed) return null;  // DON'T default to now()
+  if (!parsed) return null; // DON'T default to now()
   return parsed;
 }
 ```
@@ -167,6 +184,7 @@ packages/streaming/
 ```
 
 **Key Design: Optional Streaming**
+
 ```typescript
 // packages/streaming/src/client.ts
 export function createStreamingClient(): StreamingClient {
@@ -269,6 +287,7 @@ export class HeaderLearner {
 ```
 
 **Database Addition:**
+
 ```prisma
 model HeaderMappingHistory {
   id            String   @id @default(cuid())
@@ -330,7 +349,7 @@ export class StreamCategorizer {
     context: {
       categories: Category[];
       rules: Rule[];
-      recentTransactions?: ParsedTransaction[];  // For pattern detection
+      recentTransactions?: ParsedTransaction[]; // For pattern detection
     }
   ): Promise<CategorySuggestion> {
     // 1. Try rules first
@@ -358,20 +377,19 @@ export class StreamCategorizer {
 ```typescript
 export interface MerchantPattern {
   id: string;
-  pattern: string;       // Regex pattern
+  pattern: string; // Regex pattern
   categoryId: string;
   priority: number;
-  isBuiltIn: boolean;    // false = user-defined
-  workspaceId?: string;  // null = global
+  isBuiltIn: boolean; // false = user-defined
+  workspaceId?: string; // null = global
 }
 
 // Load from database, not hardcoded
-export async function loadMerchantPatterns(
-  workspaceId: string
-): Promise<MerchantPattern[]>;
+export async function loadMerchantPatterns(workspaceId: string): Promise<MerchantPattern[]>;
 ```
 
 **Database Addition:**
+
 ```prisma
 model MerchantPattern {
   id          String   @id @default(cuid())
@@ -472,7 +490,7 @@ export class TransactionCategorizerConsumer extends KafkaConsumer {
       await this.producer.send(TOPICS.CSV_ROW_SKIPPED, {
         importId,
         row,
-        reason: analysis.reason
+        reason: analysis.reason,
       });
       return;
     }
@@ -485,7 +503,7 @@ export class TransactionCategorizerConsumer extends KafkaConsumer {
       importId,
       transaction: row,
       category: suggestion,
-      analysis
+      analysis,
     });
   }
 }
@@ -502,7 +520,7 @@ export function useImportProgress(importId: string) {
     processed: 0,
     categorized: 0,
     skipped: 0,
-    errors: 0
+    errors: 0,
   });
 
   useEffect(() => {
@@ -511,9 +529,9 @@ export function useImportProgress(importId: string) {
 
     ws.onmessage = (event) => {
       const update = JSON.parse(event.data);
-      setProgress(prev => ({
+      setProgress((prev) => ({
         ...prev,
-        ...update
+        ...update,
       }));
     };
 
@@ -534,16 +552,13 @@ export function useImportProgress(importId: string) {
 
 ```typescript
 export interface AnomalyConfig {
-  spendingThreshold: number;      // Alert if spending > X% above average
-  duplicateWindow: number;        // Days to check for duplicates
+  spendingThreshold: number; // Alert if spending > X% above average
+  duplicateWindow: number; // Days to check for duplicates
   unusualMerchantThreshold: number;
 }
 
 export class AnomalyDetector {
-  async detectAnomalies(
-    transaction: Transaction,
-    history: TransactionHistory
-  ): Promise<Anomaly[]> {
+  async detectAnomalies(transaction: Transaction, history: TransactionHistory): Promise<Anomaly[]> {
     const anomalies: Anomaly[] = [];
 
     // Duplicate detection
@@ -553,7 +568,7 @@ export class AnomalyDetector {
         type: 'duplicate',
         severity: 'high',
         message: `Possible duplicate of transaction from ${duplicate.date}`,
-        evidence: duplicate
+        evidence: duplicate,
       });
     }
 
@@ -563,7 +578,7 @@ export class AnomalyDetector {
       anomalies.push({
         type: 'spending_spike',
         severity: 'medium',
-        message: `${Math.round((transaction.amount / avgSpending - 1) * 100)}% above average`
+        message: `${Math.round((transaction.amount / avgSpending - 1) * 100)}% above average`,
       });
     }
 
@@ -578,31 +593,31 @@ export class AnomalyDetector {
 
 ### New Files (No Conflicts)
 
-| Package | File | Purpose |
-|---------|------|---------|
-| `domain` | `src/csv/bank-formats.ts` | Bank format types |
-| `domain` | `src/csv/bank-formats-registry.ts` | Format detection |
-| `domain` | `src/csv/row-filter.ts` | Turnover row filtering |
-| `domain` | `src/csv/amount-parser.ts` | Split debit/credit handling |
-| `domain` | `src/categorization/merchant-patterns.ts` | Configurable patterns |
-| `domain` | `config/bank-formats.json` | Pre-configured formats |
-| `ai` | `src/csv/row-analyzer.ts` | AI row analysis |
-| `ai` | `src/csv/header-learner.ts` | Learning from corrections |
-| `ai` | `src/categorization/stream-categorizer.ts` | Per-row categorization |
-| `ai` | `src/anomaly/detector.ts` | Anomaly detection |
-| `streaming` | `*` (new package) | Confluent integration |
-| `worker` | `src/consumers/*.ts` | Kafka consumers |
-| `db` | `prisma/migrations/*` | New tables |
+| Package     | File                                       | Purpose                     |
+| ----------- | ------------------------------------------ | --------------------------- |
+| `domain`    | `src/csv/bank-formats.ts`                  | Bank format types           |
+| `domain`    | `src/csv/bank-formats-registry.ts`         | Format detection            |
+| `domain`    | `src/csv/row-filter.ts`                    | Turnover row filtering      |
+| `domain`    | `src/csv/amount-parser.ts`                 | Split debit/credit handling |
+| `domain`    | `src/categorization/merchant-patterns.ts`  | Configurable patterns       |
+| `domain`    | `config/bank-formats.json`                 | Pre-configured formats      |
+| `ai`        | `src/csv/row-analyzer.ts`                  | AI row analysis             |
+| `ai`        | `src/csv/header-learner.ts`                | Learning from corrections   |
+| `ai`        | `src/categorization/stream-categorizer.ts` | Per-row categorization      |
+| `ai`        | `src/anomaly/detector.ts`                  | Anomaly detection           |
+| `streaming` | `*` (new package)                          | Confluent integration       |
+| `worker`    | `src/consumers/*.ts`                       | Kafka consumers             |
+| `db`        | `prisma/migrations/*`                      | New tables                  |
 
 ### Minimal Edits (Low Conflict Risk)
 
-| File | Change |
-|------|--------|
-| `packages/core-ledger/src/utils/csv.ts` | Return `null` instead of `now()` for invalid dates |
-| `packages/ai/src/clients/index.ts` | Uncomment OpenAI, add provider selection |
-| `apps/worker/src/handlers/categorization.ts` | Add rules engine call before AI |
-| `apps/worker/src/index.ts` | Add Kafka consumer initialization (optional) |
-| `packages/db/prisma/schema.prisma` | Add new models |
+| File                                         | Change                                             |
+| -------------------------------------------- | -------------------------------------------------- |
+| `packages/core-ledger/src/utils/csv.ts`      | Return `null` instead of `now()` for invalid dates |
+| `packages/ai/src/clients/index.ts`           | Uncomment OpenAI, add provider selection           |
+| `apps/worker/src/handlers/categorization.ts` | Add rules engine call before AI                    |
+| `apps/worker/src/index.ts`                   | Add Kafka consumer initialization (optional)       |
+| `packages/db/prisma/schema.prisma`           | Add new models                                     |
 
 ---
 
@@ -630,21 +645,25 @@ OPENAI_API_KEY=...
 ## Migration Strategy
 
 ### Step 1: Deploy Foundation (No Breaking Changes)
+
 - Add new packages and files
 - Add database migrations
 - Feature flags default to `false`
 
 ### Step 2: Enable Smart Filtering
+
 - Set `ENABLE_AI_ROW_ANALYSIS=true`
 - New imports use smart filtering
 - Existing data unchanged
 
 ### Step 3: Enable Streaming
+
 - Set `ENABLE_STREAMING=true`
 - New imports use Confluent
 - BullMQ continues for other jobs
 
 ### Step 4: Enable Real-Time
+
 - Set `ENABLE_REALTIME_UPDATES=true`
 - WebSocket gateway activated
 - UI shows live progress
@@ -653,13 +672,13 @@ OPENAI_API_KEY=...
 
 ## Success Metrics
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Turnover rows imported as transactions | Unknown % | 0% |
-| Categorization accuracy | ~70% (heuristic) | 90%+ (AI + rules) |
-| Import processing time (1000 rows) | Sequential | Parallel (3x faster) |
-| Time to see categorization | Polling (seconds) | Real-time (<100ms) |
-| Rules actually applied | 0% | 100% |
+| Metric                                 | Current           | Target               |
+| -------------------------------------- | ----------------- | -------------------- |
+| Turnover rows imported as transactions | Unknown %         | 0%                   |
+| Categorization accuracy                | ~70% (heuristic)  | 90%+ (AI + rules)    |
+| Import processing time (1000 rows)     | Sequential        | Parallel (3x faster) |
+| Time to see categorization             | Polling (seconds) | Real-time (<100ms)   |
+| Rules actually applied                 | 0%                | 100%                 |
 
 ---
 
