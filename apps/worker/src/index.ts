@@ -7,8 +7,8 @@
 
 // IMPORTANT: Initialize Datadog first, before any other imports
 // This ensures proper instrumentation of all LLM calls
+// eslint-disable-next-line import/order, import/no-duplicates
 import './lib/datadog';
-import { flushMetrics, getLlmMetricsSummary } from './lib/datadog';
 
 import { Worker } from 'bullmq';
 
@@ -20,6 +20,8 @@ import {
   handleCategorization,
   handleFxFetch,
 } from './handlers';
+// eslint-disable-next-line import/no-duplicates
+import { flushMetrics, getLlmMetricsSummary } from './lib/datadog';
 import { logger } from './lib/logger';
 import { attachMonitoring, getMetrics, isHealthy } from './lib/monitoring';
 import { QUEUE_NAMES, getQueues, closeQueues } from './lib/queues';
