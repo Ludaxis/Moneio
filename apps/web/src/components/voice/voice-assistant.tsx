@@ -35,7 +35,9 @@ export function VoiceAssistant({
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null);
 
-  // ElevenLabs Conversational AI hook with client tools for financial data
+  // ElevenLabs Conversational AI hook
+  // Tools are configured as webhooks in ElevenLabs dashboard (not client-side)
+  // This avoids timeout issues by using server-to-server calls
   const conversation = useConversation({
     onConnect: () => {
       console.log('[Voice] Connected to ElevenLabs agent');
@@ -61,33 +63,6 @@ export function VoiceAssistant({
       console.error('[Voice] Error:', err);
       setError(typeof err === 'string' ? err : 'Connection error');
       setStatus('error');
-    },
-    // Fast query tool - uses direct DB queries without LLM delay
-    clientTools: {
-      queryFinancialData: async (params: { question: string }) => {
-        console.log('[Voice Tool] queryFinancialData called with:', params.question);
-        try {
-          const response = await fetch('/api/voice/query', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              workspaceId,
-              question: params.question,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to query financial data');
-          }
-
-          const data = await response.json();
-          console.log('[Voice Tool] queryFinancialData response:', data.answer);
-          return data.answer;
-        } catch (err) {
-          console.error('[Voice Tool] queryFinancialData error:', err);
-          return 'Sorry, I was unable to retrieve that financial information.';
-        }
-      },
     },
   });
 
