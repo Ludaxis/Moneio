@@ -65,8 +65,8 @@ export async function GET(request: Request) {
     const parsed = querySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
       asOfDate: searchParams.get('asOfDate'),
-      comparative: searchParams.get('comparative'),
-      previousAsOfDate: searchParams.get('previousAsOfDate'),
+      comparative: searchParams.get('comparative') || undefined,
+      previousAsOfDate: searchParams.get('previousAsOfDate') || undefined,
     });
 
     if (!parsed.success) {

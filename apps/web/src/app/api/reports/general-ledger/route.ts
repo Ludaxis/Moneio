@@ -64,8 +64,8 @@ export async function GET(request: Request) {
       workspaceId: searchParams.get('workspaceId'),
       startDate: searchParams.get('startDate'),
       endDate: searchParams.get('endDate'),
-      accountIds: searchParams.get('accountIds'),
-      accountTypes: searchParams.get('accountTypes'),
+      accountIds: searchParams.get('accountIds') || undefined,
+      accountTypes: searchParams.get('accountTypes') || undefined,
     });
 
     if (!parsed.success) {

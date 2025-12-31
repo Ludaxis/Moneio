@@ -41,11 +41,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsed = querySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
-      filter: searchParams.get('filter'),
-      type: searchParams.get('type'),
-      severity: searchParams.get('severity'),
-      limit: searchParams.get('limit'),
-      offset: searchParams.get('offset'),
+      filter: searchParams.get('filter') || undefined,
+      type: searchParams.get('type') || undefined,
+      severity: searchParams.get('severity') || undefined,
+      limit: searchParams.get('limit') || undefined,
+      offset: searchParams.get('offset') || undefined,
     });
 
     if (!parsed.success) {

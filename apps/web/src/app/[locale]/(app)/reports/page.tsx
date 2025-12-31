@@ -1574,9 +1574,10 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
           <h3 className="font-medium text-foreground">Aging Buckets</h3>
         </div>
         <div className="grid grid-cols-2 divide-x divide-y divide-border md:grid-cols-5 md:divide-y-0">
-          {report.buckets.map((bucket) => {
+          {(report.buckets || []).map((bucket) => {
             const value = report.bucketSummary[bucket];
-            const isOverdue = bucket.includes('Overdue') || bucket.includes('+');
+            const bucketStr = String(bucket || '');
+            const isOverdue = bucketStr.includes('Overdue') || bucketStr.includes('+');
             return (
               <div key={bucket} className="p-4 text-center">
                 <p className="text-sm text-muted-foreground">{bucket}</p>

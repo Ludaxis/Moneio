@@ -71,10 +71,10 @@ export async function GET(request: Request) {
       workspaceId: searchParams.get('workspaceId'),
       startDate: searchParams.get('startDate'),
       endDate: searchParams.get('endDate'),
-      comparative: searchParams.get('comparative'),
-      previousStartDate: searchParams.get('previousStartDate'),
-      previousEndDate: searchParams.get('previousEndDate'),
-      monthlyBreakdown: searchParams.get('monthlyBreakdown'),
+      comparative: searchParams.get('comparative') || undefined,
+      previousStartDate: searchParams.get('previousStartDate') || undefined,
+      previousEndDate: searchParams.get('previousEndDate') || undefined,
+      monthlyBreakdown: searchParams.get('monthlyBreakdown') || undefined,
     });
 
     if (!parsed.success) {

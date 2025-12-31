@@ -51,10 +51,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const parsed = querySchema.safeParse({
       workspaceId: searchParams.get('workspaceId'),
-      minConfidence: searchParams.get('minConfidence'),
-      lookbackMonths: searchParams.get('lookbackMonths'),
-      activeOnly: searchParams.get('activeOnly'),
-      flaggedOnly: searchParams.get('flaggedOnly'),
+      minConfidence: searchParams.get('minConfidence') || undefined,
+      lookbackMonths: searchParams.get('lookbackMonths') || undefined,
+      activeOnly: searchParams.get('activeOnly') || undefined,
+      flaggedOnly: searchParams.get('flaggedOnly') || undefined,
     });
 
     if (!parsed.success) {
