@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./documents": "./src/documents/index.ts",
     "./financial": "./src/financial/index.ts",
-    "./categorization": "./src/categorization/index.ts"
+    "./categorization": "./src/categorization/index.ts",
+    "./csv": "./src/csv/index.ts"
   },
   "scripts": {
     "build": "tsc",

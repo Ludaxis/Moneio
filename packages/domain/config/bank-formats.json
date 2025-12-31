@@ -1,0 +1,413 @@
+{
+  "$schema": "./bank-formats.schema.json",
+  "formats": [
+    {
+      "id": "wise-standard",
+      "name": "Wise (TransferWise) Standard",
+      "bank": "Wise",
+      "country": null,
+      "headerPatterns": [
+        { "field": "date", "patterns": ["created on", "finished on", "date"], "priority": 10 },
+        {
+          "field": "description",
+          "patterns": ["target name", "source name", "description"],
+          "priority": 10
+        },
+        {
+          "field": "amount",
+          "patterns": [
+            "source amount \\(after fees\\)",
+            "target amount \\(after fees\\)",
+            "amount"
+          ],
+          "priority": 10
+        },
+        {
+          "field": "currency",
+          "patterns": ["source currency", "target currency", "currency"],
+          "priority": 5
+        },
+        {
+          "field": "fee",
+          "patterns": ["source fee amount", "target fee amount", "fee"],
+          "priority": 5
+        },
+        { "field": "reference", "patterns": ["reference", "transfer id", "id"], "priority": 3 },
+        { "field": "status", "patterns": ["status"], "priority": 5 },
+        { "field": "balance", "patterns": ["running balance", "balance"], "priority": 3 }
+      ],
+      "amountConfig": {
+        "type": "single",
+        "signConvention": "negative-debit"
+      },
+      "dateConfig": {
+        "format": "YYYY-MM-DD",
+        "locale": "iso"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": ["opening balance", "closing balance"],
+        "excludeZeroAmount": true,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 90
+    },
+    {
+      "id": "seb-ee",
+      "name": "SEB Estonia",
+      "bank": "SEB",
+      "country": "EE",
+      "headerPatterns": [
+        {
+          "field": "date",
+          "patterns": ["makse kuupäev", "makse kuup", "kuupäev", "date"],
+          "priority": 10
+        },
+        {
+          "field": "description",
+          "patterns": ["selgitus", "description", "kirjeldus"],
+          "priority": 10
+        },
+        { "field": "amount", "patterns": ["summa", "amount"], "priority": 10 },
+        { "field": "balance", "patterns": ["saldo", "balance"], "priority": 5 },
+        {
+          "field": "counterpartyName",
+          "patterns": ["saaja/maksja nimi", "saaja nimi", "maksja nimi", "nimi"],
+          "priority": 7
+        },
+        {
+          "field": "counterpartyAccount",
+          "patterns": ["saaja/maksja konto", "konto", "account"],
+          "priority": 5
+        },
+        {
+          "field": "reference",
+          "patterns": ["arhiveerimistunnus", "viitenumber", "dok nr", "reference"],
+          "priority": 5
+        }
+      ],
+      "amountConfig": {
+        "type": "single",
+        "signConvention": "negative-debit"
+      },
+      "dateConfig": {
+        "format": "DD.MM.YYYY",
+        "locale": "eu"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": [
+          "algsaldo",
+          "lõppsaldo",
+          "saldo",
+          "kokku",
+          "käive",
+          "opening balance",
+          "closing balance"
+        ],
+        "excludeZeroAmount": true,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 80
+    },
+    {
+      "id": "swedbank-ee",
+      "name": "Swedbank Estonia",
+      "bank": "Swedbank",
+      "country": "EE",
+      "headerPatterns": [
+        { "field": "date", "patterns": ["kuupäev", "date", "maksepäev"], "priority": 10 },
+        { "field": "description", "patterns": ["selgitus", "description"], "priority": 10 },
+        { "field": "amount", "patterns": ["summa", "amount"], "priority": 10 },
+        { "field": "balance", "patterns": ["saldo", "jääk", "balance"], "priority": 5 },
+        {
+          "field": "counterpartyName",
+          "patterns": ["saaja/maksja", "nimi", "counterparty"],
+          "priority": 7
+        },
+        { "field": "reference", "patterns": ["viitenumber", "viide", "reference"], "priority": 5 }
+      ],
+      "amountConfig": {
+        "type": "single",
+        "signConvention": "negative-debit"
+      },
+      "dateConfig": {
+        "format": "DD.MM.YYYY",
+        "locale": "eu"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": [
+          "algsaldo",
+          "lõppsaldo",
+          "kokku",
+          "opening balance",
+          "closing balance"
+        ],
+        "excludeZeroAmount": true,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 80
+    },
+    {
+      "id": "lhv-ee",
+      "name": "LHV Estonia",
+      "bank": "LHV",
+      "country": "EE",
+      "headerPatterns": [
+        { "field": "date", "patterns": ["kuupäev", "date", "tehingu kuupäev"], "priority": 10 },
+        {
+          "field": "description",
+          "patterns": ["selgitus", "kirjeldus", "description"],
+          "priority": 10
+        },
+        { "field": "amount", "patterns": ["summa", "amount"], "priority": 10 },
+        { "field": "debit", "patterns": ["deebet", "debit", "väljaminek"], "priority": 10 },
+        { "field": "credit", "patterns": ["kreedit", "credit", "sisseminek"], "priority": 10 },
+        { "field": "balance", "patterns": ["saldo", "balance"], "priority": 5 },
+        { "field": "counterpartyName", "patterns": ["saaja/maksja", "vastaspool"], "priority": 7 },
+        { "field": "reference", "patterns": ["viitenumber", "viide"], "priority": 5 }
+      ],
+      "amountConfig": {
+        "type": "split",
+        "debitPatterns": ["deebet", "debit", "väljaminek"],
+        "creditPatterns": ["kreedit", "credit", "sisseminek"],
+        "signConvention": "absolute"
+      },
+      "dateConfig": {
+        "format": "DD.MM.YYYY",
+        "locale": "eu"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": [
+          "algsaldo",
+          "lõppsaldo",
+          "kokku",
+          "opening balance",
+          "closing balance"
+        ],
+        "excludeZeroAmount": false,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 80
+    },
+    {
+      "id": "deutsche-bank-de",
+      "name": "Deutsche Bank Germany",
+      "bank": "Deutsche Bank",
+      "country": "DE",
+      "headerPatterns": [
+        {
+          "field": "date",
+          "patterns": ["buchungstag", "wertstellung", "datum", "date"],
+          "priority": 10
+        },
+        {
+          "field": "description",
+          "patterns": ["verwendungszweck", "buchungstext", "beschreibung"],
+          "priority": 10
+        },
+        { "field": "amount", "patterns": ["betrag", "amount", "umsatz"], "priority": 10 },
+        { "field": "balance", "patterns": ["saldo", "kontostand", "balance"], "priority": 5 },
+        {
+          "field": "counterpartyName",
+          "patterns": ["empfänger", "auftraggeber", "beguenstigter"],
+          "priority": 7
+        },
+        { "field": "counterpartyAccount", "patterns": ["iban", "konto", "account"], "priority": 5 },
+        { "field": "reference", "patterns": ["referenz", "kundenreferenz"], "priority": 5 }
+      ],
+      "amountConfig": {
+        "type": "single",
+        "signConvention": "negative-debit"
+      },
+      "dateConfig": {
+        "format": "DD.MM.YYYY",
+        "locale": "eu"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": [
+          "anfangssaldo",
+          "endsaldo",
+          "saldo vortrag",
+          "übertrag",
+          "summe",
+          "kontostand"
+        ],
+        "excludeZeroAmount": true,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 75
+    },
+    {
+      "id": "revolut-standard",
+      "name": "Revolut Standard",
+      "bank": "Revolut",
+      "country": null,
+      "headerPatterns": [
+        { "field": "date", "patterns": ["started date", "completed date", "date"], "priority": 10 },
+        { "field": "description", "patterns": ["description"], "priority": 10 },
+        { "field": "amount", "patterns": ["amount", "value"], "priority": 10 },
+        { "field": "currency", "patterns": ["currency"], "priority": 5 },
+        { "field": "fee", "patterns": ["fee"], "priority": 5 },
+        { "field": "balance", "patterns": ["balance"], "priority": 5 },
+        { "field": "status", "patterns": ["state", "status"], "priority": 5 },
+        { "field": "category", "patterns": ["category", "type"], "priority": 3 }
+      ],
+      "amountConfig": {
+        "type": "single",
+        "signConvention": "negative-debit"
+      },
+      "dateConfig": {
+        "format": "YYYY-MM-DD",
+        "locale": "iso"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": ["opening balance", "closing balance"],
+        "excludeZeroAmount": true,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 85
+    },
+    {
+      "id": "n26-standard",
+      "name": "N26 Standard",
+      "bank": "N26",
+      "country": null,
+      "headerPatterns": [
+        { "field": "date", "patterns": ["date", "booking date", "value date"], "priority": 10 },
+        {
+          "field": "description",
+          "patterns": ["partner name", "payment reference", "description"],
+          "priority": 10
+        },
+        {
+          "field": "amount",
+          "patterns": ["amount \\(eur\\)", "amount", "original amount"],
+          "priority": 10
+        },
+        { "field": "currency", "patterns": ["original currency", "currency"], "priority": 5 },
+        {
+          "field": "counterpartyAccount",
+          "patterns": ["partner iban", "account number"],
+          "priority": 5
+        },
+        { "field": "category", "patterns": ["type", "category"], "priority": 3 }
+      ],
+      "amountConfig": {
+        "type": "single",
+        "signConvention": "negative-debit"
+      },
+      "dateConfig": {
+        "format": "YYYY-MM-DD",
+        "locale": "iso"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": ["opening balance", "closing balance"],
+        "excludeZeroAmount": true,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 85
+    },
+    {
+      "id": "generic-split",
+      "name": "Generic (Split Debit/Credit)",
+      "bank": null,
+      "country": null,
+      "headerPatterns": [
+        {
+          "field": "date",
+          "patterns": ["date", "datum", "posted", "transaction date"],
+          "priority": 5
+        },
+        {
+          "field": "description",
+          "patterns": ["description", "memo", "details", "narrative", "particulars"],
+          "priority": 5
+        },
+        {
+          "field": "debit",
+          "patterns": ["debit", "withdrawal", "out", "expense", "money out"],
+          "priority": 5
+        },
+        {
+          "field": "credit",
+          "patterns": ["credit", "deposit", "in", "income", "money in"],
+          "priority": 5
+        },
+        { "field": "balance", "patterns": ["balance", "running balance"], "priority": 3 },
+        { "field": "reference", "patterns": ["reference", "ref", "cheque", "check"], "priority": 3 }
+      ],
+      "amountConfig": {
+        "type": "split",
+        "debitPatterns": ["debit", "withdrawal", "out", "expense", "money out"],
+        "creditPatterns": ["credit", "deposit", "in", "income", "money in"],
+        "signConvention": "absolute"
+      },
+      "dateConfig": {
+        "format": "auto",
+        "locale": "eu"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": ["opening balance", "closing balance", "balance forward", "total"],
+        "excludeZeroAmount": false,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 10
+    },
+    {
+      "id": "generic-single",
+      "name": "Generic (Single Amount)",
+      "bank": null,
+      "country": null,
+      "headerPatterns": [
+        {
+          "field": "date",
+          "patterns": ["date", "datum", "posted", "transaction date", "value date"],
+          "priority": 5
+        },
+        {
+          "field": "description",
+          "patterns": ["description", "memo", "details", "narrative", "particulars", "text"],
+          "priority": 5
+        },
+        {
+          "field": "amount",
+          "patterns": ["amount", "sum", "value", "betrag", "montant"],
+          "priority": 5
+        },
+        { "field": "balance", "patterns": ["balance", "saldo", "running balance"], "priority": 3 },
+        { "field": "reference", "patterns": ["reference", "ref", "id"], "priority": 3 }
+      ],
+      "amountConfig": {
+        "type": "single",
+        "signConvention": "negative-debit"
+      },
+      "dateConfig": {
+        "format": "auto",
+        "locale": "eu"
+      },
+      "exclusionConfig": {
+        "descriptionPatterns": [],
+        "turnoverKeywords": ["opening balance", "closing balance", "balance forward", "total"],
+        "excludeZeroAmount": true,
+        "excludeMissingAmount": true
+      },
+      "isBuiltIn": true,
+      "priority": 5
+    }
+  ]
+}
