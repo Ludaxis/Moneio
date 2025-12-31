@@ -18,7 +18,11 @@ import {
 } from '@moneio/domain';
 import { Job } from 'bullmq';
 
-import type { SendNotificationJobData, SendWeeklyDigestJobData, NotificationResult } from '../lib/queues';
+import type {
+  SendNotificationJobData,
+  SendWeeklyDigestJobData,
+  NotificationResult,
+} from '../lib/queues';
 
 /**
  * Handle sending a notification

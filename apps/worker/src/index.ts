@@ -119,11 +119,15 @@ const fxFetchWorker = new Worker(QUEUE_NAMES.FX_FETCH, handleFxFetch, {
 workers.push(fxFetchWorker);
 
 // INSIGHT_GENERATION Worker
-const insightGenerationWorker = new Worker(QUEUE_NAMES.INSIGHT_GENERATION, handleInsightGeneration, {
-  connection,
-  concurrency: config.concurrency.insightGeneration,
-  ...workerSettings,
-});
+const insightGenerationWorker = new Worker(
+  QUEUE_NAMES.INSIGHT_GENERATION,
+  handleInsightGeneration,
+  {
+    connection,
+    concurrency: config.concurrency.insightGeneration,
+    ...workerSettings,
+  }
+);
 workers.push(insightGenerationWorker);
 
 // SEND_NOTIFICATION Worker

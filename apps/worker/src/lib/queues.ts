@@ -191,7 +191,9 @@ export function getQueues() {
     queues.fxFetch = createQueue<FxFetchJobData>(QUEUE_NAMES.FX_FETCH);
   }
   if (!queues.insightGeneration) {
-    queues.insightGeneration = createQueue<InsightGenerationJobData>(QUEUE_NAMES.INSIGHT_GENERATION);
+    queues.insightGeneration = createQueue<InsightGenerationJobData>(
+      QUEUE_NAMES.INSIGHT_GENERATION
+    );
   }
   if (!queues.sendNotification) {
     queues.sendNotification = createQueue<SendNotificationJobData>(QUEUE_NAMES.SEND_NOTIFICATION);
