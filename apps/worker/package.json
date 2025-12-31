@@ -20,6 +20,7 @@
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",
     "@moneio/domain": "workspace:*",
+    "@moneio/observability": "workspace:*",
     "@moneio/utils": "workspace:*",
     "@prisma/client": "^5.22.0",
     "@google-cloud/vision": "^4.2.0",
