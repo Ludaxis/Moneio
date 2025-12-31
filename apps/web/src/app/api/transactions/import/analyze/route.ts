@@ -1,5 +1,6 @@
-import { createLlmClient } from '@moneio/ai';
+import { createLlmClient, AiBatchCategorizer } from '@moneio/ai';
 import { prisma } from '@moneio/db';
+import type { MerchantCategoryMapping } from '@moneio/domain';
 import { getDefaultExclusionConfig, createRowFilter } from '@moneio/domain';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -122,7 +123,7 @@ export async function POST(request: Request) {
     });
 
     // Load workspace context
-    const [categories, workspace] = await Promise.all([
+    const [categories, workspace, learnedMappings, rules] = await Promise.all([
       prisma.category.findMany({
         where: { workspaceId },
         select: { id: true, name: true },
@@ -130,6 +131,17 @@ export async function POST(request: Request) {
       prisma.workspace.findUnique({
         where: { id: workspaceId },
         select: { locale: true, baseCurrency: true },
+      }),
+      // Load learned merchant->category mappings
+      prisma.merchantCategoryMapping.findMany({
+        where: { workspaceId },
+        include: { category: { select: { name: true } } },
+        orderBy: { frequency: 'desc' },
+      }),
+      // Load categorization rules
+      prisma.rule.findMany({
+        where: { workspaceId, isActive: true },
+        orderBy: { priority: 'desc' },
       }),
     ]);
 
@@ -222,8 +234,36 @@ export async function POST(request: Request) {
       included.push(tx);
     });
 
-    // Step 3: Predict categories (simple heuristic for now)
-    const transactions = await predictCategories(included, categories);
+    // Step 3: AI-powered batch categorization
+    const transactions = await predictCategoriesWithAi(
+      included,
+      categories,
+      learnedMappings.map((m) => ({
+        id: m.id,
+        workspaceId: m.workspaceId,
+        merchantPattern: m.merchantPattern,
+        merchantName: m.merchantName,
+        categoryId: m.categoryId,
+        categoryName: m.category.name,
+        frequency: m.frequency,
+        confidence: Number(m.confidence),
+        source: m.source as 'user' | 'imported' | 'ai_suggested',
+        lastUsedAt: m.lastUsedAt,
+        createdAt: m.createdAt,
+      })),
+      rules.map((r) => ({
+        id: r.id,
+        categoryId: r.categoryId,
+        conditions: r.conditions as Array<{
+          field: 'description' | 'amount' | 'merchant';
+          operator: 'contains' | 'equals' | 'startsWith' | 'regex' | 'gt' | 'lt';
+          value: string | number;
+          caseSensitive?: boolean;
+        }>,
+        match: 'all' as const,
+        priority: r.priority,
+      }))
+    );
 
     return NextResponse.json({
       headers,
@@ -811,92 +851,137 @@ function getDescription(row: ParsedRow, mapping: ColumnMapping): string {
 }
 
 // ============================================================
-// Category Prediction (Simple Heuristic)
+// AI-Powered Category Prediction (Batch Processing)
 // ============================================================
 
-async function predictCategories(
+interface CategorizationRule {
+  id: string;
+  categoryId: string;
+  conditions: Array<{
+    field: 'description' | 'amount' | 'merchant';
+    operator: 'contains' | 'equals' | 'startsWith' | 'regex' | 'gt' | 'lt';
+    value: string | number;
+    caseSensitive?: boolean;
+  }>;
+  match: 'all' | 'any';
+  priority: number;
+}
+
+async function predictCategoriesWithAi(
   transactions: ParsedTransaction[],
-  categories: Array<{ id: string; name: string }>
+  categories: Array<{ id: string; name: string }>,
+  learnedMappings: MerchantCategoryMapping[],
+  rules: CategorizationRule[]
 ): Promise<ParsedTransaction[]> {
-  if (categories.length === 0) return transactions;
+  if (categories.length === 0 || transactions.length === 0) {
+    return transactions;
+  }
 
-  // Simple keyword matching
-  const categoryKeywords: Record<string, string[]> = {
-    'Software and web hosting': [
-      'google cloud',
-      'aws',
-      'vercel',
-      'supabase',
-      'anthropic',
-      'openai',
-      'claude',
-      'slack',
-      'notion',
-      'figma',
-      'github',
-      'netlify',
-      'render',
-      'heroku',
-      'digital ocean',
-    ],
-    Marketing: [
-      'google ads',
-      'facebook',
-      'meta',
-      'instagram',
-      'tiktok',
-      'linkedin ads',
-      'advertising',
-    ],
-    'Office expenses': ['office', 'supplies', 'equipment', 'furniture'],
-    'Contract services': ['consulting', 'freelance', 'contractor'],
-    Travel: ['hotel', 'flight', 'airline', 'airbnb', 'booking.com', 'uber', 'lyft', 'taxi'],
-    'Food and meals': ['restaurant', 'cafe', 'coffee', 'lunch', 'dinner', 'food'],
-    'Internal Transfer': ['transfer', 'internal', 'own account'],
-    'Bank fees': ['fee', 'charge', 'commission', 'interest'],
-  };
+  // Check existing category from CSV first
+  const needsCategorization: ParsedTransaction[] = [];
+  const alreadyCategorized: ParsedTransaction[] = [];
 
-  return transactions.map((tx) => {
-    const desc = (tx.description + ' ' + (tx.counterpartyName || '')).toLowerCase();
-
-    // Check existing category from CSV
+  for (const tx of transactions) {
     if (tx.category) {
       const match = categories.find((c) => c.name.toLowerCase() === tx.category?.toLowerCase());
       if (match) {
-        return {
+        alreadyCategorized.push({
           ...tx,
           predictedCategoryId: match.id,
           predictedCategoryName: match.name,
-          predictedConfidence: 90,
-        };
+          predictedConfidence: 95,
+        });
+        continue;
+      }
+    }
+    needsCategorization.push(tx);
+  }
+
+  if (needsCategorization.length === 0) {
+    return alreadyCategorized;
+  }
+
+  console.log('[CSV Analyze] AI categorization:', {
+    total: transactions.length,
+    fromCsv: alreadyCategorized.length,
+    needsAi: needsCategorization.length,
+    learnedMappings: learnedMappings.length,
+    rules: rules.length,
+  });
+
+  try {
+    // Create batch categorizer
+    const llmClient = createLlmClient();
+    const batchCategorizer = new AiBatchCategorizer({
+      llmClient,
+      batchSize: 20, // 20 transactions per LLM call
+      concurrency: 5, // 5 parallel LLM calls
+      minAiConfidence: 50,
+    });
+
+    // Prepare transactions for batch categorization
+    const batchInput = needsCategorization.map((tx) => ({
+      id: tx.id,
+      description: tx.description,
+      amount: tx.amount,
+      counterpartyName: tx.counterpartyName,
+      date: tx.date,
+      currency: tx.currency,
+      originalRow: tx.originalRow,
+    }));
+
+    // Run batch categorization
+    const { predictions, stats } = await batchCategorizer.categorize({
+      transactions: batchInput,
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+      })),
+      learnedMappings,
+      rules,
+    });
+
+    console.log('[CSV Analyze] Categorization stats:', stats);
+
+    // Apply predictions to transactions
+    // Build result map with type assertion to avoid complex inference
+    const resultMap = new Map<string, ParsedTransaction>();
+
+    // Add already categorized transactions
+    for (const tx of alreadyCategorized) {
+      resultMap.set(tx.id, tx);
+    }
+
+    // Add AI-categorized transactions
+    for (const tx of needsCategorization) {
+      const prediction = predictions.get(tx.id);
+      if (prediction && prediction.categoryId) {
+        resultMap.set(tx.id, {
+          ...tx,
+          predictedCategoryId: prediction.categoryId,
+          predictedCategoryName: prediction.categoryName ?? undefined,
+          predictedConfidence: prediction.confidence,
+        });
+      } else {
+        resultMap.set(tx.id, {
+          ...tx,
+          predictedCategoryId: undefined,
+          predictedCategoryName: undefined,
+          predictedConfidence: 20,
+        });
       }
     }
 
-    // Try keyword matching
-    for (const [categoryName, keywords] of Object.entries(categoryKeywords)) {
-      if (keywords.some((kw) => desc.includes(kw))) {
-        const match = categories.find(
-          (c) =>
-            c.name.toLowerCase().includes(categoryName.toLowerCase()) ||
-            categoryName.toLowerCase().includes(c.name.toLowerCase())
-        );
-        if (match) {
-          return {
-            ...tx,
-            predictedCategoryId: match.id,
-            predictedCategoryName: match.name,
-            predictedConfidence: 60,
-          };
-        }
-      }
-    }
-
-    // Default: first category or none
-    return {
+    return transactions.map((tx) => resultMap.get(tx.id) || tx);
+  } catch (error) {
+    console.error('[CSV Analyze] AI categorization failed:', error);
+    // Return transactions with low confidence (fallback)
+    return transactions.map((tx) => ({
       ...tx,
       predictedCategoryId: undefined,
       predictedCategoryName: undefined,
       predictedConfidence: 20,
-    };
-  });
+      predictionSource: 'error' as const,
+    }));
+  }
 }

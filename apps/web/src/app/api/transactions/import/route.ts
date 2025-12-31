@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 
 import { prisma } from '@moneio/db';
+import { normalizeMerchantName } from '@moneio/domain';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -19,6 +20,7 @@ const transactionSchema = z.object({
   balance: z.number().finite().optional().nullable(),
   reference: z.string().max(256).optional().nullable(),
   categoryId: z.string().uuid().optional().nullable(), // Pre-assigned category from import
+  counterpartyName: z.string().max(256).optional().nullable(), // Merchant/payee name for learning
 });
 
 const importSchema = z.object({
@@ -191,6 +193,9 @@ export async function POST(request: Request) {
           });
         }
       }
+
+      // Learn from user's category selections
+      await learnFromCategorySelections(workspaceId, toCreate);
     }
 
     skipped = transactions.length - imported;
@@ -220,4 +225,87 @@ export async function POST(request: Request) {
     console.error('Failed to import transactions:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+/**
+ * Learn from user's category selections during import
+ * Stores merchant->category mappings for future predictions
+ */
+async function learnFromCategorySelections(
+  workspaceId: string,
+  transactions: Array<{
+    categoryId?: string | null;
+    counterpartyName?: string | null;
+    description?: string | null;
+  }>
+): Promise<void> {
+  // Filter to transactions with both category and merchant/description
+  const learnable = transactions.filter(
+    (tx) => tx.categoryId && (tx.counterpartyName || tx.description)
+  );
+
+  if (learnable.length === 0) return;
+
+  // Aggregate by normalized pattern + category
+  const aggregated = new Map<
+    string,
+    { merchantPattern: string; merchantName: string; categoryId: string; count: number }
+  >();
+
+  for (const tx of learnable) {
+    const merchantName = tx.counterpartyName || tx.description || '';
+    const merchantPattern = normalizeMerchantName(merchantName);
+
+    if (!merchantPattern || !tx.categoryId) continue;
+
+    const key = `${merchantPattern}:${tx.categoryId}`;
+    const existing = aggregated.get(key);
+
+    if (existing) {
+      existing.count++;
+    } else {
+      aggregated.set(key, {
+        merchantPattern,
+        merchantName,
+        categoryId: tx.categoryId,
+        count: 1,
+      });
+    }
+  }
+
+  // Upsert mappings
+  for (const mapping of aggregated.values()) {
+    try {
+      await prisma.merchantCategoryMapping.upsert({
+        where: {
+          workspaceId_merchantPattern: {
+            workspaceId,
+            merchantPattern: mapping.merchantPattern,
+          },
+        },
+        create: {
+          workspaceId,
+          merchantPattern: mapping.merchantPattern,
+          merchantName: mapping.merchantName,
+          categoryId: mapping.categoryId,
+          frequency: mapping.count,
+          confidence: 0.9, // High confidence for user selections
+          source: 'imported',
+        },
+        update: {
+          categoryId: mapping.categoryId,
+          merchantName: mapping.merchantName,
+          frequency: { increment: mapping.count },
+          // Increase confidence with each use (max 0.99)
+          confidence: 0.99,
+          lastUsedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      // Log but don't fail the import if learning fails
+      console.warn('[Import] Failed to learn mapping:', mapping.merchantPattern, error);
+    }
+  }
+
+  console.log(`[Import] Learned ${aggregated.size} merchant->category mappings`);
 }
