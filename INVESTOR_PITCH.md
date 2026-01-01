@@ -2,15 +2,19 @@
 
 ## Investor Pitch Deck — January 2026
 
+_AI-powered finance for people who don't know accounting_
+
 _All statistics sourced and verified from 2025 market research_
 
 ---
 
 # "Your finances should just work."
 
-Every small business owner started their company to pursue their passion—not to become an accountant. Yet they spend countless hours drowning in spreadsheets, receipts, and bank statements.
+Most people don't know where their money goes. They didn't start their business—or their life—to become an accountant. Yet they spend countless hours drowning in spreadsheets, receipts, and bank statements.
 
 **What if your finances understood themselves?**
+
+Moneio is for everyone who wants CFO-level financial intelligence without needing any accounting expertise.
 
 ---
 
@@ -89,14 +93,16 @@ _Sources: [NerdWallet 2025](https://www.nerdwallet.com/business/software/learn/b
 
 ## The Market Opportunity
 
-### Global Small Business Universe
+### Target Audience: Individuals & Small Businesses
 
-| Metric                    | Number                                 | Source                                                                   |
-| ------------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
-| **Global SMBs**           | 400+ million                           | [DemandSage 2025](https://www.demandsage.com/small-business-statistics/) |
-| **U.S. Small Businesses** | 34.8 million (99.9% of all businesses) | [DemandSage 2025](https://www.demandsage.com/small-business-statistics/) |
-| **Global entrepreneurs**  | 582 million                            | [TrueList 2025](https://truelist.co/blog/small-business-statistics/)     |
-| **Global SMB employment** | 50-70% of all jobs                     | [Statista](https://www.statista.com/statistics/1261592/global-smes/)     |
+Moneio is built for **everyone who doesn't know accounting**—from freelancers and solo entrepreneurs to small business owners and individuals managing personal finances.
+
+| Metric                    | Number                                    | Source                                                                   |
+| ------------------------- | ----------------------------------------- | ------------------------------------------------------------------------ |
+| **Global SMBs**           | 400+ million                              | [DemandSage 2025](https://www.demandsage.com/small-business-statistics/) |
+| **Global entrepreneurs**  | 582 million                               | [TrueList 2025](https://truelist.co/blog/small-business-statistics/)     |
+| **Potential users**       | 2+ billion individuals & small businesses | Freelancers, gig workers, solopreneurs, SMB owners                       |
+| **U.S. Small Businesses** | 34.8 million (99.9% of all businesses)    | [DemandSage 2025](https://www.demandsage.com/small-business-statistics/) |
 
 ### The Accounting Software Market
 
@@ -440,9 +446,22 @@ _Note: SaaS CAC has increased 55% over 5 years ([Rocking Web](https://www.rockin
 
 ---
 
+## The Team
+
+### Founding Team
+
+| Name      | Role       | Focus                                     |
+| --------- | ---------- | ----------------------------------------- |
+| **Reza**  | Co-Founder | Product — Vision, design, user experience |
+| **Ahmad** | Co-Founder | Finance — Business model, financial ops   |
+| **Sina**  | Co-Founder | Engineering — Architecture, AI, platform  |
+| **Erfan** | Co-Founder | Marketing — Growth, brand, go-to-market   |
+
+---
+
 ## The Ask
 
-### Raising: $3M Seed Round
+### Raising: $1M Seed Round
 
 | Use of Funds     | Allocation | Purpose                          |
 | ---------------- | ---------- | -------------------------------- |
