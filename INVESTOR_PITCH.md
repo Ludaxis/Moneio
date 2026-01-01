@@ -92,6 +92,22 @@ This is our timing advantage. The market is transforming NOW:
 
 **AI adoption in accounting jumped from 9% to 41% in just one year. This is a land-grab moment.**
 
+### The Crypto Accounting Gap
+
+A massive underserved market with no unified solution:
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| **Crypto accounting market 2025** | ~$500M-$5B | [Data Insights Market](https://www.datainsightsmarket.com/reports/accounting-software-for-digital-asset-523030) |
+| **CAGR** | 25%+ through 2033 | [Market Research Future](https://www.marketresearchfuture.com/reports/crypto-asset-management-market-10730) |
+| **US SMBs accepting crypto** | 17-35% | [CoinLaw](https://coinlaw.io/cryptocurrency-payment-adoption-by-merchants-statistics/) |
+| **Global merchants accepting crypto** | 46% | [The Small Business Blog](https://thesmallbusinessblog.com/crypto-statistics/) |
+| **E-commerce with crypto payments** | 43% | [Security.org](https://www.security.org/digital-security/cryptocurrency-annual-consumer-report/) |
+
+**The problem:** QuickBooks and Xero don't support crypto. Crypto tools don't do traditional accounting. **No one offers unified fiat + crypto CFO intelligence.**
+
+New IRS Form 1099-DA (effective 2025) requires crypto reporting — creating urgent compliance demand.
+
 ---
 
 ## The Solution: Moneio
@@ -190,25 +206,26 @@ Instant answers. No reports to generate. No formulas to write.
 | **Cash Flow Optimizer** | AI suggests when to send invoices, pay bills | Improve cash position by 20%+ |
 | **Fraud Shield** | Real-time fraud detection and prevention | Protect your business 24/7 |
 
-### Phase 2: The Financial Advisor (Q3 2026)
+### Phase 2: The Financial Advisor + Crypto Foundation (Q3 2026)
 
 | Feature | Description | Impact |
 |---------|-------------|--------|
 | **Growth Predictor** | AI forecasts revenue scenarios | Plan expansion with confidence |
 | **Pricing Intelligence** | Analyze what to charge based on margins | Increase profit margins 15%+ |
 | **Vendor Negotiator** | AI suggests when and how to negotiate | Save 10%+ on recurring costs |
-| **Investment Timing** | Know when you can afford to invest | Grow faster without the risk |
-| **Competitor Benchmarks** | How do you compare to industry peers? | Understand your market position |
+| **Crypto Wallet Connections** | Connect Bitcoin, ETH, Solana, 50+ chains | Unified fiat + crypto view |
+| **Auto Cost-Basis Tracking** | FIFO, LIFO, HIFO calculations automatic | Eliminate crypto tax headaches |
 
-### Phase 3: The CFO Network (Q4 2026)
+### Phase 3: The CFO Network + Crypto Compliance (Q4 2026)
 
 | Feature | Description | Impact |
 |---------|-------------|--------|
 | **Multi-Entity View** | Consolidated view across companies | Manage a portfolio, not just a business |
 | **Investor Dashboard** | One-click reports for investors/board | Impress stakeholders effortlessly |
-| **Team Permissions** | Role-based access for your team | Scale your operations |
 | **Bank Connections** | Real-time bank feed integration | Zero manual data entry |
-| **Payment Processing** | Accept payments directly in Moneio | Close the loop on cash flow |
+| **Crypto Tax Reports** | Form 8949, 1099-DA, Schedule D ready | IRS compliance automated |
+| **DeFi Transaction Parsing** | Yield, staking, swaps, NFTs categorized | AI understands Web3 complexity |
+| **Payment Processing** | Accept fiat + crypto payments in Moneio | Close the loop on all cash flow |
 
 ### Phase 4: The Autonomous CFO (2027)
 
@@ -216,34 +233,48 @@ Instant answers. No reports to generate. No formulas to write.
 |---------|-------------|--------|
 | **Agentic Finance** | AI takes actions on your behalf | Set it and forget it |
 | **Predictive Hiring** | Know when you can afford to hire | Grow your team strategically |
-| **Market Intelligence** | Industry trends affecting your business | Stay ahead of the curve |
-| **M&A Readiness** | Always be ready for acquisition | Maximize your exit value |
+| **Multi-Chain Treasury** | Unified fiat + crypto treasury management | One view of all assets |
+| **Crypto-Fiat Optimization** | AI suggests best currency for each transaction | Maximize returns across currencies |
 | **Financial Copilot** | AI that runs your finances while you sleep | True financial automation |
 
 ---
 
 ## Competitive Landscape
 
-### Current Market Leaders
+### Traditional Accounting Leaders
 
 | Company | Market Share | 2025 Pricing | Key Limitation |
 |---------|--------------|--------------|----------------|
-| **QuickBooks** | 62.2% (desktop) | $30-200/mo | Legacy-first, AI bolted on |
-| **Xero** | 8.9% | $15-78/mo | Recording, not understanding |
+| **QuickBooks** | 62.2% (desktop) | $30-200/mo | Legacy-first, AI bolted on, no crypto |
+| **Xero** | 8.9% | $15-78/mo | Recording, not understanding, no crypto |
 | **Sage** | 10.3% | $25-200/mo | Enterprise focus, SMB afterthought |
 | **Wave** | ~5% | Free (ads) | Basic features, no intelligence |
 
 *Source: [Datanyze Market Share](https://www.datanyze.com/market-share/accounting--352), [Webgility](https://www.webgility.com/blog/xero-vs-quickbooks)*
 
+### Crypto-Only Solutions
+
+| Company | Pricing | Key Limitation |
+|---------|---------|----------------|
+| **Cryptoworth** | ~$99+/mo | Crypto only, no traditional accounting |
+| **Cryptio** | ~$500+/mo | Enterprise focus, expensive for SMBs |
+| **Breezing** | $29+/mo | Subledger only, needs separate GL |
+| **Koinly/CoinTracker** | $49-199/yr | Tax-focused only, no business features |
+
+*Source: [Breezing](https://breezing.io/blog/best-crypto-accounting-subledger-tools-2025/), [Cryptoworth](https://blog.cryptoworth.com/what-is-the-best-crypto-accounting-software/)*
+
+**The gap:** Traditional tools ignore crypto. Crypto tools ignore traditional accounting. **Moneio will be the first AI-native platform unifying both.**
+
 ### Our Differentiation
 
-| Dimension | Incumbents | Moneio |
-|-----------|------------|--------|
-| **AI Integration** | Bolt-on features | AI-native architecture |
-| **User Experience** | Forms and menus | Conversational interface |
-| **Insights** | "Here's your data" | "Here's what to do" |
-| **Learning** | Static rules | Learns your business |
-| **Accessibility** | Requires training | Ask in plain English |
+| Dimension | Traditional Accounting | Crypto Tools | Moneio |
+|-----------|----------------------|--------------|--------|
+| **Fiat Support** | Yes | Limited | Yes |
+| **Crypto Support** | No | Yes | Yes |
+| **AI Integration** | Bolt-on | Basic | AI-native |
+| **User Experience** | Forms and menus | Technical | Conversational |
+| **Insights** | "Here's your data" | "Here's your holdings" | "Here's what to do" |
+| **Tax Compliance** | Fiat only | Crypto only | Unified reporting |
 
 ### Why Now?
 
@@ -395,6 +426,7 @@ The confidence to make big decisions shouldn't require years of experience.
 
 All statistics in this deck are sourced from 2025 research:
 
+### Small Business & Accounting Market
 - [Commerce Institute - Business Failure Rate 2025](https://www.commerceinstitute.com/business-failure-rate/)
 - [U.S. Chamber of Commerce - Why Small Businesses Fail](https://www.uschamber.com/co/start/strategy/why-small-businesses-fail)
 - [DemandSage - Small Business Statistics 2025](https://www.demandsage.com/small-business-statistics/)
@@ -406,6 +438,17 @@ All statistics in this deck are sourced from 2025 research:
 - [Graphite Financial - Fractional CFO Rates 2025](https://graphitefinancial.com/blog/fractional-cfo-hourly-rates/)
 - [Datanyze - Accounting Market Share](https://www.datanyze.com/market-share/accounting--352)
 - [Fortune Business Insights - Accounting Software Market](https://www.fortunebusinessinsights.com/industry-reports/accounting-software-market-100107)
+
+### Cryptocurrency & Digital Assets
+- [Data Insights Market - Accounting Software for Digital Assets 2025-2033](https://www.datainsightsmarket.com/reports/accounting-software-for-digital-asset-523030)
+- [Market Research Future - Crypto Asset Management Market](https://www.marketresearchfuture.com/reports/crypto-asset-management-market-10730)
+- [CoinLaw - Cryptocurrency Merchant Adoption Statistics 2025](https://coinlaw.io/cryptocurrency-payment-adoption-by-merchants-statistics/)
+- [The Small Business Blog - Crypto Statistics 2025](https://thesmallbusinessblog.com/crypto-statistics/)
+- [Security.org - 2025 Cryptocurrency Consumer Report](https://www.security.org/digital-security/cryptocurrency-annual-consumer-report/)
+- [Decimal - Crypto Tax Implications for Businesses 2025](https://decimal.com/blog/understanding-the-tax-implications-of-cryptocurrency-for-businesses-in-2025)
+- [TaxPlanIQ - Crypto Tax Updates 2025](https://www.taxplaniq.com/blog/crypto-tax-and-digital-asset-updates-what-you-need-to-know-in-2025)
+- [Breezing - Best Crypto Accounting Tools 2025](https://breezing.io/blog/best-crypto-accounting-subledger-tools-2025/)
+- [Cryptoworth - Best Crypto Accounting Software 2025](https://blog.cryptoworth.com/what-is-the-best-crypto-accounting-software/)
 
 ---
 
