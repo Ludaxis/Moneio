@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moneio | عرض المستثمرين ٢٠٢٦</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563EB;
+      --primary-light: #3B82F6;
+      --accent: #7C3AED;
+      --success: #059669;
+      --text: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --bg: #FFFFFF;
+      --bg-subtle: #F8FAFC;
+      --border: #E2E8F0;
+    }
+
+    [data-theme="dark"] {
+      --primary: #3B82F6;
+      --primary-light: #60A5FA;
+      --accent: #A78BFA;
+      --success: #10B981;
+      --text: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --text-muted: #64748B;
+      --bg: #0F172A;
+      --bg-subtle: #1E293B;
+      --border: #334155;
+    }
+
+    [data-theme="dark"] .cross { color: #F87171; }
+    [data-theme="dark"] .circle-tam { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); }
+    [data-theme="dark"] .circle-sam { background: rgba(167, 139, 250, 0.15); border-color: rgba(167, 139, 250, 0.3); }
+    [data-theme="dark"] .icon-box { background: rgba(59, 130, 246, 0.15); }
+    [data-theme="dark"] .icon-box.accent { background: rgba(167, 139, 250, 0.15); }
+    [data-theme="dark"] .icon-box.success { background: rgba(16, 185, 129, 0.15); }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    body {
+      font-family: 'Vazirmatn', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.7;
+      direction: rtl;
+      overflow: hidden;
+    }
+
+    .slide {
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      position: relative;
+    }
+
+    .slide-inner {
+      max-width: 1000px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 38px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 20px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .highlight { color: var(--primary); }
+
+    .nav {
+      position: fixed;
+      left: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-dot:hover, .nav-dot.active {
+      background: var(--primary);
+      transform: scale(1.4);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+    .card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: right;
+    }
+
+    .card-center { text-align: center; }
+
+    .stat-value {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    .icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+
+    .icon-box.accent {
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--accent);
+    }
+
+    .icon-box.success {
+      background: rgba(5, 150, 105, 0.1);
+      color: var(--success);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      text-align: right;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr.highlight-row {
+      background: rgba(37, 99, 235, 0.05);
+    }
+
+    .check { color: var(--success); }
+    .cross { color: #DC2626; }
+
+    .source {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-right: 4px;
+      vertical-align: super;
+    }
+
+    .source-block {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .source-block a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .list {
+      list-style: none;
+      text-align: right;
+    }
+
+    .list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      flex-direction: row-reverse;
+    }
+
+    .list li i {
+      color: var(--primary);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 3px;
+      float: right;
+    }
+
+    .market-visual {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto;
+    }
+
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .circle-tam {
+      width: 280px;
+      height: 280px;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      top: 0;
+      right: 0;
+    }
+
+    .circle-sam {
+      width: 180px;
+      height: 180px;
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      top: 50px;
+      right: 50px;
+    }
+
+    .circle-som {
+      width: 80px;
+      height: 80px;
+      background: var(--primary);
+      color: white;
+      top: 100px;
+      right: 100px;
+    }
+
+    .circle-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .circle-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .circle-som .circle-label { color: rgba(255,255,255,0.8); }
+    .circle-som .circle-value { font-size: 16px; }
+
+    .slide-num {
+      position: absolute;
+      bottom: 24px;
+      left: 48px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 36px; }
+      h2 { font-size: 28px; }
+    }
+
+    @media (max-width: 640px) {
+      .slide { padding: 24px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+      h2 { font-size: 24px; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-inner > * {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      html, body {
+        overflow: visible;
+        scroll-snap-type: none;
+        background: var(--bg) !important;
+      }
+      .slide {
+        page-break-after: always;
+        page-break-inside: avoid;
+        background: var(--bg) !important;
+      }
+      .slide:last-child { page-break-after: avoid; }
+      .nav, .theme-toggle, .download-btn, .lang-switch, .slide-num { display: none !important; }
+    }
+
+    @page {
+      size: 1920px 1080px landscape;
+      margin: 0;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .download-btn {
+      position: fixed;
+      top: 24px;
+      left: 76px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .download-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .lang-switch {
+      position: fixed;
+      top: 24px;
+      left: 128px;
+      z-index: 100;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .lang-switch:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+  <button class="download-btn" id="downloadBtn" title="تحميل PDF">
+    <i data-lucide="download" style="width:20px;height:20px;"></i>
+  </button>
+
+  <button class="theme-toggle" id="themeToggle" title="تغيير الوضع">
+    <i data-lucide="moon" style="width:20px;height:20px;"></i>
+  </button>
+
+  <a href="pitch-deck.html" class="lang-switch">English</a>
+
+  <nav class="nav" id="nav"></nav>
+
+  <!-- الشريحة 1: الغلاف -->
+  <section class="slide" data-title="الغلاف">
+    <div class="slide-inner">
+      <div style="margin-bottom:48px;">
+        <div style="font-size:32px;font-weight:700;">mone<span style="color:var(--accent);">io</span></div>
+      </div>
+      <h1>الجميع يمكنه أن يصبح <span class="highlight">مديراً مالياً</span></h1>
+      <p>إدارة مالية مدعومة بالذكاء الاصطناعي لمن لا يعرفون المحاسبة</p>
+      <div style="margin-top:48px;font-size:14px;color:var(--text-muted);">
+        جولة تمويل بذرية | يناير ٢٠٢٦ | سري
+      </div>
+    </div>
+    <div class="slide-num">٠١ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٢: المشكلة -->
+  <section class="slide" data-title="المشكلة">
+    <div class="slide-inner">
+      <p class="tag">المشكلة</p>
+      <h2>٨٢٪ من فشل الأعمال يعود إلى<br><span class="highlight">سوء إدارة التدفق النقدي</span></h2>
+
+      <div class="grid-3" style="margin-top: 32px;">
+        <div class="card card-center">
+          <div class="stat-value">٦١٪</div>
+          <div class="stat-label">من الفواتير تُدفع متأخرة</div>
+          <div class="source-block">Clockify ٢٠٢٥</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value">$٣٩K</div>
+          <div class="stat-label">التكلفة السنوية للتأخر في السداد</div>
+          <div class="source-block">InvoPilot</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value">+١٠٠</div>
+          <div class="stat-label">يوم سنوياً على المحاسبة</div>
+          <div class="source-block">Remote Books</div>
+        </div>
+      </div>
+
+      <p style="margin-top: 24px; font-size: 16px;">
+        معظم الناس لا يعرفون أين تذهب أموالهم. الذكاء الاصطناعي يغير ذلك.
+      </p>
+    </div>
+    <div class="slide-num">٠٢ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٣: الحل -->
+  <section class="slide" data-title="الحل">
+    <div class="slide-inner">
+      <p class="tag">الحل</p>
+      <h2>مساعدك المالي الذكي<br><span class="highlight">لا تحتاج أي خبرة محاسبية</span></h2>
+
+      <div class="grid-4" style="margin-top: 32px; text-align: right;">
+        <div class="card">
+          <div class="icon-box"><i data-lucide="file-scan" style="width:20px;height:20px;"></i></div>
+          <h3>ذكاء المستندات</h3>
+          <p style="font-size:14px;margin:0;">استخراج تلقائي للفواتير والإيصالات والكشوف</p>
+        </div>
+        <div class="card">
+          <div class="icon-box accent"><i data-lucide="sparkles" style="width:20px;height:20px;"></i></div>
+          <h3>تصنيف ذكي</h3>
+          <p style="font-size:14px;margin:0;">تصنيف المعاملات بالذكاء الاصطناعي</p>
+        </div>
+        <div class="card">
+          <div class="icon-box"><i data-lucide="git-merge" style="width:20px;height:20px;"></i></div>
+          <h3>مطابقة الفواتير</h3>
+          <p style="font-size:14px;margin:0;">مطابقة تلقائية مع المعاملات البنكية</p>
+        </div>
+        <div class="card">
+          <div class="icon-box success"><i data-lucide="message-circle" style="width:20px;height:20px;"></i></div>
+          <h3>محادثة مالية</h3>
+          <p style="font-size:14px;margin:0;">اسأل بلغتك واحصل على إجابات فورية</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">٠٣ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٤: المنتج -->
+  <section class="slide" data-title="المنتج">
+    <div class="slide-inner">
+      <p class="tag">لوحة التحكم المالية</p>
+      <h2>ذكاء مالي في الوقت الفعلي</h2>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;color:var(--success);">+٢٣.٨K</div>
+          <div class="stat-label">الإيرادات الشهرية</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;color:#DC2626;">-١٦.٤K</div>
+          <div class="stat-label">المصروفات الشهرية</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;">٧.٤K</div>
+          <div class="stat-label">صافي التدفق النقدي</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px; align-items: stretch;">
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+          <h3 style="display:flex;align-items:center;gap:8px;color:var(--accent);justify-content:flex-end;">
+            رؤية الذكاء الاصطناعي
+            <i data-lucide="brain" style="width:18px;height:18px;"></i>
+          </h3>
+          <p style="font-size:15px;margin-top:12px;margin-bottom:0;text-align:right;">
+            "نفقاتك السحابية ٢.٧ ألف شهرياً عبر ٣ مزودين. الدمج يوفر ٤٠٠ شهرياً."
+          </p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+          <h3>المميزات</h3>
+          <ul class="list" style="margin-top:8px;margin-bottom:0;">
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>مؤشر الصحة المالية (A-F)</li>
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>حاسبة المدرج النقدي</li>
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>توقعات ٦ أشهر</li>
+            <li style="margin-bottom:0;"><i data-lucide="check" style="width:16px;height:16px;"></i>كشف الحالات الشاذة</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">٠٤ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٥: السوق -->
+  <section class="slide" data-title="السوق">
+    <div class="slide-inner">
+      <p class="tag">فرصة السوق</p>
+      <h2>سوق بقيمة <span class="highlight">٢١ مليار$</span> ينمو إلى ٤٤ مليار$</h2>
+
+      <div class="grid-2" style="margin-top: 24px; align-items: center;">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:600;color:var(--primary);">٩٪ ← ٤١٪</span>
+              <span style="font-size:15px;">اعتماد الذكاء الاصطناعي في المحاسبة</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:41%;"></div></div>
+            <div class="source-block">Karbon State of AI ٢٠٢٥</div>
+          </div>
+          <div class="grid-2" style="gap:16px;">
+            <div class="card card-center">
+              <div style="font-size:28px;font-weight:700;color:var(--primary);">+٢B</div>
+              <div class="stat-label">أفراد وشركات صغيرة</div>
+            </div>
+            <div class="card card-center">
+              <div style="font-size:28px;font-weight:700;color:var(--accent);">٤٧.٨٪</div>
+              <div class="stat-label">نمو المحاسبة الآلية سنوياً</div>
+            </div>
+          </div>
+        </div>
+        <div class="market-visual">
+          <div class="circle circle-tam">
+            <div class="circle-value">$٤٤B</div>
+            <div class="circle-label">TAM ٢٠٣٠</div>
+          </div>
+          <div class="circle circle-sam">
+            <div class="circle-value">$٢١B</div>
+            <div class="circle-label">SAM ٢٠٢٥</div>
+          </div>
+          <div class="circle circle-som">
+            <div class="circle-value">$٥٠B</div>
+            <div class="circle-label">AI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">٠٥ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٦: نموذج العمل -->
+  <section class="slide" data-title="نموذج العمل">
+    <div class="slide-inner">
+      <p class="tag">نموذج العمل</p>
+      <h2>أرخص ١٠-١٠٠ مرة من البدائل</h2>
+
+      <div class="grid-4" style="margin-top: 24px;">
+        <div class="card card-center">
+          <h3>المبتدئ</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$٢٩</div>
+          <div style="font-size:14px;color:var(--text-muted);">/شهرياً</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">رواد الأعمال الفرديين</div>
+        </div>
+        <div class="card card-center" style="border-color:var(--primary);background:rgba(37,99,235,0.03);">
+          <h3 style="color:var(--primary);">النمو</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$٧٩</div>
+          <div style="font-size:14px;color:var(--text-muted);">/شهرياً</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">الفرق الصغيرة</div>
+        </div>
+        <div class="card card-center">
+          <h3>التوسع</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$١٩٩</div>
+          <div style="font-size:14px;color:var(--text-muted);">/شهرياً</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">الشركات النامية</div>
+        </div>
+        <div class="card card-center">
+          <h3>المؤسسات</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">مخصص</div>
+          <div style="font-size:14px;color:var(--text-muted);">حسب الطلب</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">الشركات المتوسطة</div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">٨٥٪</div>
+          <div class="stat-label">هامش الربح المستهدف</div>
+        </div>
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">٩:١</div>
+          <div class="stat-label">نسبة LTV:CAC</div>
+        </div>
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">٨ أشهر</div>
+          <div class="stat-label">استرداد تكلفة الاستحواذ</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">٠٦ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٧: الإنجازات -->
+  <section class="slide" data-title="الإنجازات">
+    <div class="slide-inner">
+      <p class="tag">الإنجازات</p>
+      <h2>منصة متكاملة جاهزة</h2>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="card">
+          <h3 style="margin-bottom:16px;">الإنجازات التقنية</h3>
+          <ul class="list">
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>نظام معالجة المستندات</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>محرك الاستخراج الذكي (GPT-٤o)</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>تقييم الصحة المالية</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>توقعات التدفق النقدي</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>المساعد الصوتي</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>تكامل MCP</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">قدرات المنصة</h3>
+          <div class="grid-2" style="gap:12px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              ٧ تقارير مالية
+              <i data-lucide="file-text" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              ٤ لغات
+              <i data-lucide="globe" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              دعم RTL
+              <i data-lucide="languages" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              متعدد العملات
+              <i data-lucide="coins" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              استعلامات صوتية
+              <i data-lucide="mic" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              محادثة ذكية
+              <i data-lucide="bot" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">٠٧ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٨: المنافسة -->
+  <section class="slide" data-title="المنافسة">
+    <div class="slide-inner">
+      <p class="tag">المنافسة</p>
+      <h2>مصمم لعصر <span class="highlight">الذكاء الاصطناعي أولاً</span></h2>
+
+      <table style="margin-top: 24px;">
+        <thead>
+          <tr>
+            <th>الشركة</th>
+            <th>الإيرادات</th>
+            <th>المشتركين</th>
+            <th>القيود</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>QuickBooks</strong></td>
+            <td>$١١.١B</td>
+            <td>+٧M</td>
+            <td class="cross">تقليدي، الذكاء مضاف لاحقاً</td>
+          </tr>
+          <tr>
+            <td><strong>Xero</strong></td>
+            <td>$١.٢B</td>
+            <td>٤.٦M</td>
+            <td class="cross">تسجيل فقط، لا فهم</td>
+          </tr>
+          <tr>
+            <td><strong>Sage</strong></td>
+            <td>~$٢B</td>
+            <td>-</td>
+            <td class="cross">يركز على المؤسسات الكبرى</td>
+          </tr>
+          <tr class="highlight-row">
+            <td><strong style="color:var(--primary);">Moneio</strong></td>
+            <td style="color:var(--accent);">ذكاء اصطناعي أصيل</td>
+            <td>قبل الإطلاق</td>
+            <td class="check">ذكاء CFO بـ $٢٩/شهرياً</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size:14px;margin-top:16px;">
+        QuickBooks نمت ٢٢٪ سنوياً. Xero نمت ٢٣٪ سنوياً. السوق يتوسع بسرعة.
+      </p>
+    </div>
+    <div class="slide-num">٠٨ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ٩: خارطة الطريق -->
+  <section class="slide" data-title="خارطة الطريق">
+    <div class="slide-inner">
+      <p class="tag">خارطة الطريق</p>
+      <h2>الطريق نحو التمويل المستقل</h2>
+
+      <div class="grid-4" style="margin-top: 24px; text-align: right;">
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:8px;">Q٢ ٢٠٢٦</div>
+          <h3>قاتل المحاسب</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>مطابقة تلقائية</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>دفع ذكي للفواتير</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>إعداد ضرائب بنقرة</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px;">Q٣ ٢٠٢٦</div>
+          <h3>المستشار المالي</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>توقع النمو</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>ذكاء التسعير</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>محافظ العملات الرقمية</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--success);margin-bottom:8px;">Q٤ ٢٠٢٦</div>
+          <h3>شبكة CFO</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>عرض متعدد الكيانات</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>ربط البنوك</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>تقارير ضرائب الكريبتو</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">٢٠٢٧</div>
+          <h3>CFO المستقل</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>تمويل ذاتي التشغيل</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>توقع التوظيف</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>مساعد مالي شامل</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">٠٩ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ١٠: الفريق -->
+  <section class="slide" data-title="الفريق">
+    <div class="slide-inner">
+      <p class="tag">الفريق</p>
+      <h2>فريق التأسيس</h2>
+
+      <div class="grid-4" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">R</div>
+          <h3>رضا</h3>
+          <div style="font-size:14px;color:var(--primary);margin-bottom:8px;">المنتج</div>
+          <p style="font-size:13px;margin:0;">شريك مؤسس</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">A</div>
+          <h3>أحمد</h3>
+          <div style="font-size:14px;color:var(--accent);margin-bottom:8px;">المالية</div>
+          <p style="font-size:13px;margin:0;">شريك مؤسس</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--success);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">S</div>
+          <h3>سينا</h3>
+          <div style="font-size:14px;color:var(--success);margin-bottom:8px;">الهندسة</div>
+          <p style="font-size:13px;margin:0;">شريك مؤسس</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:#F59E0B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">E</div>
+          <h3>عرفان</h3>
+          <div style="font-size:14px;color:#F59E0B;margin-bottom:8px;">التسويق</div>
+          <p style="font-size:13px;margin:0;">شريك مؤسس</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">١٠ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ١١: الطلب -->
+  <section class="slide" data-title="الطلب">
+    <div class="slide-inner">
+      <p class="tag">طلب التمويل</p>
+      <h2>نجمع <span class="highlight">مليون دولار</span> جولة بذرية</h2>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div class="stat-value">$١M</div>
+          <div class="stat-label">جولة بذرية</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="color:var(--text);">١٨ شهر</div>
+          <div class="stat-label">المدرج التشغيلي</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="color:var(--text);">$١M</div>
+          <div class="stat-label">هدف ARR Q٤ ٢٠٢٦</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="card">
+          <h3>توزيع التمويل</h3>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span style="font-weight:600;">٥٠٪</span>
+              <span>الهندسة والذكاء الاصطناعي</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:50%;"></div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span style="font-weight:600;">٣٠٪</span>
+              <span>التسويق والمبيعات</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:30%;background:var(--accent);"></div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span style="font-weight:600;">٢٠٪</span>
+              <span>العمليات</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:20%;background:var(--success);"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>أهداف ١٨ شهر</h3>
+          <ul class="list" style="margin-top:12px;">
+            <li style="font-size:14px;"><i data-lucide="calendar" style="width:14px;height:14px;"></i><strong>Q٢ ٢٠٢٦</strong> — ربط البنوك (Open Banking)</li>
+            <li style="font-size:14px;"><i data-lucide="users" style="width:14px;height:14px;"></i><strong>Q٣ ٢٠٢٦</strong> — ١٠,٠٠٠ عميل مدفوع</li>
+            <li style="font-size:14px;"><i data-lucide="trending-up" style="width:14px;height:14px;"></i><strong>Q٤ ٢٠٢٦</strong> — مليون دولار ARR</li>
+            <li style="font-size:14px;margin-bottom:0;"><i data-lucide="rocket" style="width:14px;height:14px;"></i><strong>Q١ ٢٠٢٧</strong> — جاهزون لـ Series A</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">١١ / ١٢</div>
+  </section>
+
+  <!-- الشريحة ١٢: شكراً -->
+  <section class="slide" data-title="شكراً">
+    <div class="slide-inner">
+      <p class="tag">شكراً لكم</p>
+      <div style="font-size:64px;font-weight:700;margin-bottom:32px;">mone<span style="color:var(--accent);">io</span></div>
+      <h2 style="font-weight:400;color:var(--text-secondary);">إدارة مالية ذكية للجميع</h2>
+    </div>
+    <div class="slide-num">١٢ / ١٢</div>
+  </section>
+
+  <script>
+    lucide.createIcons();
+
+    // Theme Toggle
+    (function() {
+      var toggle = document.getElementById('themeToggle');
+      var saved = localStorage.getItem('theme-ar');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        toggle.innerHTML = '<i data-lucide="sun" style="width:20px;height:20px;"></i>';
+        lucide.createIcons();
+      }
+
+      toggle.onclick = function(e) {
+        e.stopPropagation();
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('theme-ar', 'light');
+          toggle.innerHTML = '<i data-lucide="moon" style="width:20px;height:20px;"></i>';
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme-ar', 'dark');
+          toggle.innerHTML = '<i data-lucide="sun" style="width:20px;height:20px;"></i>';
+        }
+        lucide.createIcons();
+      };
+    })();
+
+    // Slide Navigation
+    (function() {
+      var slides = document.querySelectorAll('.slide');
+      var totalSlides = slides.length;
+      var current = 0;
+      var isAnimating = false;
+
+      var nav = document.getElementById('nav');
+      for (var i = 0; i < totalSlides; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('data-index', i);
+        nav.appendChild(dot);
+      }
+
+      function goTo(n) {
+        if (isAnimating) return;
+        if (n >= totalSlides) n = 0;
+        if (n < 0) n = totalSlides - 1;
+        isAnimating = true;
+        current = n;
+        slides[n].scrollIntoView({ behavior: 'smooth' });
+
+        var dots = document.querySelectorAll('.nav-dot');
+        for (var i = 0; i < dots.length; i++) {
+          dots[i].className = 'nav-dot' + (i === current ? ' active' : '');
+        }
+
+        setTimeout(function() { isAnimating = false; }, 500);
+      }
+
+      function next() { goTo(current + 1); }
+      function prev() { goTo(current - 1); }
+
+      nav.onclick = function(e) {
+        e.stopPropagation();
+        if (e.target.classList.contains('nav-dot')) {
+          var idx = parseInt(e.target.getAttribute('data-index'));
+          goTo(idx);
+        }
+      };
+
+      document.onkeydown = function(e) {
+        var k = e.keyCode;
+        if (k === 39 || k === 40 || k === 32 || k === 34) { e.preventDefault(); next(); }
+        else if (k === 37 || k === 38 || k === 33) { e.preventDefault(); prev(); }
+        else if (k === 36) { e.preventDefault(); goTo(0); }
+        else if (k === 35) { e.preventDefault(); goTo(totalSlides - 1); }
+        else if (k === 82) { goTo(0); }
+      };
+
+      document.onclick = function(e) {
+        var tag = e.target.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'a' || e.target.classList.contains('nav-dot')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.nav')) return;
+        next();
+      };
+
+      document.oncontextmenu = function(e) {
+        var tag = e.target.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'a' || e.target.classList.contains('nav-dot')) return true;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.nav')) return true;
+        e.preventDefault();
+        prev();
+        return false;
+      };
+
+      var wheelTimer = null;
+      document.onwheel = function(e) {
+        e.preventDefault();
+        if (wheelTimer) return;
+        wheelTimer = setTimeout(function() { wheelTimer = null; }, 300);
+        if (e.deltaY > 0) next();
+        else prev();
+      };
+
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            for (var i = 0; i < slides.length; i++) {
+              if (slides[i] === entry.target) {
+                current = i;
+                var dots = document.querySelectorAll('.nav-dot');
+                for (var j = 0; j < dots.length; j++) {
+                  dots[j].className = 'nav-dot' + (j === current ? ' active' : '');
+                }
+                break;
+              }
+            }
+          }
+        });
+      }, { threshold: 0.5 });
+
+      for (var i = 0; i < slides.length; i++) {
+        observer.observe(slides[i]);
+      }
+    })();
+
+    // Download PDF
+    document.getElementById('downloadBtn').onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      alert('لحفظ كـ PDF:\n\n١. اضغط Cmd+P (Mac) أو Ctrl+P (Windows)\n٢. اختر "Save as PDF"\n٣. اختر Landscape\n٤. فعّل "Background graphics"\n٥. اجعل الهوامش None');
+      window.print();
+    };
+  </script>
+</body>
+</html>

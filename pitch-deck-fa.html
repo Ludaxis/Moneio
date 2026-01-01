@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moneio | ارائه سرمایه‌گذاران ۲۰۲۶</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563EB;
+      --primary-light: #3B82F6;
+      --accent: #7C3AED;
+      --success: #059669;
+      --text: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --bg: #FFFFFF;
+      --bg-subtle: #F8FAFC;
+      --border: #E2E8F0;
+    }
+
+    [data-theme="dark"] {
+      --primary: #3B82F6;
+      --primary-light: #60A5FA;
+      --accent: #A78BFA;
+      --success: #10B981;
+      --text: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --text-muted: #64748B;
+      --bg: #0F172A;
+      --bg-subtle: #1E293B;
+      --border: #334155;
+    }
+
+    [data-theme="dark"] .cross { color: #F87171; }
+    [data-theme="dark"] .circle-tam { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); }
+    [data-theme="dark"] .circle-sam { background: rgba(167, 139, 250, 0.15); border-color: rgba(167, 139, 250, 0.3); }
+    [data-theme="dark"] .icon-box { background: rgba(59, 130, 246, 0.15); }
+    [data-theme="dark"] .icon-box.accent { background: rgba(167, 139, 250, 0.15); }
+    [data-theme="dark"] .icon-box.success { background: rgba(16, 185, 129, 0.15); }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    body {
+      font-family: 'Vazirmatn', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.7;
+      direction: rtl;
+      overflow: hidden;
+    }
+
+    .slide {
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      position: relative;
+    }
+
+    .slide-inner {
+      max-width: 1000px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 38px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 20px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .highlight { color: var(--primary); }
+
+    .nav {
+      position: fixed;
+      left: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-dot:hover, .nav-dot.active {
+      background: var(--primary);
+      transform: scale(1.4);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+    .card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: right;
+    }
+
+    .card-center { text-align: center; }
+
+    .stat-value {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    .icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+
+    .icon-box.accent {
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--accent);
+    }
+
+    .icon-box.success {
+      background: rgba(5, 150, 105, 0.1);
+      color: var(--success);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      text-align: right;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr.highlight-row {
+      background: rgba(37, 99, 235, 0.05);
+    }
+
+    .check { color: var(--success); }
+    .cross { color: #DC2626; }
+
+    .source {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-right: 4px;
+      vertical-align: super;
+    }
+
+    .source-block {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .source-block a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .list {
+      list-style: none;
+      text-align: right;
+    }
+
+    .list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      flex-direction: row-reverse;
+    }
+
+    .list li i {
+      color: var(--primary);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 3px;
+      float: right;
+    }
+
+    .market-visual {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto;
+    }
+
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .circle-tam {
+      width: 280px;
+      height: 280px;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      top: 0;
+      right: 0;
+    }
+
+    .circle-sam {
+      width: 180px;
+      height: 180px;
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      top: 50px;
+      right: 50px;
+    }
+
+    .circle-som {
+      width: 80px;
+      height: 80px;
+      background: var(--primary);
+      color: white;
+      top: 100px;
+      right: 100px;
+    }
+
+    .circle-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .circle-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .circle-som .circle-label { color: rgba(255,255,255,0.8); }
+    .circle-som .circle-value { font-size: 16px; }
+
+    .slide-num {
+      position: absolute;
+      bottom: 24px;
+      left: 48px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 36px; }
+      h2 { font-size: 28px; }
+    }
+
+    @media (max-width: 640px) {
+      .slide { padding: 24px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+      h2 { font-size: 24px; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-inner > * {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      html, body {
+        overflow: visible;
+        scroll-snap-type: none;
+        background: var(--bg) !important;
+      }
+      .slide {
+        page-break-after: always;
+        page-break-inside: avoid;
+        background: var(--bg) !important;
+      }
+      .slide:last-child { page-break-after: avoid; }
+      .nav, .theme-toggle, .download-btn, .lang-switch, .slide-num { display: none !important; }
+    }
+
+    @page {
+      size: 1920px 1080px landscape;
+      margin: 0;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .download-btn {
+      position: fixed;
+      top: 24px;
+      left: 76px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .download-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .lang-switch {
+      position: fixed;
+      top: 24px;
+      left: 128px;
+      z-index: 100;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .lang-switch:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+  <button class="download-btn" id="downloadBtn" title="دانلود PDF">
+    <i data-lucide="download" style="width:20px;height:20px;"></i>
+  </button>
+
+  <button class="theme-toggle" id="themeToggle" title="تغییر تم">
+    <i data-lucide="moon" style="width:20px;height:20px;"></i>
+  </button>
+
+  <nav class="nav" id="nav"></nav>
+
+  <!-- اسلاید ۱: جلد -->
+  <section class="slide" data-title="جلد">
+    <div class="slide-inner">
+      <div style="margin-bottom:48px;">
+        <div style="font-size:32px;font-weight:700;">mone<span style="color:var(--accent);">io</span></div>
+      </div>
+      <h1>همه می‌توانند <span class="highlight">مدیر مالی</span> باشند</h1>
+      <p>مدیریت مالی هوشمند برای کسانی که حسابداری نمی‌دانند</p>
+      <div style="margin-top:48px;font-size:14px;color:var(--text-muted);">
+        دور سرمایه‌گذاری بذری | ژانویه ۲۰۲۶ | محرمانه
+      </div>
+    </div>
+    <div class="slide-num">۰۱ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۲: مشکل -->
+  <section class="slide" data-title="مشکل">
+    <div class="slide-inner">
+      <p class="tag">مشکل</p>
+      <h2>۸۲٪ از شکست کسب‌وکارها به دلیل<br><span class="highlight">مدیریت نادرست جریان نقدی</span> است</h2>
+
+      <div class="grid-3" style="margin-top: 32px;">
+        <div class="card card-center">
+          <div class="stat-value">۶۱٪</div>
+          <div class="stat-label">فاکتورها دیر پرداخت می‌شوند</div>
+          <div class="source-block">Clockify ۲۰۲۵</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value">$۳۹K</div>
+          <div class="stat-label">هزینه سالانه تأخیر در پرداخت</div>
+          <div class="source-block">InvoPilot</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value">+۱۰۰</div>
+          <div class="stat-label">روز در سال صرف حسابداری</div>
+          <div class="source-block">Remote Books</div>
+        </div>
+      </div>
+
+      <p style="margin-top: 24px; font-size: 16px;">
+        بیشتر مردم نمی‌دانند پولشان کجا می‌رود. هوش مصنوعی این را تغییر می‌دهد.
+      </p>
+    </div>
+    <div class="slide-num">۰۲ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۳: راه‌حل -->
+  <section class="slide" data-title="راه‌حل">
+    <div class="slide-inner">
+      <p class="tag">راه‌حل</p>
+      <h2>دستیار مالی هوشمند شما<br><span class="highlight">بدون نیاز به دانش حسابداری</span></h2>
+
+      <div class="grid-4" style="margin-top: 32px; text-align: right;">
+        <div class="card">
+          <div class="icon-box"><i data-lucide="file-scan" style="width:20px;height:20px;"></i></div>
+          <h3>هوش اسناد</h3>
+          <p style="font-size:14px;margin:0;">استخراج خودکار فاکتورها، رسیدها و صورت‌حساب‌ها</p>
+        </div>
+        <div class="card">
+          <div class="icon-box accent"><i data-lucide="sparkles" style="width:20px;height:20px;"></i></div>
+          <h3>دسته‌بندی هوشمند</h3>
+          <p style="font-size:14px;margin:0;">دسته‌بندی تراکنش‌ها با هوش مصنوعی</p>
+        </div>
+        <div class="card">
+          <div class="icon-box"><i data-lucide="git-merge" style="width:20px;height:20px;"></i></div>
+          <h3>تطبیق فاکتور</h3>
+          <p style="font-size:14px;margin:0;">تطبیق خودکار با تراکنش‌های بانکی</p>
+        </div>
+        <div class="card">
+          <div class="icon-box success"><i data-lucide="message-circle" style="width:20px;height:20px;"></i></div>
+          <h3>گفتگوی مالی</h3>
+          <p style="font-size:14px;margin:0;">با زبان خودتان بپرسید و فوری پاسخ بگیرید</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۰۳ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۴: محصول -->
+  <section class="slide" data-title="محصول">
+    <div class="slide-inner">
+      <p class="tag">داشبورد مالی</p>
+      <h2>هوش مالی در لحظه</h2>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;color:var(--success);">+۲۳.۸K</div>
+          <div class="stat-label">درآمد ماهانه</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;color:#DC2626;">-۱۶.۴K</div>
+          <div class="stat-label">هزینه ماهانه</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;">۷.۴K</div>
+          <div class="stat-label">جریان نقدی خالص</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px; align-items: stretch;">
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+          <h3 style="display:flex;align-items:center;gap:8px;color:var(--accent);justify-content:flex-end;">
+            بینش هوش مصنوعی
+            <i data-lucide="brain" style="width:18px;height:18px;"></i>
+          </h3>
+          <p style="font-size:15px;margin-top:12px;margin-bottom:0;text-align:right;">
+            "هزینه‌های ابری شما ۲.۷ هزار در ماه از ۳ ارائه‌دهنده است. ادغام ۴۰۰ در ماه صرفه‌جویی می‌کند."
+          </p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+          <h3>ویژگی‌ها</h3>
+          <ul class="list" style="margin-top:8px;margin-bottom:0;">
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>شاخص سلامت مالی (A-F)</li>
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>محاسبه‌گر runway نقدی</li>
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>پیش‌بینی ۶ ماهه</li>
+            <li style="margin-bottom:0;"><i data-lucide="check" style="width:16px;height:16px;"></i>تشخیص ناهنجاری</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۰۴ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۵: بازار -->
+  <section class="slide" data-title="بازار">
+    <div class="slide-inner">
+      <p class="tag">فرصت بازار</p>
+      <h2>بازاری به ارزش <span class="highlight">۲۱ میلیارد$</span> در حال رشد به ۴۴ میلیارد$</h2>
+
+      <div class="grid-2" style="margin-top: 24px; align-items: center;">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:600;color:var(--primary);">۹٪ ← ۴۱٪</span>
+              <span style="font-size:15px;">پذیرش هوش مصنوعی در حسابداری</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:41%;"></div></div>
+            <div class="source-block">Karbon State of AI ۲۰۲۵</div>
+          </div>
+          <div class="grid-2" style="gap:16px;">
+            <div class="card card-center">
+              <div style="font-size:28px;font-weight:700;color:var(--primary);">+۲B</div>
+              <div class="stat-label">افراد و کسب‌وکارهای کوچک</div>
+            </div>
+            <div class="card card-center">
+              <div style="font-size:28px;font-weight:700;color:var(--accent);">۴۷.۸٪</div>
+              <div class="stat-label">رشد سالانه حسابداری خودکار</div>
+            </div>
+          </div>
+        </div>
+        <div class="market-visual">
+          <div class="circle circle-tam">
+            <div class="circle-value">$۴۴B</div>
+            <div class="circle-label">TAM ۲۰۳۰</div>
+          </div>
+          <div class="circle circle-sam">
+            <div class="circle-value">$۲۱B</div>
+            <div class="circle-label">SAM ۲۰۲۵</div>
+          </div>
+          <div class="circle circle-som">
+            <div class="circle-value">$۵۰B</div>
+            <div class="circle-label">AI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۰۵ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۶: مدل کسب‌وکار -->
+  <section class="slide" data-title="مدل کسب‌وکار">
+    <div class="slide-inner">
+      <p class="tag">مدل کسب‌وکار</p>
+      <h2>۱۰ تا ۱۰۰ برابر ارزان‌تر از رقبا</h2>
+
+      <div class="grid-4" style="margin-top: 24px;">
+        <div class="card card-center">
+          <h3>استارتر</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$۲۹</div>
+          <div style="font-size:14px;color:var(--text-muted);">/ماهانه</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">کارآفرینان انفرادی</div>
+        </div>
+        <div class="card card-center" style="border-color:var(--primary);background:rgba(37,99,235,0.03);">
+          <h3 style="color:var(--primary);">رشد</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$۷۹</div>
+          <div style="font-size:14px;color:var(--text-muted);">/ماهانه</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">تیم‌های کوچک</div>
+        </div>
+        <div class="card card-center">
+          <h3>مقیاس</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$۱۹۹</div>
+          <div style="font-size:14px;color:var(--text-muted);">/ماهانه</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">شرکت‌های در حال رشد</div>
+        </div>
+        <div class="card card-center">
+          <h3>سازمانی</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">سفارشی</div>
+          <div style="font-size:14px;color:var(--text-muted);">بر اساس نیاز</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">شرکت‌های متوسط</div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">۸۵٪</div>
+          <div class="stat-label">حاشیه سود هدف</div>
+        </div>
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">۹:۱</div>
+          <div class="stat-label">نسبت LTV:CAC</div>
+        </div>
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">۸ ماه</div>
+          <div class="stat-label">بازگشت هزینه جذب</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۰۶ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۷: دستاوردها -->
+  <section class="slide" data-title="دستاوردها">
+    <div class="slide-inner">
+      <p class="tag">دستاوردها</p>
+      <h2>پلتفرم کامل و آماده</h2>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="card">
+          <h3 style="margin-bottom:16px;">دستاوردهای فنی</h3>
+          <ul class="list">
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>سیستم پردازش اسناد</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>موتور استخراج هوشمند (GPT-۴o)</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>ارزیابی سلامت مالی</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>پیش‌بینی جریان نقدی</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>دستیار صوتی</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>یکپارچه‌سازی MCP</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">قابلیت‌های پلتفرم</h3>
+          <div class="grid-2" style="gap:12px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              ۷ گزارش مالی
+              <i data-lucide="file-text" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              ۴ زبان
+              <i data-lucide="globe" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              پشتیبانی RTL
+              <i data-lucide="languages" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              چند ارزی
+              <i data-lucide="coins" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              پرس‌وجوی صوتی
+              <i data-lucide="mic" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;justify-content:flex-end;">
+              چت هوشمند
+              <i data-lucide="bot" style="width:16px;height:16px;color:var(--primary);"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۰۷ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۸: رقابت -->
+  <section class="slide" data-title="رقابت">
+    <div class="slide-inner">
+      <p class="tag">رقابت</p>
+      <h2>طراحی شده برای عصر <span class="highlight">هوش مصنوعی محور</span></h2>
+
+      <table style="margin-top: 24px;">
+        <thead>
+          <tr>
+            <th>شرکت</th>
+            <th>درآمد</th>
+            <th>مشترکین</th>
+            <th>محدودیت‌ها</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>QuickBooks</strong></td>
+            <td>$۱۱.۱B</td>
+            <td>+۷M</td>
+            <td class="cross">سنتی، AI اضافه شده</td>
+          </tr>
+          <tr>
+            <td><strong>Xero</strong></td>
+            <td>$۱.۲B</td>
+            <td>۴.۶M</td>
+            <td class="cross">فقط ثبت، بدون درک</td>
+          </tr>
+          <tr>
+            <td><strong>Sage</strong></td>
+            <td>~$۲B</td>
+            <td>-</td>
+            <td class="cross">تمرکز بر سازمان‌های بزرگ</td>
+          </tr>
+          <tr class="highlight-row">
+            <td><strong style="color:var(--primary);">Moneio</strong></td>
+            <td style="color:var(--accent);">AI بومی</td>
+            <td>قبل از راه‌اندازی</td>
+            <td class="check">هوش CFO با $۲۹/ماه</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size:14px;margin-top:16px;">
+        QuickBooks با ۲۲٪ و Xero با ۲۳٪ رشد سالانه. بازار به سرعت در حال گسترش است.
+      </p>
+    </div>
+    <div class="slide-num">۰۸ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۹: نقشه راه -->
+  <section class="slide" data-title="نقشه راه">
+    <div class="slide-inner">
+      <p class="tag">نقشه راه</p>
+      <h2>مسیر به سوی امور مالی خودمختار</h2>
+
+      <div class="grid-4" style="margin-top: 24px; text-align: right;">
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:8px;">Q۲ ۲۰۲۶</div>
+          <h3>قاتل حسابدار</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>تطبیق خودکار</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>پرداخت هوشمند فاکتور</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>تنظیم مالیات با یک کلیک</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px;">Q۳ ۲۰۲۶</div>
+          <h3>مشاور مالی</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>پیش‌بینی رشد</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>هوش قیمت‌گذاری</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>کیف پول رمزارز</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--success);margin-bottom:8px;">Q۴ ۲۰۲۶</div>
+          <h3>شبکه CFO</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>نمای چند شرکتی</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>اتصال بانکی</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>گزارش مالیات کریپتو</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">۲۰۲۷</div>
+          <h3>CFO خودمختار</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>تأمین مالی خودکار</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>پیش‌بینی استخدام</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>دستیار مالی جامع</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۰۹ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۱۰: تیم -->
+  <section class="slide" data-title="تیم">
+    <div class="slide-inner">
+      <p class="tag">تیم</p>
+      <h2>تیم بنیان‌گذار</h2>
+
+      <div class="grid-4" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">R</div>
+          <h3>رضا</h3>
+          <div style="font-size:14px;color:var(--primary);margin-bottom:8px;">محصول</div>
+          <p style="font-size:13px;margin:0;">هم‌بنیان‌گذار</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">A</div>
+          <h3>احمد</h3>
+          <div style="font-size:14px;color:var(--accent);margin-bottom:8px;">مالی</div>
+          <p style="font-size:13px;margin:0;">هم‌بنیان‌گذار</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--success);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">S</div>
+          <h3>سینا</h3>
+          <div style="font-size:14px;color:var(--success);margin-bottom:8px;">مهندسی</div>
+          <p style="font-size:13px;margin:0;">هم‌بنیان‌گذار</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:#F59E0B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">E</div>
+          <h3>عرفان</h3>
+          <div style="font-size:14px;color:#F59E0B;margin-bottom:8px;">مارکتینگ</div>
+          <p style="font-size:13px;margin:0;">هم‌بنیان‌گذار</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۱۰ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۱۱: درخواست -->
+  <section class="slide" data-title="درخواست">
+    <div class="slide-inner">
+      <p class="tag">درخواست سرمایه</p>
+      <h2>جذب <span class="highlight">یک میلیون دلار</span> در دور بذری</h2>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div class="stat-value">$۱M</div>
+          <div class="stat-label">دور بذری</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="color:var(--text);">۱۸ ماه</div>
+          <div class="stat-label">runway عملیاتی</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="color:var(--text);">$۱M</div>
+          <div class="stat-label">هدف ARR در Q۴ ۲۰۲۶</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="card">
+          <h3>تخصیص سرمایه</h3>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span style="font-weight:600;">۵۰٪</span>
+              <span>مهندسی و هوش مصنوعی</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:50%;"></div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span style="font-weight:600;">۳۰٪</span>
+              <span>بازاریابی و فروش</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:30%;background:var(--accent);"></div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span style="font-weight:600;">۲۰٪</span>
+              <span>عملیات</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:20%;background:var(--success);"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>اهداف ۱۸ ماهه</h3>
+          <ul class="list" style="margin-top:12px;">
+            <li style="font-size:14px;"><i data-lucide="calendar" style="width:14px;height:14px;"></i><strong>Q۲ ۲۰۲۶</strong> — اتصال بانکی (Open Banking)</li>
+            <li style="font-size:14px;"><i data-lucide="users" style="width:14px;height:14px;"></i><strong>Q۳ ۲۰۲۶</strong> — ۱۰,۰۰۰ مشتری پولی</li>
+            <li style="font-size:14px;"><i data-lucide="trending-up" style="width:14px;height:14px;"></i><strong>Q۴ ۲۰۲۶</strong> — یک میلیون دلار ARR</li>
+            <li style="font-size:14px;margin-bottom:0;"><i data-lucide="rocket" style="width:14px;height:14px;"></i><strong>Q۱ ۲۰۲۷</strong> — آماده برای Series A</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">۱۱ / ۱۲</div>
+  </section>
+
+  <!-- اسلاید ۱۲: سپاس -->
+  <section class="slide" data-title="سپاس">
+    <div class="slide-inner">
+      <p class="tag">با تشکر</p>
+      <div style="font-size:64px;font-weight:700;margin-bottom:32px;">mone<span style="color:var(--accent);">io</span></div>
+      <h2 style="font-weight:400;color:var(--text-secondary);">مدیریت مالی هوشمند برای همه</h2>
+    </div>
+    <div class="slide-num">۱۲ / ۱۲</div>
+  </section>
+
+  <script>
+    lucide.createIcons();
+
+    // Theme Toggle
+    (function() {
+      var toggle = document.getElementById('themeToggle');
+      var saved = localStorage.getItem('theme-fa');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        toggle.innerHTML = '<i data-lucide="sun" style="width:20px;height:20px;"></i>';
+        lucide.createIcons();
+      }
+
+      toggle.onclick = function(e) {
+        e.stopPropagation();
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('theme-fa', 'light');
+          toggle.innerHTML = '<i data-lucide="moon" style="width:20px;height:20px;"></i>';
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme-fa', 'dark');
+          toggle.innerHTML = '<i data-lucide="sun" style="width:20px;height:20px;"></i>';
+        }
+        lucide.createIcons();
+      };
+    })();
+
+    // Slide Navigation
+    (function() {
+      var slides = document.querySelectorAll('.slide');
+      var totalSlides = slides.length;
+      var current = 0;
+      var isAnimating = false;
+
+      var nav = document.getElementById('nav');
+      for (var i = 0; i < totalSlides; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('data-index', i);
+        nav.appendChild(dot);
+      }
+
+      function goTo(n) {
+        if (isAnimating) return;
+        if (n >= totalSlides) n = 0;
+        if (n < 0) n = totalSlides - 1;
+        isAnimating = true;
+        current = n;
+        slides[n].scrollIntoView({ behavior: 'smooth' });
+
+        var dots = document.querySelectorAll('.nav-dot');
+        for (var i = 0; i < dots.length; i++) {
+          dots[i].className = 'nav-dot' + (i === current ? ' active' : '');
+        }
+
+        setTimeout(function() { isAnimating = false; }, 500);
+      }
+
+      function next() { goTo(current + 1); }
+      function prev() { goTo(current - 1); }
+
+      nav.onclick = function(e) {
+        e.stopPropagation();
+        if (e.target.classList.contains('nav-dot')) {
+          var idx = parseInt(e.target.getAttribute('data-index'));
+          goTo(idx);
+        }
+      };
+
+      document.onkeydown = function(e) {
+        var k = e.keyCode;
+        if (k === 39 || k === 40 || k === 32 || k === 34) { e.preventDefault(); next(); }
+        else if (k === 37 || k === 38 || k === 33) { e.preventDefault(); prev(); }
+        else if (k === 36) { e.preventDefault(); goTo(0); }
+        else if (k === 35) { e.preventDefault(); goTo(totalSlides - 1); }
+        else if (k === 82) { goTo(0); }
+      };
+
+      document.onclick = function(e) {
+        var tag = e.target.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'a' || e.target.classList.contains('nav-dot')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.nav')) return;
+        next();
+      };
+
+      document.oncontextmenu = function(e) {
+        var tag = e.target.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'a' || e.target.classList.contains('nav-dot')) return true;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.nav')) return true;
+        e.preventDefault();
+        prev();
+        return false;
+      };
+
+      var wheelTimer = null;
+      document.onwheel = function(e) {
+        e.preventDefault();
+        if (wheelTimer) return;
+        wheelTimer = setTimeout(function() { wheelTimer = null; }, 300);
+        if (e.deltaY > 0) next();
+        else prev();
+      };
+
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            for (var i = 0; i < slides.length; i++) {
+              if (slides[i] === entry.target) {
+                current = i;
+                var dots = document.querySelectorAll('.nav-dot');
+                for (var j = 0; j < dots.length; j++) {
+                  dots[j].className = 'nav-dot' + (j === current ? ' active' : '');
+                }
+                break;
+              }
+            }
+          }
+        });
+      }, { threshold: 0.5 });
+
+      for (var i = 0; i < slides.length; i++) {
+        observer.observe(slides[i]);
+      }
+    })();
+
+    // Download PDF
+    document.getElementById('downloadBtn').onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      alert('برای ذخیره به صورت PDF:\n\n۱. کلید Cmd+P (Mac) یا Ctrl+P (Windows) را بزنید\n۲. گزینه "Save as PDF" را انتخاب کنید\n۳. Landscape را انتخاب کنید\n۴. گزینه "Background graphics" را فعال کنید\n۵. حاشیه‌ها را None قرار دهید');
+      window.print();
+    };
+  </script>
+</body>
+</html>

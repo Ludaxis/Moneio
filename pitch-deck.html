@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moneio | Investor Deck 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563EB;
+      --primary-light: #3B82F6;
+      --accent: #7C3AED;
+      --success: #059669;
+      --text: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --bg: #FFFFFF;
+      --bg-subtle: #F8FAFC;
+      --border: #E2E8F0;
+    }
+
+    [data-theme="dark"] {
+      --primary: #3B82F6;
+      --primary-light: #60A5FA;
+      --accent: #A78BFA;
+      --success: #10B981;
+      --text: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --text-muted: #64748B;
+      --bg: #0F172A;
+      --bg-subtle: #1E293B;
+      --border: #334155;
+    }
+
+    [data-theme="dark"] .cross { color: #F87171; }
+    [data-theme="dark"] .circle-tam { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); }
+    [data-theme="dark"] .circle-sam { background: rgba(167, 139, 250, 0.15); border-color: rgba(167, 139, 250, 0.3); }
+    [data-theme="dark"] .icon-box { background: rgba(59, 130, 246, 0.15); }
+    [data-theme="dark"] .icon-box.accent { background: rgba(167, 139, 250, 0.15); }
+    [data-theme="dark"] .icon-box.success { background: rgba(16, 185, 129, 0.15); }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    /* Slides */
+    .slide {
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      position: relative;
+    }
+
+    .slide-inner {
+      max-width: 1000px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Typography */
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 40px;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 20px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .highlight { color: var(--primary); }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-dot:hover, .nav-dot.active {
+      background: var(--primary);
+      transform: scale(1.4);
+    }
+
+    /* Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+    /* Cards */
+    .card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: left;
+    }
+
+    .card-center { text-align: center; }
+
+    /* Stats */
+    .stat-value {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    /* Icons */
+    .icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+
+    .icon-box.accent {
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--accent);
+    }
+
+    .icon-box.success {
+      background: rgba(5, 150, 105, 0.1);
+      color: var(--success);
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr.highlight-row {
+      background: rgba(37, 99, 235, 0.05);
+    }
+
+    .check { color: var(--success); }
+    .cross { color: #DC2626; }
+
+    /* Source links */
+    .source {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-left: 4px;
+      vertical-align: super;
+      transition: color 0.2s;
+    }
+    .source:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    .source-block {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .source-block a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .source-block a:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1D4ED8;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* List */
+    .list {
+      list-style: none;
+      text-align: left;
+    }
+
+    .list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .list li i {
+      color: var(--primary);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Progress */
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 3px;
+    }
+
+    /* Market Circles */
+    .market-visual {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto;
+    }
+
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .circle-tam {
+      width: 280px;
+      height: 280px;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      top: 0;
+      left: 0;
+    }
+
+    .circle-sam {
+      width: 180px;
+      height: 180px;
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      top: 50px;
+      left: 50px;
+    }
+
+    .circle-som {
+      width: 80px;
+      height: 80px;
+      background: var(--primary);
+      color: white;
+      top: 100px;
+      left: 100px;
+    }
+
+    .circle-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .circle-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .circle-som .circle-label { color: rgba(255,255,255,0.8); }
+    .circle-som .circle-value { font-size: 16px; }
+
+    /* Slide number */
+    .slide-num {
+      position: absolute;
+      bottom: 24px;
+      right: 48px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 40px; }
+      h2 { font-size: 32px; }
+    }
+
+    @media (max-width: 640px) {
+      .slide { padding: 24px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      h1 { font-size: 32px; }
+      h2 { font-size: 28px; }
+      .header { padding: 16px 24px; }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-inner > * {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    /* Print - Optimized for PDF export */
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+        scroll-snap-type: none;
+        background: var(--bg) !important;
+      }
+
+      .slide {
+        width: 100vw;
+        height: 100vh;
+        page-break-after: always;
+        page-break-inside: avoid;
+        break-after: page;
+        break-inside: avoid;
+        position: relative;
+        background: var(--bg) !important;
+      }
+
+      .slide:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+
+      .nav, .theme-toggle, .download-btn, .lang-switch, .slide-num {
+        display: none !important;
+      }
+
+      .card {
+        background: var(--bg-subtle) !important;
+        border: 1px solid var(--border) !important;
+      }
+
+      .stat-value { color: var(--primary) !important; }
+      .highlight { color: var(--primary) !important; }
+      .check { color: var(--success) !important; }
+      .cross { color: #DC2626 !important; }
+
+      .icon-box {
+        background: rgba(37, 99, 235, 0.1) !important;
+      }
+      .icon-box.accent {
+        background: rgba(124, 58, 237, 0.1) !important;
+      }
+      .icon-box.success {
+        background: rgba(5, 150, 105, 0.1) !important;
+      }
+
+      .circle-tam {
+        background: rgba(37, 99, 235, 0.08) !important;
+        border: 1px solid rgba(37, 99, 235, 0.2) !important;
+      }
+      .circle-sam {
+        background: rgba(124, 58, 237, 0.1) !important;
+        border: 1px solid rgba(124, 58, 237, 0.3) !important;
+      }
+      .circle-som {
+        background: var(--primary) !important;
+      }
+
+      .progress-fill {
+        background: var(--primary) !important;
+      }
+
+      a { color: inherit !important; }
+    }
+
+    [data-theme="dark"] @media print {
+      .icon-box { background: rgba(59, 130, 246, 0.15) !important; }
+      .icon-box.accent { background: rgba(167, 139, 250, 0.15) !important; }
+      .icon-box.success { background: rgba(16, 185, 129, 0.15) !important; }
+      .circle-tam { background: rgba(59, 130, 246, 0.15) !important; }
+      .circle-sam { background: rgba(167, 139, 250, 0.15) !important; }
+    }
+
+    @page {
+      size: 1920px 1080px landscape;
+      margin: 0;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Download Button */
+    .download-btn {
+      position: fixed;
+      top: 24px;
+      right: 76px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .download-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Language Switch */
+    .lang-switch {
+      position: fixed;
+      top: 24px;
+      right: 128px;
+      z-index: 100;
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 20px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .lang-switch:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Prevent scroll within slides */
+    body {
+      overflow: hidden;
+    }
+
+    .slides-container {
+      height: 100vh;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- Language Switch -->
+  <a href="pitch-deck-ar.html" class="lang-switch" title="عربي">
+    <i data-lucide="languages" style="width:18px;height:18px;"></i>
+    <span>عربي</span>
+  </a>
+
+  <!-- Download Button -->
+  <button class="download-btn" id="downloadBtn" title="Download as PDF">
+    <i data-lucide="download" style="width:20px;height:20px;"></i>
+  </button>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+    <i data-lucide="moon" style="width:20px;height:20px;"></i>
+  </button>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav"></nav>
+
+  <!-- SLIDE 1: Cover -->
+  <section class="slide" data-title="Cover">
+    <div class="slide-inner">
+      <div style="margin-bottom:48px;">
+        <div style="font-size:32px;font-weight:700;">mone<span style="color:var(--accent);">io</span></div>
+      </div>
+      <h1>Everyone Can Be a <span class="highlight">CFO</span></h1>
+      <p>AI-powered finance for people who don't know accounting.</p>
+      <div style="margin-top:48px;font-size:14px;color:var(--text-muted);">
+        Seed Round | January 2026 | Confidential
+      </div>
+    </div>
+    <div class="slide-num">01 / 12</div>
+  </section>
+
+  <!-- SLIDE 2: Problem -->
+  <section class="slide" id="slide-2" data-title="Problem">
+    <div class="slide-inner">
+      <p class="tag">The Problem</p>
+      <h2>82% of business failures are due to<br><span class="highlight">cash flow mismanagement</span><a href="https://www.uschamber.com/co/start/strategy/why-small-businesses-fail" target="_blank" class="source">[1]</a></h2>
+
+      <div class="grid-3" style="margin-top: 32px;">
+        <div class="card card-center">
+          <div class="stat-value">61%</div>
+          <div class="stat-label">of invoices paid late</div>
+          <div class="source-block"><a href="https://clockify.me/late-invoice-statistics" target="_blank">Clockify 2025</a></div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value">$39K</div>
+          <div class="stat-label">annual cost of late payments</div>
+          <div class="source-block"><a href="https://invopilot.com/blog/late-invoice-payments/" target="_blank">InvoPilot</a></div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value">100+</div>
+          <div class="stat-label">days/year on bookkeeping</div>
+          <div class="source-block"><a href="https://www.remotebooksonline.com/blog/how-much-time-do-small-business-owners-typically-spend-on-bookkeeping-tasks" target="_blank">Remote Books</a></div>
+        </div>
+      </div>
+
+      <p style="margin-top: 24px; font-size: 16px;">
+        Most people have no idea where their money goes. AI changes that.
+      </p>
+    </div>
+    <div class="slide-num">02 / 12</div>
+  </section>
+
+  <!-- SLIDE 3: Solution -->
+  <section class="slide" id="slide-3" data-title="Solution">
+    <div class="slide-inner">
+      <p class="tag">Our Solution</p>
+      <h2>Your AI financial assistant<br><span class="highlight">No accounting knowledge needed</span></h2>
+
+      <div class="grid-4" style="margin-top: 32px; text-align: left;">
+        <div class="card">
+          <div class="icon-box"><i data-lucide="file-scan" style="width:20px;height:20px;"></i></div>
+          <h3>Document AI</h3>
+          <p style="font-size:14px;margin:0;">OCR + AI extracts invoices, receipts, statements automatically.</p>
+        </div>
+        <div class="card">
+          <div class="icon-box accent"><i data-lucide="sparkles" style="width:20px;height:20px;"></i></div>
+          <h3>Smart Categorization</h3>
+          <p style="font-size:14px;margin:0;">ML-powered transaction tagging that learns your business.</p>
+        </div>
+        <div class="card">
+          <div class="icon-box"><i data-lucide="git-merge" style="width:20px;height:20px;"></i></div>
+          <h3>Invoice Matching</h3>
+          <p style="font-size:14px;margin:0;">Auto-reconcile invoices with bank transactions.</p>
+        </div>
+        <div class="card">
+          <div class="icon-box success"><i data-lucide="message-circle" style="width:20px;height:20px;"></i></div>
+          <h3>Financial Chat</h3>
+          <p style="font-size:14px;margin:0;">Ask questions in plain language, get instant insights.</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">03 / 12</div>
+  </section>
+
+  <!-- SLIDE 4: Product -->
+  <section class="slide" id="slide-4" data-title="Product">
+    <div class="slide-inner">
+      <p class="tag">The CFO Dashboard</p>
+      <h2>Real-time financial intelligence</h2>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;color:var(--success);">+23.8K</div>
+          <div class="stat-label">Monthly Revenue</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;color:#DC2626;">-16.4K</div>
+          <div class="stat-label">Monthly Expenses</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="font-size:32px;">7.4K</div>
+          <div class="stat-label">Net Cashflow</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px; align-items: stretch;">
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+          <h3 style="display:flex;align-items:center;gap:8px;color:var(--accent);">
+            <i data-lucide="brain" style="width:18px;height:18px;"></i>
+            AI Insight
+          </h3>
+          <p style="font-size:15px;margin-top:12px;margin-bottom:0;">
+            "Your cloud expenses total 2.7K/mo across 3 providers. Consolidating could save 400/mo."
+          </p>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+          <h3>Features</h3>
+          <ul class="list" style="margin-top:8px;margin-bottom:0;">
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>Financial Health Score (A-F)</li>
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>Cash Runway Calculator</li>
+            <li><i data-lucide="check" style="width:16px;height:16px;"></i>6-Month Forecasting</li>
+            <li style="margin-bottom:0;"><i data-lucide="check" style="width:16px;height:16px;"></i>Anomaly Detection</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">04 / 12</div>
+  </section>
+
+  <!-- SLIDE 5: Market -->
+  <section class="slide" id="slide-5" data-title="Market">
+    <div class="slide-inner">
+      <p class="tag">Market Opportunity</p>
+      <h2>A <span class="highlight">$21B</span> market growing to $44B<a href="https://www.fortunebusinessinsights.com/industry-reports/accounting-software-market-100107" target="_blank" class="source">[2]</a></h2>
+
+      <div class="grid-2" style="margin-top: 24px; align-items: center;">
+        <div class="market-visual">
+          <div class="circle circle-tam">
+            <div class="circle-value">$44B</div>
+            <div class="circle-label">TAM 2030</div>
+          </div>
+          <div class="circle circle-sam">
+            <div class="circle-value">$21B</div>
+            <div class="circle-label">SAM 2025</div>
+          </div>
+          <div class="circle circle-som">
+            <div class="circle-value">$50B</div>
+            <div class="circle-label">AI</div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:15px;">AI Adoption in Accounting</span>
+              <span style="font-weight:600;color:var(--primary);">9% → 41%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:41%;"></div></div>
+            <div class="source-block"><a href="https://karbonhq.com/resources/state-of-ai-accounting-report-2025/" target="_blank">Karbon State of AI 2025</a></div>
+          </div>
+          <div class="grid-2" style="gap:16px;">
+            <div class="card card-center">
+              <div style="font-size:28px;font-weight:700;color:var(--primary);">2B+</div>
+              <div class="stat-label">Individuals & SMBs</div>
+              <div class="source-block"><a href="https://www.demandsage.com/small-business-statistics/" target="_blank">Global target</a></div>
+            </div>
+            <div class="card card-center">
+              <div style="font-size:28px;font-weight:700;color:var(--accent);">47.8%</div>
+              <div class="stat-label">Auto-Bookkeeping CAGR</div>
+              <div class="source-block"><a href="https://www.marketresearchfuture.com/reports/ai-in-accounting-market-22351" target="_blank">MRFR</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">05 / 12</div>
+  </section>
+
+  <!-- SLIDE 6: Business Model -->
+  <section class="slide" id="slide-6" data-title="Business Model">
+    <div class="slide-inner">
+      <p class="tag">Business Model</p>
+      <h2>10-100x cheaper than alternatives</h2>
+
+      <div class="grid-4" style="margin-top: 24px;">
+        <div class="card card-center">
+          <h3>Starter</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$29</div>
+          <div style="font-size:14px;color:var(--text-muted);">/month</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">Solo founders</div>
+        </div>
+        <div class="card card-center" style="border-color:var(--primary);background:rgba(37,99,235,0.03);">
+          <h3 style="color:var(--primary);">Growth</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$79</div>
+          <div style="font-size:14px;color:var(--text-muted);">/month</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">Small teams</div>
+        </div>
+        <div class="card card-center">
+          <h3>Scale</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">$199</div>
+          <div style="font-size:14px;color:var(--text-muted);">/month</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">Growing SMB</div>
+        </div>
+        <div class="card card-center">
+          <h3>Enterprise</h3>
+          <div style="font-size:36px;font-weight:700;margin:8px 0;">Custom</div>
+          <div style="font-size:14px;color:var(--text-muted);">pricing</div>
+          <div style="font-size:13px;margin-top:12px;color:var(--text-secondary);">Mid-market</div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">85%</div>
+          <div class="stat-label">Target Gross Margin</div>
+          <div class="source-block"><a href="https://www.gsquaredcfo.com/blog/saas-benchmarks-5-performance-benchmarks-for-2025" target="_blank">G Squared</a></div>
+        </div>
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">9:1</div>
+          <div class="stat-label">Target LTV:CAC</div>
+          <div class="source-block"><a href="https://www.wallstreetprep.com/knowledge/ltv-cac-ratio/" target="_blank">WSP</a></div>
+        </div>
+        <div class="card card-center">
+          <div style="font-size:28px;font-weight:700;">8mo</div>
+          <div class="stat-label">CAC Payback</div>
+          <div class="source-block"><a href="https://www.benchmarkit.ai/2025benchmarks" target="_blank">Benchmarkit</a></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">06 / 12</div>
+  </section>
+
+  <!-- SLIDE 7: Traction -->
+  <section class="slide" id="slide-7" data-title="Traction">
+    <div class="slide-inner">
+      <p class="tag">Traction</p>
+      <h2>Full-featured platform built</h2>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Technology Milestones</h3>
+          <ul class="list">
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>Document processing pipeline</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>AI extraction engine (GPT-4o)</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>Financial health scoring</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>Cash flow forecasting</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>Voice assistant</li>
+            <li><i data-lucide="check-circle" style="width:16px;height:16px;color:var(--success);"></i>MCP integration</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Platform Capabilities</h3>
+          <div class="grid-2" style="gap:12px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;">
+              <i data-lucide="file-text" style="width:16px;height:16px;color:var(--primary);"></i>
+              7 Financial Reports
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;">
+              <i data-lucide="globe" style="width:16px;height:16px;color:var(--primary);"></i>
+              4 Languages
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;">
+              <i data-lucide="languages" style="width:16px;height:16px;color:var(--primary);"></i>
+              RTL Support
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;">
+              <i data-lucide="coins" style="width:16px;height:16px;color:var(--primary);"></i>
+              Multi-Currency
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;">
+              <i data-lucide="mic" style="width:16px;height:16px;color:var(--primary);"></i>
+              Voice Queries
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px;">
+              <i data-lucide="bot" style="width:16px;height:16px;color:var(--primary);"></i>
+              AI Chat
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">07 / 12</div>
+  </section>
+
+  <!-- SLIDE 8: Competition -->
+  <section class="slide" id="slide-8" data-title="Competition">
+    <div class="slide-inner">
+      <p class="tag">Competition</p>
+      <h2>Built for the <span class="highlight">AI-first</span> era</h2>
+
+      <table style="margin-top: 24px;">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Revenue</th>
+            <th>Subscribers</th>
+            <th>Limitation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>QuickBooks</strong></td>
+            <td><a href="https://investors.intuit.com/news-events/press-releases/detail/1266/intuit-reports-strong-fourth-quarter-and-full-year-fiscal-2025-results-sets-fiscal-2026-guidance-with-double-digit-revenue-growth-and-continued-operating-margin-expansion" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--text-muted);">$11.1B</a></td>
+            <td>7M+</td>
+            <td class="cross">Legacy-first, AI bolted on</td>
+          </tr>
+          <tr>
+            <td><strong>Xero</strong></td>
+            <td><a href="https://www.nzherald.co.nz/business/xero-cracks-2-billion-revenue-for-first-time-but-subscriber-growth-slows/5Q2MY36S75A2RNRCDKZSKUXVJA/" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--text-muted);">$1.2B</a></td>
+            <td>4.6M</td>
+            <td class="cross">Recording, not understanding</td>
+          </tr>
+          <tr>
+            <td><strong>Sage</strong></td>
+            <td><a href="https://www.datanyze.com/market-share/accounting--352" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--text-muted);">~$2B</a></td>
+            <td>-</td>
+            <td class="cross">Enterprise focus</td>
+          </tr>
+          <tr class="highlight-row">
+            <td><strong style="color:var(--primary);">Moneio</strong></td>
+            <td style="color:var(--accent);">AI-Native</td>
+            <td>Pre-launch</td>
+            <td class="check">CFO intelligence at $29/mo</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="font-size:14px;margin-top:16px;">
+        QuickBooks grew 22% YoY. Xero grew 23% YoY. Market expanding rapidly.<a href="https://investors.intuit.com/news-events/press-releases/detail/1266/intuit-reports-strong-fourth-quarter-and-full-year-fiscal-2025-results-sets-fiscal-2026-guidance-with-double-digit-revenue-growth-and-continued-operating-margin-expansion" target="_blank" class="source">[3]</a>
+      </p>
+    </div>
+    <div class="slide-num">08 / 12</div>
+  </section>
+
+  <!-- SLIDE 9: Roadmap -->
+  <section class="slide" id="slide-9" data-title="Roadmap">
+    <div class="slide-inner">
+      <p class="tag">Roadmap</p>
+      <h2>The path to autonomous finance</h2>
+
+      <div class="grid-4" style="margin-top: 24px; text-align: left;">
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:8px;">Q2 2026</div>
+          <h3>Accountant Killer</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Auto-Reconciliation</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Smart Bill Pay</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>One-Click Tax Prep</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px;">Q3 2026</div>
+          <h3>Financial Advisor</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Growth Predictor</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Pricing Intelligence</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>Crypto Wallets</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--success);margin-bottom:8px;">Q4 2026</div>
+          <h3>CFO Network</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Multi-Entity View</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Bank Connections</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>Crypto Tax Reports</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">2027</div>
+          <h3>Autonomous CFO</h3>
+          <ul class="list" style="margin-top:8px;">
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Agentic Finance</li>
+            <li style="font-size:13px;margin-bottom:6px;"><i data-lucide="check" style="width:14px;height:14px;"></i>Predictive Hiring</li>
+            <li style="font-size:13px;margin-bottom:0;"><i data-lucide="check" style="width:14px;height:14px;"></i>Financial Copilot</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">09 / 12</div>
+  </section>
+
+  <!-- SLIDE 10: Team -->
+  <section class="slide" id="slide-10" data-title="Team">
+    <div class="slide-inner">
+      <p class="tag">Team</p>
+      <h2>The Founding Team</h2>
+
+      <div class="grid-4" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">R</div>
+          <h3>Reza</h3>
+          <div style="font-size:14px;color:var(--primary);margin-bottom:8px;">Product</div>
+          <p style="font-size:13px;margin:0;">Co-founder</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">A</div>
+          <h3>Ahmad</h3>
+          <div style="font-size:14px;color:var(--accent);margin-bottom:8px;">Finance</div>
+          <p style="font-size:13px;margin:0;">Co-founder</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--success);color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">S</div>
+          <h3>Sina</h3>
+          <div style="font-size:14px;color:var(--success);margin-bottom:8px;">Engineering</div>
+          <p style="font-size:13px;margin:0;">Co-founder</p>
+        </div>
+        <div class="card card-center">
+          <div style="width:64px;height:64px;border-radius:50%;background:#F59E0B;color:white;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin:0 auto 16px;">E</div>
+          <h3>Erfan</h3>
+          <div style="font-size:14px;color:#F59E0B;margin-bottom:8px;">Marketing</div>
+          <p style="font-size:13px;margin:0;">Co-founder</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">10 / 12</div>
+  </section>
+
+  <!-- SLIDE 11: The Ask -->
+  <section class="slide" id="slide-11" data-title="The Ask">
+    <div class="slide-inner">
+      <p class="tag">The Ask</p>
+      <h2>Raising <span class="highlight">$1M Seed</span></h2>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card card-center">
+          <div class="stat-value">$1M</div>
+          <div class="stat-label">Seed Round</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="color:var(--text);">18mo</div>
+          <div class="stat-label">Runway</div>
+        </div>
+        <div class="card card-center">
+          <div class="stat-value" style="color:var(--text);">$1M</div>
+          <div class="stat-label">ARR Target Q4 2026</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="card">
+          <h3>Use of Funds</h3>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span>Engineering & AI</span><span style="font-weight:600;">50%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:50%;"></div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span>Go-to-Market</span><span style="font-weight:600;">30%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:30%;background:var(--accent);"></div></div>
+          </div>
+          <div style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+              <span>Operations</span><span style="font-weight:600;">20%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:20%;background:var(--success);"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>18-Month Milestones</h3>
+          <ul class="list" style="margin-top:12px;">
+            <li style="font-size:14px;"><i data-lucide="calendar" style="width:14px;height:14px;"></i><strong>Q2 2026</strong> — Bank integrations (Open Banking)</li>
+            <li style="font-size:14px;"><i data-lucide="users" style="width:14px;height:14px;"></i><strong>Q3 2026</strong> — 10,000 paying customers</li>
+            <li style="font-size:14px;"><i data-lucide="trending-up" style="width:14px;height:14px;"></i><strong>Q4 2026</strong> — $1M ARR</li>
+            <li style="font-size:14px;margin-bottom:0;"><i data-lucide="rocket" style="width:14px;height:14px;"></i><strong>Q1 2027</strong> — Series A ready</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">11 / 12</div>
+  </section>
+
+  <!-- SLIDE 12: Thank You -->
+  <section class="slide" id="slide-12" data-title="Thank You">
+    <div class="slide-inner">
+      <p class="tag">Thank You</p>
+      <div style="font-size:64px;font-weight:700;margin-bottom:32px;">mone<span style="color:var(--accent);">io</span></div>
+      <h2 style="font-weight:400;color:var(--text-secondary);">AI-powered finance for everyone</h2>
+    </div>
+    <div class="slide-num">12 / 12</div>
+  </section>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // ========== THEME TOGGLE ==========
+    (function() {
+      var toggle = document.getElementById('themeToggle');
+      var saved = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        toggle.innerHTML = '<i data-lucide="sun" style="width:20px;height:20px;"></i>';
+        lucide.createIcons();
+      }
+
+      toggle.onclick = function(e) {
+        e.stopPropagation();
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('theme', 'light');
+          toggle.innerHTML = '<i data-lucide="moon" style="width:20px;height:20px;"></i>';
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+          toggle.innerHTML = '<i data-lucide="sun" style="width:20px;height:20px;"></i>';
+        }
+        lucide.createIcons();
+      };
+    })();
+
+    // ========== SLIDE NAVIGATION ==========
+    (function() {
+      var slides = document.querySelectorAll('.slide');
+      var totalSlides = slides.length;
+      var current = 0;
+      var isAnimating = false;
+
+      // Build nav dots
+      var nav = document.getElementById('nav');
+      for (var i = 0; i < totalSlides; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('data-index', i);
+        nav.appendChild(dot);
+      }
+
+      function goTo(n) {
+        if (isAnimating) return;
+        if (n >= totalSlides) n = 0;
+        if (n < 0) n = totalSlides - 1;
+        isAnimating = true;
+        current = n;
+        slides[n].scrollIntoView({ behavior: 'smooth' });
+
+        // Update dots
+        var dots = document.querySelectorAll('.nav-dot');
+        for (var i = 0; i < dots.length; i++) {
+          dots[i].className = 'nav-dot' + (i === current ? ' active' : '');
+        }
+
+        setTimeout(function() { isAnimating = false; }, 500);
+      }
+
+      function next() { goTo(current + 1); }
+      function prev() { goTo(current - 1); }
+      function restart() { goTo(0); }
+
+      // Nav dot clicks
+      nav.onclick = function(e) {
+        e.stopPropagation();
+        if (e.target.classList.contains('nav-dot')) {
+          var idx = parseInt(e.target.getAttribute('data-index'));
+          goTo(idx);
+        }
+      };
+
+      // Keyboard
+      document.onkeydown = function(e) {
+        var k = e.keyCode;
+        // Right: 39, Down: 40, Space: 32, PageDown: 34
+        if (k === 39 || k === 40 || k === 32 || k === 34) {
+          e.preventDefault();
+          next();
+        }
+        // Left: 37, Up: 38, PageUp: 33
+        else if (k === 37 || k === 38 || k === 33) {
+          e.preventDefault();
+          prev();
+        }
+        // Home: 36
+        else if (k === 36) {
+          e.preventDefault();
+          goTo(0);
+        }
+        // End: 35
+        else if (k === 35) {
+          e.preventDefault();
+          goTo(totalSlides - 1);
+        }
+        // R: 82
+        else if (k === 82) {
+          restart();
+        }
+      };
+
+      // Click to advance
+      document.onclick = function(e) {
+        var tag = e.target.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'a' || e.target.classList.contains('nav-dot')) return;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.nav')) return;
+        next();
+      };
+
+      // Right-click to go back
+      document.oncontextmenu = function(e) {
+        var tag = e.target.tagName.toLowerCase();
+        if (tag === 'button' || tag === 'a' || e.target.classList.contains('nav-dot')) return true;
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.nav')) return true;
+        e.preventDefault();
+        prev();
+        return false;
+      };
+
+      // Mouse wheel
+      var wheelTimer = null;
+      document.onwheel = function(e) {
+        e.preventDefault();
+        if (wheelTimer) return;
+        wheelTimer = setTimeout(function() { wheelTimer = null; }, 300);
+        if (e.deltaY > 0) next();
+        else prev();
+      };
+
+      // Track scroll position
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            for (var i = 0; i < slides.length; i++) {
+              if (slides[i] === entry.target) {
+                current = i;
+                var dots = document.querySelectorAll('.nav-dot');
+                for (var j = 0; j < dots.length; j++) {
+                  dots[j].className = 'nav-dot' + (j === current ? ' active' : '');
+                }
+                break;
+              }
+            }
+          }
+        });
+      }, { threshold: 0.5 });
+
+      for (var i = 0; i < slides.length; i++) {
+        observer.observe(slides[i]);
+      }
+    })();
+
+    // ========== DOWNLOAD PDF ==========
+    document.getElementById('downloadBtn').onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Show instructions
+      alert('To save as PDF:\n\n1. Press Cmd+P (Mac) or Ctrl+P (Windows)\n2. Select "Save as PDF"\n3. Set to Landscape\n4. Enable "Background graphics"\n5. Set margins to None');
+
+      window.print();
+    };
+  </script>
+</body>
+</html>
