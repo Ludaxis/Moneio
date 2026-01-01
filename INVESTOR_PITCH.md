@@ -25,6 +25,34 @@ Additional data from [Bureau of Labor Statistics 2024](https://www.commerceinsti
 - **49.4% fail within 5 years**
 - **65.3% fail within 10 years**
 
+### The Late Payment Epidemic
+
+According to [Intuit QuickBooks 2025 Late Payments Report](https://quickbooks.intuit.com/r/small-business-data/small-business-late-payments-report-2025/):
+
+| Metric | Data | Source |
+|--------|------|--------|
+| SMBs owed money | **56% with $17,500 avg outstanding** | [QuickBooks](https://quickbooks.intuit.com/r/small-business-data/small-business-late-payments-report-2025/) |
+| Invoices paid late | **61%** (up from 45% in 2020) | [Clockify](https://clockify.me/late-invoice-statistics) |
+| Annual cost of late payments | **$39,406 average** | [InvoPilot](https://invopilot.com/blog/late-invoice-payments/) |
+| Time chasing payments | **15 days/year, 4 hours/week** | [InvoPilot](https://invopilot.com/blog/late-invoice-payments/) |
+| SMBs impacted negatively | **73%** | [Kaplan Group](https://www.kaplancollectionagency.com/business-advice/54-statistics-on-the-b2b-payment-delays/) |
+
+**70% of owners use personal savings or take on debt** to cover cash flow gaps from late payments.
+
+### The Subscription Waste Problem
+
+Businesses are hemorrhaging money on forgotten software:
+
+| Metric | Data | Source |
+|--------|------|--------|
+| SaaS licenses unused | **53%** | [Zylo](https://zylo.com/blog/saas-statistics/) |
+| Average enterprise waste | **$21 million/year** | [CIO Dive](https://www.ciodive.com/news/software-spend-waste-saas-billions-zylo-ai-adoption/708548/) |
+| SMB waste on unused licenses | **$2 million/year** | [EZO](https://ezo.io/assetsonar/blog/stop-bleeding-money-on-unused-softwareoptimizing-saas-spend/) |
+| Budget lost to waste | **25-30%** | [Gartner via CorpSoft](https://corpsoft.io/2025/06/20/what-business-leaders-need-to-know-about-cutting-saas-waste-without-blocking-growth/) |
+| Duplicate subscriptions per company | **7.6 average** | [Zylo](https://zylo.com/blog/saas-statistics/) |
+
+**Moneio's Money Leak Finder automatically detects forgotten subscriptions and duplicate charges.**
+
 ### The Hidden Time Tax
 
 Small business owners are losing their most valuable resource—time:
@@ -108,6 +136,35 @@ A massive underserved market with no unified solution:
 
 New IRS Form 1099-DA (effective 2025) requires crypto reporting — creating urgent compliance demand.
 
+### The MENA & Arabic Market Opportunity
+
+An underserved $15B+ market with native RTL language support:
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| **MENA Fintech Market 2025** | $1.66 billion | [Mordor Intelligence](https://www.giiresearch.com/report/moi1690894-mena-fintech-market-share-analysis-industry-trends.html) |
+| **Projected 2030** | $2.63 billion (9.7% CAGR) | [Research and Markets](https://www.researchandmarkets.com/report/middle-east-fintech-market) |
+| **Arab fintech sector** | $15 billion+ | [Statista](https://www.statista.com/topics/8699/fintech-in-mena/) |
+| **UAE SME digital adoption** | 70% cashless by 2024 | [McKinsey](https://www.mckinsey.com/industries/financial-services/our-insights/fintech-in-menap-a-solid-foundation-for-growth) |
+| **Saudi digital banking** | 58% penetration (up from 32% in 2020) | [SAMA via Tenity](https://www.tenity.com/blog/fintech-middle-east) |
+| **Islamic fintech market** | $306B by 2027 | [MENA Fintech Association](https://mena-fintech.org/) |
+
+**Moneio is built with RTL (Right-to-Left) Arabic support from day one** — a key differentiator vs. Western-only competitors. We support **English, Arabic (العربية), Estonian, and Farsi** out of the box.
+
+### The Fraud & Financial Crime Crisis
+
+Small businesses are disproportionately targeted:
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| **SMB fraud losses** | $14 billion (47% of all cases) | [Experian](https://www.experian.com/blogs/business-information/2025/03/25/a-growing-small-business-financial-fraud-problem/) |
+| **Global fraud losses** | $485.6 billion (2023) | [Nasdaq Verafin](https://www.sanctionscanner.com/blog/financial-crime-and-compliance-report-20252026-key-findings-and-global-trends-1288) |
+| **Fraud detection market** | $63.9B → $246B by 2032 (21% CAGR) | [Fortune Business Insights](https://www.fortunebusinessinsights.com/industry-reports/fraud-detection-and-prevention-market-100231) |
+| **Businesses hit by payment fraud** | 85% in 2023 | [PwC Economic Crime Survey](https://www.pwc.com/gx/en/services/forensics/economic-crime-survey.html) |
+| **AI adoption for fraud detection** | 73% of institutions (up from 49%) | [CoinLaw](https://coinlaw.io/banking-fraud-detection-statistics/) |
+
+**Moneio's Anomaly Detection and Fraud Shield protect businesses 24/7** with AI-powered monitoring.
+
 ---
 
 ## The Solution: Moneio
@@ -126,6 +183,15 @@ An AI-powered financial brain that:
 Upload any document—invoice, receipt, bank statement. In any format. In any language.
 
 Our AI extracts every detail: amounts, dates, vendors, line items, tax information. No manual entry. Ever.
+
+**AI Document Extraction Performance:**
+
+| Metric | Manual | Moneio AI | Source |
+|--------|--------|-----------|--------|
+| Time per invoice | 10-30 minutes | **1-2 seconds** | [Cradl AI](https://www.cradl.ai/post/invoice-data-extraction-ai) |
+| Cost per invoice | $12-20 | **~$2.36** | [Cradl AI](https://www.cradl.ai/post/invoice-data-extraction-ai) |
+| Accuracy rate | 80% (manual OCR) | **95-99%** | [Koncile AI](https://www.koncile.ai/en/ressources/top-10-ocr-tools-for-invoices-2025) |
+| Processing speed improvement | — | **80% faster** | [Klippa](https://www.klippa.com/en/ocr/financial-documents/invoices/) |
 
 #### 2. Watch It Learn
 Moneio learns your business. It recognizes your vendors, understands your categories, and detects your patterns.
@@ -243,14 +309,16 @@ Instant answers. No reports to generate. No formulas to write.
 
 ### Traditional Accounting Leaders
 
-| Company | Market Share | 2025 Pricing | Key Limitation |
-|---------|--------------|--------------|----------------|
-| **QuickBooks** | 62.2% (desktop) | $30-200/mo | Legacy-first, AI bolted on, no crypto |
-| **Xero** | 8.9% | $15-78/mo | Recording, not understanding, no crypto |
-| **Sage** | 10.3% | $25-200/mo | Enterprise focus, SMB afterthought |
-| **Wave** | ~5% | Free (ads) | Basic features, no intelligence |
+| Company | Revenue (2025) | Subscribers | Key Limitation |
+|---------|----------------|-------------|----------------|
+| **QuickBooks (Intuit)** | $11.1B (Global Business) | 7M+ online | Legacy-first, AI bolted on, no crypto |
+| **Xero** | $2.1B NZD (~$1.2B USD) | 4.6M | Recording, not understanding, no crypto |
+| **Sage** | ~$2B | — | Enterprise focus, SMB afterthought |
+| **Wave** | ~$100M | — | Basic features, no intelligence |
 
-*Source: [Datanyze Market Share](https://www.datanyze.com/market-share/accounting--352), [Webgility](https://www.webgility.com/blog/xero-vs-quickbooks)*
+*Sources: [Intuit FY2025](https://investors.intuit.com/news-events/press-releases/detail/1266/intuit-reports-strong-fourth-quarter-and-full-year-fiscal-2025-results-sets-fiscal-2026-guidance-with-double-digit-revenue-growth-and-continued-operating-margin-expansion), [Xero FY25](https://www.nzherald.co.nz/business/xero-cracks-2-billion-revenue-for-first-time-but-subscriber-growth-slows/5Q2MY36S75A2RNRCDKZSKUXVJA/), [Datanyze](https://www.datanyze.com/market-share/accounting--352)*
+
+**QuickBooks grew 22% YoY. Xero grew 23% YoY.** The market is expanding rapidly — room for AI-native disruptors.
 
 ### Crypto-Only Solutions
 
@@ -304,11 +372,16 @@ Instant answers. No reports to generate. No formulas to write.
 - Accountant marketplace (referral fees)
 - Financing (revenue-based financing partnerships)
 
-### Unit Economics Target
-- **LTV**: $3,600 (3-year average)
-- **CAC**: $400 (organic + paid)
-- **LTV:CAC**: 9:1
-- **Gross Margin**: 85%
+### Unit Economics Target (vs. Industry Benchmarks)
+
+| Metric | Moneio Target | SaaS Benchmark | Source |
+|--------|---------------|----------------|--------|
+| **LTV:CAC Ratio** | 9:1 | 3:1 to 5:1 optimal | [Wall Street Prep](https://www.wallstreetprep.com/knowledge/ltv-cac-ratio/) |
+| **CAC Payback** | 8 months | 12-15 months target | [Benchmarkit](https://www.benchmarkit.ai/2025benchmarks) |
+| **Gross Margin** | 85% | 70-85% SaaS standard | [G Squared CFO](https://www.gsquaredcfo.com/blog/saas-benchmarks-5-performance-benchmarks-for-2025) |
+| **Net Dollar Retention** | 115%+ target | 111% top tier | [Financial Models Lab](https://financialmodelslab.com/blogs/kpi-metrics/saas) |
+
+*Note: SaaS CAC has increased 55% over 5 years ([Rocking Web](https://www.rockingweb.com.au/saas-metrics-benchmark-report-2025/)). Our AI-driven acquisition lowers CAC significantly.*
 
 ---
 
@@ -438,6 +511,51 @@ All statistics in this deck are sourced from 2025 research:
 - [Graphite Financial - Fractional CFO Rates 2025](https://graphitefinancial.com/blog/fractional-cfo-hourly-rates/)
 - [Datanyze - Accounting Market Share](https://www.datanyze.com/market-share/accounting--352)
 - [Fortune Business Insights - Accounting Software Market](https://www.fortunebusinessinsights.com/industry-reports/accounting-software-market-100107)
+
+### Late Payments & Cash Flow
+- [Intuit QuickBooks - 2025 Late Payments Report](https://quickbooks.intuit.com/r/small-business-data/small-business-late-payments-report-2025/)
+- [Clockify - Late Invoice Statistics 2025](https://clockify.me/late-invoice-statistics)
+- [InvoPilot - 50+ Late Invoice Statistics 2025](https://invopilot.com/blog/late-invoice-payments/)
+- [Kaplan Group - B2B Payment Delays Statistics](https://www.kaplancollectionagency.com/business-advice/54-statistics-on-the-b2b-payment-delays/)
+
+### SaaS Waste & Subscription Management
+- [Zylo - 111 SaaS Statistics 2025](https://zylo.com/blog/saas-statistics/)
+- [CIO Dive - Software Waste Statistics](https://www.ciodive.com/news/software-spend-waste-saas-billions-zylo-ai-adoption/708548/)
+- [EZO - Optimizing SaaS Spend](https://ezo.io/assetsonar/blog/stop-bleeding-money-on-unused-softwareoptimizing-saas-spend/)
+- [CorpSoft - Cutting SaaS Waste 2025](https://corpsoft.io/2025/06/20/what-business-leaders-need-to-know-about-cutting-saas-waste-without-blocking-growth/)
+
+### AI Document Processing
+- [Cradl AI - Invoice Data Extraction 2025](https://www.cradl.ai/post/invoice-data-extraction-ai)
+- [Koncile AI - Top 10 OCR Tools for Invoices 2025](https://www.koncile.ai/en/ressources/top-10-ocr-tools-for-invoices-2025)
+- [Klippa - Invoice OCR Software](https://www.klippa.com/en/ocr/financial-documents/invoices/)
+- [AI Multiple - Invoice OCR Benchmark](https://research.aimultiple.com/invoice-ocr/)
+
+### SaaS Unit Economics & Benchmarks
+- [Wall Street Prep - LTV/CAC Ratio](https://www.wallstreetprep.com/knowledge/ltv-cac-ratio/)
+- [Benchmarkit - 2025 SaaS Performance Metrics](https://www.benchmarkit.ai/2025benchmarks)
+- [G Squared CFO - SaaS Benchmarks 2025](https://www.gsquaredcfo.com/blog/saas-benchmarks-5-performance-benchmarks-for-2025)
+- [Financial Models Lab - SaaS KPIs](https://financialmodelslab.com/blogs/kpi-metrics/saas)
+- [Rocking Web - SaaS Metrics Benchmark Report 2025](https://www.rockingweb.com.au/saas-metrics-benchmark-report-2025/)
+
+### Competitor Data
+- [Intuit FY2025 Results](https://investors.intuit.com/news-events/press-releases/detail/1266/intuit-reports-strong-fourth-quarter-and-full-year-fiscal-2025-results-sets-fiscal-2026-guidance-with-double-digit-revenue-growth-and-continued-operating-margin-expansion)
+- [Xero FY25 Results](https://www.nzherald.co.nz/business/xero-cracks-2-billion-revenue-for-first-time-but-subscriber-growth-slows/5Q2MY36S75A2RNRCDKZSKUXVJA/)
+- [Fit Small Business - QuickBooks Statistics](https://fitsmallbusiness.com/quickbooks-statistics/)
+
+### MENA & Arabic Market
+- [Mordor Intelligence - MENA Fintech Market](https://www.giiresearch.com/report/moi1690894-mena-fintech-market-share-analysis-industry-trends.html)
+- [Research and Markets - Middle East Fintech](https://www.researchandmarkets.com/report/middle-east-fintech-market)
+- [Statista - Fintech in MENA](https://www.statista.com/topics/8699/fintech-in-mena/)
+- [McKinsey - Fintech in MENAP](https://www.mckinsey.com/industries/financial-services/our-insights/fintech-in-menap-a-solid-foundation-for-growth)
+- [Tenity - Fintech in Middle East](https://www.tenity.com/blog/fintech-middle-east)
+- [MENA Fintech Association](https://mena-fintech.org/)
+
+### Fraud & Financial Crime
+- [Experian - Small Business Fraud 2025](https://www.experian.com/blogs/business-information/2025/03/25/a-growing-small-business-financial-fraud-problem/)
+- [Sanction Scanner - Financial Crime Report 2025-2026](https://www.sanctionscanner.com/blog/financial-crime-and-compliance-report-20252026-key-findings-and-global-trends-1288)
+- [Fortune Business Insights - Fraud Detection Market](https://www.fortunebusinessinsights.com/industry-reports/fraud-detection-and-prevention-market-100231)
+- [PwC - Global Economic Crime Survey 2024](https://www.pwc.com/gx/en/services/forensics/economic-crime-survey.html)
+- [CoinLaw - Banking Fraud Detection Statistics](https://coinlaw.io/banking-fraud-detection-statistics/)
 
 ### Cryptocurrency & Digital Assets
 - [Data Insights Market - Accounting Software for Digital Assets 2025-2033](https://www.datainsightsmarket.com/reports/accounting-software-for-digital-asset-523030)
