@@ -401,12 +401,208 @@
       h2 { font-size: 32px; }
     }
 
+    @media (max-width: 768px) {
+      body { font-size: 14px; }
+      .slide { padding: 16px; }
+      .slide-inner { max-width: 100%; }
+
+      h1 { font-size: 28px; margin-bottom: 12px; }
+      h2 { font-size: 22px; margin-bottom: 16px; }
+      h3 { font-size: 16px; margin-bottom: 6px; }
+      p { font-size: 14px; }
+      .tag { font-size: 10px; margin-bottom: 10px; }
+
+      .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .card { padding: 12px; border-radius: 8px; }
+      .stat-value { font-size: 28px; }
+      .stat-label { font-size: 11px; margin-top: 4px; }
+
+      .icon-box { width: 28px; height: 28px; margin-bottom: 8px; }
+      .icon-box i { width: 14px !important; height: 14px !important; }
+
+      .list li { font-size: 12px; gap: 6px; margin-bottom: 6px; }
+      .list li i { width: 12px !important; height: 12px !important; }
+
+      .progress-bar { height: 4px; margin-top: 4px; }
+
+      .market-visual { width: 160px; height: 160px; }
+      .circle-tam { width: 160px; height: 160px; }
+      .circle-sam { width: 100px; height: 100px; top: 30px; left: 30px; }
+      .circle-som { width: 50px; height: 50px; top: 55px; left: 55px; }
+      .circle-value { font-size: 14px; }
+      .circle-label { font-size: 9px; }
+      .circle-som .circle-value { font-size: 12px; }
+
+      table { font-size: 11px; }
+      th, td { padding: 6px 8px; }
+      th { font-size: 9px; }
+
+      .source { font-size: 9px; }
+      .source-block { font-size: 9px; margin-top: 2px; }
+
+      .slide-num { font-size: 10px; bottom: 12px; right: 16px; }
+
+      .nav { right: 12px; gap: 6px; }
+      .nav-dot { width: 6px; height: 6px; }
+
+      /* Header buttons on mobile */
+      .theme-toggle, .download-btn { width: 32px; height: 32px; top: 12px; }
+      .theme-toggle { right: 12px; }
+      .download-btn { right: 52px; }
+      .theme-toggle i, .download-btn i { width: 16px !important; height: 16px !important; }
+
+      .lang-switch {
+        top: 12px;
+        right: 92px;
+        height: 32px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+      .lang-switch i { width: 14px !important; height: 14px !important; }
+    }
+
     @media (max-width: 640px) {
-      .slide { padding: 24px; }
-      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-      h1 { font-size: 32px; }
-      h2 { font-size: 28px; }
-      .header { padding: 16px 24px; }
+      body { font-size: 12px; }
+      .slide { padding: 12px; }
+
+      h1 { font-size: 22px; margin-bottom: 10px; }
+      h2 { font-size: 18px; margin-bottom: 12px; }
+      h3 { font-size: 13px; margin-bottom: 4px; }
+      p { font-size: 12px; }
+      .tag { font-size: 9px; margin-bottom: 8px; }
+
+      .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .card { padding: 10px; border-radius: 6px; }
+      .stat-value { font-size: 22px; }
+      .stat-label { font-size: 10px; }
+
+      .icon-box { width: 24px; height: 24px; margin-bottom: 6px; border-radius: 4px; }
+      .icon-box i { width: 12px !important; height: 12px !important; }
+
+      .list li { font-size: 10px; gap: 4px; margin-bottom: 4px; }
+      .list li i { width: 10px !important; height: 10px !important; }
+
+      .market-visual { width: 120px; height: 120px; }
+      .circle-tam { width: 120px; height: 120px; }
+      .circle-sam { width: 75px; height: 75px; top: 22px; left: 22px; }
+      .circle-som { width: 36px; height: 36px; top: 42px; left: 42px; }
+      .circle-value { font-size: 11px; }
+      .circle-label { font-size: 7px; }
+      .circle-som .circle-value { font-size: 9px; }
+
+      table { font-size: 9px; }
+      th, td { padding: 4px 6px; }
+      th { font-size: 8px; }
+
+      .source { font-size: 8px; }
+      .source-block { font-size: 8px; }
+
+      .slide-num { font-size: 9px; bottom: 8px; right: 12px; }
+
+      .nav { right: 8px; gap: 5px; }
+      .nav-dot { width: 5px; height: 5px; }
+
+      .theme-toggle, .download-btn { width: 28px; height: 28px; top: 8px; }
+      .theme-toggle { right: 8px; }
+      .download-btn { right: 42px; }
+      .theme-toggle i, .download-btn i { width: 14px !important; height: 14px !important; }
+
+      .lang-switch {
+        top: 8px;
+        right: 76px;
+        height: 28px;
+        padding: 0 8px;
+        font-size: 10px;
+        gap: 4px;
+      }
+      .lang-switch i { width: 12px !important; height: 12px !important; }
+    }
+
+    @media (max-width: 480px) {
+      body { font-size: 11px; }
+      .slide { padding: 10px 8px; }
+
+      h1 { font-size: 18px; margin-bottom: 8px; }
+      h2 { font-size: 15px; margin-bottom: 10px; }
+      h3 { font-size: 11px; margin-bottom: 3px; }
+      p { font-size: 10px; max-width: 100%; }
+      .tag { font-size: 8px; margin-bottom: 6px; letter-spacing: 0.05em; }
+
+      .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .card { padding: 8px; border-radius: 6px; }
+      .stat-value { font-size: 18px; }
+      .stat-label { font-size: 8px; }
+
+      .icon-box { width: 20px; height: 20px; margin-bottom: 4px; border-radius: 4px; }
+      .icon-box i { width: 10px !important; height: 10px !important; }
+
+      .list li { font-size: 9px; gap: 3px; margin-bottom: 3px; }
+      .list li i { width: 8px !important; height: 8px !important; margin-top: 1px; }
+
+      .market-visual { width: 100px; height: 100px; }
+      .circle-tam { width: 100px; height: 100px; }
+      .circle-sam { width: 65px; height: 65px; top: 18px; left: 18px; }
+      .circle-som { width: 30px; height: 30px; top: 35px; left: 35px; }
+      .circle-value { font-size: 10px; }
+      .circle-label { font-size: 6px; }
+      .circle-som .circle-value { font-size: 8px; }
+
+      table { font-size: 8px; }
+      th, td { padding: 3px 4px; }
+      th { font-size: 7px; }
+
+      .source { font-size: 7px; }
+      .source-block { font-size: 7px; }
+
+      .slide-num { font-size: 8px; bottom: 6px; right: 8px; }
+
+      .nav { right: 6px; gap: 4px; }
+      .nav-dot { width: 4px; height: 4px; }
+
+      .theme-toggle, .download-btn { width: 24px; height: 24px; top: 6px; }
+      .theme-toggle { right: 6px; }
+      .download-btn { right: 34px; }
+      .theme-toggle i, .download-btn i { width: 12px !important; height: 12px !important; }
+
+      .lang-switch {
+        top: 6px;
+        right: 62px;
+        height: 24px;
+        padding: 0 6px;
+        font-size: 9px;
+        gap: 3px;
+        border-radius: 12px;
+      }
+      .lang-switch i { width: 10px !important; height: 10px !important; }
+    }
+
+    /* Mobile button visibility - hidden on middle slides */
+    @media (max-width: 768px) {
+      .header-controls-hidden .lang-switch,
+      .header-controls-hidden .download-btn,
+      .header-controls-hidden .theme-toggle {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .lang-switch,
+      .download-btn,
+      .theme-toggle {
+        transition: opacity 0.3s ease;
+      }
     }
 
     /* Animations */
@@ -1228,6 +1424,23 @@
       };
 
       // Track scroll position
+      // Function to update header controls visibility on mobile
+      function updateHeaderControls(slideIndex) {
+        var isMobile = window.innerWidth <= 768;
+        var isFirstOrLast = slideIndex === 0 || slideIndex === totalSlides - 1;
+
+        if (isMobile && !isFirstOrLast) {
+          document.body.classList.add('header-controls-hidden');
+        } else {
+          document.body.classList.remove('header-controls-hidden');
+        }
+      }
+
+      // Update on resize
+      window.addEventListener('resize', function() {
+        updateHeaderControls(current);
+      });
+
       var observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
           if (entry.isIntersecting) {
@@ -1238,6 +1451,8 @@
                 for (var j = 0; j < dots.length; j++) {
                   dots[j].className = 'nav-dot' + (j === current ? ' active' : '');
                 }
+                // Update header controls visibility
+                updateHeaderControls(current);
                 break;
               }
             }
