@@ -40,29 +40,29 @@ Before implementing improvements, the team must decide:
 
 ### Strengths ✅
 
-| Area | Status | Evidence |
-|------|--------|----------|
+| Area                  | Status       | Evidence                                    |
+| --------------------- | ------------ | ------------------------------------------- |
 | Monorepo Architecture | ✅ Excellent | Clear package boundaries, Turborepo caching |
-| Zero-Dependency Core | ✅ Excellent | `core-ledger` has zero external deps |
-| Type Safety | ✅ Excellent | Strict TS + Zod runtime validation |
-| Human-in-the-Loop AI | ✅ Excellent | `AiProposal<T>` with confidence scores |
-| i18n with RTL | ✅ Excellent | Arabic/Persian support |
-| Worker Shutdown | ✅ Good | Graceful SIGTERM handling |
-| Upstash Optimization | ✅ Good | 5s drain delay reduces API calls 1000x |
+| Zero-Dependency Core  | ✅ Excellent | `core-ledger` has zero external deps        |
+| Type Safety           | ✅ Excellent | Strict TS + Zod runtime validation          |
+| Human-in-the-Loop AI  | ✅ Excellent | `AiProposal<T>` with confidence scores      |
+| i18n with RTL         | ✅ Excellent | Arabic/Persian support                      |
+| Worker Shutdown       | ✅ Good      | Graceful SIGTERM handling                   |
+| Upstash Optimization  | ✅ Good      | 5s drain delay reduces API calls 1000x      |
 
 ### Weaknesses 🔴
 
-| Area | Issue | Impact |
-|------|-------|--------|
+| Area                  | Issue                              | Impact                    |
+| --------------------- | ---------------------------------- | ------------------------- |
 | Frontend Architecture | Client-heavy, useEffect waterfalls | High TTI, duplicate logic |
-| API Design | Mixed concerns in route handlers | Hard to test/reuse |
-| Database Access | Prisma in routes, no pooling | Connection exhaustion |
-| Queue Reliability | No DLQ, no idempotency | Duplicate work on retry |
-| Auth | Inconsistent, no tenant quotas | Security gaps |
-| Observability | Only in worker, not web | Blind spots |
-| Testing | Sparse unit tests only | Low confidence |
-| Documentation | README references Drizzle/Hono | Confusion for new devs |
-| Dependencies | Duplicate ElevenLabs packages | Bundle bloat |
+| API Design            | Mixed concerns in route handlers   | Hard to test/reuse        |
+| Database Access       | Prisma in routes, no pooling       | Connection exhaustion     |
+| Queue Reliability     | No DLQ, no idempotency             | Duplicate work on retry   |
+| Auth                  | Inconsistent, no tenant quotas     | Security gaps             |
+| Observability         | Only in worker, not web            | Blind spots               |
+| Testing               | Sparse unit tests only             | Low confidence            |
+| Documentation         | README references Drizzle/Hono     | Confusion for new devs    |
+| Dependencies          | Duplicate ElevenLabs packages      | Bundle bloat              |
 
 ---
 
@@ -71,6 +71,7 @@ Before implementing improvements, the team must decide:
 ### Issue 1: Client-Heavy Frontend 🔴 CRITICAL
 
 **Current pattern** (wrong for 2025):
+
 ```typescript
 // apps/web/src/app/[locale]/(app)/dashboard/page.tsx
 'use client';
@@ -81,7 +82,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetch('/api/dashboard/metrics')
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(setMetrics)
       .finally(() => setLoading(false));
   }, [workspaceId]);
@@ -91,12 +92,14 @@ export default function DashboardPage() {
 ```
 
 **Problems:**
+
 - Data fetching on client = larger bundle, slower TTI
 - Manual loading states = duplicated logic across pages
 - No request deduplication = wasted bandwidth
 - No streaming = users wait for everything
 
 **Correct pattern** (RSC-first):
+
 ```typescript
 // apps/web/src/app/[locale]/(app)/dashboard/page.tsx
 import { Suspense } from 'react';
@@ -127,6 +130,7 @@ async function DashboardMetrics({ workspaceId }: { workspaceId: string }) {
 ### Issue 2: API Routes Mix All Concerns 🔴 CRITICAL
 
 **Current pattern** (`apps/web/src/app/api/transactions/route.ts`):
+
 ```typescript
 export async function GET(request: Request) {
   // HTTP concern
@@ -135,7 +139,9 @@ export async function GET(request: Request) {
 
   // Auth concern
   const supabase = createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   // Validation concern
@@ -157,7 +163,7 @@ export async function GET(request: Request) {
 
   // Serialization concern
   return NextResponse.json({
-    items: transactions.map(t => ({
+    items: transactions.map((t) => ({
       ...t,
       amount: serializeDecimal(t.amount),
     })),
@@ -166,6 +172,7 @@ export async function GET(request: Request) {
 ```
 
 **Problems:**
+
 - 860-line chat route is unmaintainable
 - Can't unit test business logic without HTTP
 - Permission checks copy-pasted across 67+ routes
@@ -174,6 +181,7 @@ export async function GET(request: Request) {
 ### Issue 3: No Idempotency in Queue Jobs 🔴 CRITICAL
 
 **Current pattern** (`apps/worker/src/index.ts`):
+
 ```typescript
 await queue.add('doc-extract', { documentId });
 // If job fails and retries, extraction runs twice
@@ -181,6 +189,7 @@ await queue.add('doc-extract', { documentId });
 ```
 
 **Impact:**
+
 - Retry = duplicate work
 - Failed jobs lost (no DLQ)
 - No visibility into job failures
@@ -188,11 +197,13 @@ await queue.add('doc-extract', { documentId });
 ### Issue 4: Database Connections in Serverless 🟡 HIGH
 
 **Current pattern** (`packages/db/src/client.ts`):
+
 ```typescript
 export const prisma = global.prisma || new PrismaClient();
 ```
 
 **Problems in serverless:**
+
 - Each cold start = new connection
 - 1000 concurrent requests = 1000 connections
 - PostgreSQL max_connections exhausted
@@ -201,6 +212,7 @@ export const prisma = global.prisma || new PrismaClient();
 ### Issue 5: Inconsistent Authorization 🟡 HIGH
 
 **Evidence:**
+
 - `withWorkspace` exists but some routes use ad-hoc checks
 - `chat/route.ts` and `voice/route.ts` have no rate limiting
 - No tenant-level quotas for AI operations
@@ -209,6 +221,7 @@ export const prisma = global.prisma || new PrismaClient();
 ### Issue 6: Observability Gap 🟡 HIGH
 
 **Current state:**
+
 - `packages/observability/integrations/nextjs.ts` exists but isn't used
 - Worker has Datadog LLM tracing
 - Web app has no request tracing
@@ -217,10 +230,12 @@ export const prisma = global.prisma || new PrismaClient();
 ### Issue 7: Documentation Drift 🟠 MEDIUM
 
 **README.md** still references:
+
 - Drizzle (code uses Prisma)
 - Hono (code uses Next.js route handlers)
 
 **package.json** has duplicates:
+
 - `@11labs/react` AND `@elevenlabs/react`
 
 ---
@@ -231,14 +246,14 @@ export const prisma = global.prisma || new PrismaClient();
 
 **This must be decided first** — it affects everything else.
 
-| Aspect | Serverless (Vercel) | Containerized (K8s) |
-|--------|---------------------|---------------------|
-| **Database** | Prisma Data Proxy or pgBouncer | Direct connections OK |
-| **Queues** | Upstash REST Queue | BullMQ + ioredis fine |
-| **Workers** | Vercel Functions (limited) | Long-running pods |
-| **Scaling** | Automatic, pay-per-request | Manual, fixed cost |
-| **Cold starts** | Yes, optimize for it | No |
-| **Best for** | Variable traffic, low ops | Predictable traffic, full control |
+| Aspect          | Serverless (Vercel)            | Containerized (K8s)               |
+| --------------- | ------------------------------ | --------------------------------- |
+| **Database**    | Prisma Data Proxy or pgBouncer | Direct connections OK             |
+| **Queues**      | Upstash REST Queue             | BullMQ + ioredis fine             |
+| **Workers**     | Vercel Functions (limited)     | Long-running pods                 |
+| **Scaling**     | Automatic, pay-per-request     | Manual, fixed cost                |
+| **Cold starts** | Yes, optimize for it           | No                                |
+| **Best for**    | Variable traffic, low ops      | Predictable traffic, full control |
 
 **Recommendation:** Start with Vercel serverless, plan migration path to K8s when traffic justifies dedicated infrastructure.
 
@@ -263,6 +278,7 @@ packages/
 ```
 
 **Benefits:**
+
 - Routes become thin adapters (< 50 lines)
 - Business logic is unit testable
 - Prisma models never leak to API
@@ -272,10 +288,10 @@ packages/
 
 Replace client-side fetching with React Server Components:
 
-| Pattern | Use Case |
-|---------|----------|
-| RSC + `cache()` | Read-heavy pages (dashboard, lists) |
-| Server Actions | Mutations (create, update, delete) |
+| Pattern              | Use Case                              |
+| -------------------- | ------------------------------------- |
+| RSC + `cache()`      | Read-heavy pages (dashboard, lists)   |
+| Server Actions       | Mutations (create, update, delete)    |
 | Client + React Query | Interactive islands (chat, real-time) |
 
 ```typescript
@@ -300,6 +316,7 @@ export const getDashboardMetrics = cache(async (workspaceId: string) => {
 ### Phase 0: Foundation Decisions (Week 0)
 
 **Deliverables:**
+
 1. ✅ Decide serverless vs containerized
 2. ✅ Document decision in ADR
 3. ✅ Update README to match current stack
@@ -330,7 +347,9 @@ export async function getTenantContext(): Promise<TenantContext> {
   const workspaceId = headersList.get('x-workspace-id');
 
   const supabase = createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) throw new UnauthorizedError('Not authenticated');
   if (!workspaceId) throw new ValidationError('Workspace required');
@@ -368,10 +387,7 @@ export async function withTenantContext<T>(
 import { prisma } from '@moneio/db';
 
 export class TransactionRepository {
-  async findByWorkspace(
-    workspaceId: string,
-    options: { cursor?: string; limit?: number }
-  ) {
+  async findByWorkspace(workspaceId: string, options: { cursor?: string; limit?: number }) {
     const { cursor, limit = 20 } = options;
 
     return prisma.bankTransaction.findMany({
@@ -399,23 +415,22 @@ import { toTransactionDto } from './mapper';
 
 const repo = new TransactionRepository();
 
-export const getTransactions = cache(async (
-  workspaceId: string,
-  options: { cursor?: string; limit?: number }
-) => {
-  const { limit = 20 } = options;
-  const transactions = await repo.findByWorkspace(workspaceId, options);
+export const getTransactions = cache(
+  async (workspaceId: string, options: { cursor?: string; limit?: number }) => {
+    const { limit = 20 } = options;
+    const transactions = await repo.findByWorkspace(workspaceId, options);
 
-  const hasMore = transactions.length > limit;
-  const items = hasMore ? transactions.slice(0, -1) : transactions;
-  const nextCursor = hasMore ? items[items.length - 1].id : null;
+    const hasMore = transactions.length > limit;
+    const items = hasMore ? transactions.slice(0, -1) : transactions;
+    const nextCursor = hasMore ? items[items.length - 1].id : null;
 
-  return {
-    items: items.map(toTransactionDto),
-    nextCursor,
-    hasMore,
-  };
-});
+    return {
+      items: items.map(toTransactionDto),
+      nextCursor,
+      hasMore,
+    };
+  }
+);
 ```
 
 #### 1.3 Convert Dashboard to RSC
@@ -473,10 +488,9 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const query = listQuerySchema.parse(Object.fromEntries(url.searchParams));
 
-  const result = await withTenantContext(
-    (ctx) => getTransactions(ctx.workspaceId, query),
-    { rateLimit: 'api' }
-  );
+  const result = await withTenantContext((ctx) => getTransactions(ctx.workspaceId, query), {
+    rateLimit: 'api',
+  });
 
   return NextResponse.json(result);
 }
@@ -487,6 +501,7 @@ export async function GET(request: Request) {
 #### 2.1 Database Connection Pooling
 
 For Vercel/serverless:
+
 ```env
 # Direct connection for migrations
 DIRECT_URL="postgresql://user:pass@db.supabase.co:5432/postgres"
@@ -620,8 +635,8 @@ export async function checkRateLimit(
   limiterType: 'api' | 'ai' | 'upload'
 ) {
   // Check user limit
-  const userResult = await userLimiters[limiterType === 'upload' ? 'api' : limiterType]
-    .limit(userId);
+  const userResult =
+    await userLimiters[limiterType === 'upload' ? 'api' : limiterType].limit(userId);
 
   if (!userResult.success) {
     throw new RateLimitError('User rate limit exceeded', {
@@ -694,9 +709,7 @@ export function withApi<TQuery = unknown, TBody = unknown, TResult = unknown>(
       let query = {} as TQuery;
       if (options.query) {
         const url = new URL(request.url);
-        const parsed = options.query.safeParse(
-          Object.fromEntries(url.searchParams)
-        );
+        const parsed = options.query.safeParse(Object.fromEntries(url.searchParams));
         if (!parsed.success) {
           return NextResponse.json(
             { error: 'Invalid query', details: parsed.error.flatten() },
@@ -729,7 +742,6 @@ export function withApi<TQuery = unknown, TBody = unknown, TResult = unknown>(
       }
 
       return NextResponse.json(result);
-
     } catch (error) {
       if (error instanceof UnauthorizedError) {
         return NextResponse.json({ error: error.message }, { status: 401 });
@@ -755,6 +767,7 @@ export function withApi<TQuery = unknown, TBody = unknown, TResult = unknown>(
 ```
 
 Usage:
+
 ```typescript
 // apps/web/src/app/api/transactions/route.ts
 import { withApi } from '@moneio/app-services/shared';
@@ -858,10 +871,7 @@ export async function handleDocExtract(job: Job<DocExtractJobData>) {
   const tracer = trace.getTracer('moneio-worker');
 
   // Extract trace context from job data
-  const parentContext = trace.propagation.extract(
-    context.active(),
-    job.data._traceContext || {}
-  );
+  const parentContext = trace.propagation.extract(context.active(), job.data._traceContext || {});
 
   return context.with(parentContext, () => {
     return tracer.startActiveSpan('worker.doc-extract', async (span) => {
@@ -1423,8 +1433,8 @@ export async function checkInputGuardrails(input: string): Promise<GuardrailResu
 
   // Check for PII patterns
   const piiPatterns = [
-    /\b\d{3}-\d{2}-\d{4}\b/,  // SSN
-    /\b\d{16}\b/,             // Credit card
+    /\b\d{3}-\d{2}-\d{4}\b/, // SSN
+    /\b\d{16}\b/, // Credit card
   ];
 
   for (const pattern of piiPatterns) {
@@ -1456,7 +1466,7 @@ export function validateOutputSchema<T>(
 
   return {
     valid: false,
-    errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+    errors: result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`),
   };
 }
 ```
@@ -1508,7 +1518,7 @@ export async function runExtractionEval(): Promise<EvalReport> {
 
   return {
     total: results.length,
-    passed: results.filter(r => r.passed).length,
+    passed: results.filter((r) => r.passed).length,
     avgConfidence: results.reduce((sum, r) => sum + r.confidence, 0) / results.length,
     avgDuration: results.reduce((sum, r) => sum + r.duration, 0) / results.length,
     results,
@@ -1527,9 +1537,9 @@ interface CostAlert {
 }
 
 const costAlerts: CostAlert[] = [
-  { type: 'daily_budget', threshold: 100, action: 'alert' },     // $100/day
-  { type: 'per_request', threshold: 1, action: 'block' },        // $1/request max
-  { type: 'anomaly', threshold: 3, action: 'warn' },             // 3x normal
+  { type: 'daily_budget', threshold: 100, action: 'alert' }, // $100/day
+  { type: 'per_request', threshold: 1, action: 'block' }, // $1/request max
+  { type: 'anomaly', threshold: 3, action: 'warn' }, // 3x normal
 ];
 
 export async function checkCostLimits(
@@ -1562,12 +1572,14 @@ export async function checkCostLimits(
 ### 8.1 Documentation Updates
 
 **Fix README.md:**
+
 - Remove references to Drizzle (we use Prisma)
 - Remove references to Hono (we use Next.js route handlers)
 - Add architecture overview matching current stack
 - Document the worker pipeline
 
 **Fix package.json duplicates:**
+
 ```bash
 # Remove duplicate ElevenLabs packages
 pnpm remove @11labs/react  # Keep @elevenlabs/react
@@ -1579,17 +1591,18 @@ pnpm remove @11labs/react  # Keep @elevenlabs/react
 # Adding a New Workspace-Scoped Feature
 
 ## 1. Create Service Layer
+```
 
-```
 packages/app-services/src/my-feature/
-├── service.ts        # Business logic
-├── repository.ts     # Database access
-├── dto.ts           # API types
-├── mapper.ts        # Entity ↔ DTO
-└── __tests__/
-    ├── service.test.ts
-    └── integration.test.ts
-```
+├── service.ts # Business logic
+├── repository.ts # Database access
+├── dto.ts # API types
+├── mapper.ts # Entity ↔ DTO
+└── **tests**/
+├── service.test.ts
+└── integration.test.ts
+
+````
 
 ## 2. Create API Route
 
@@ -1602,7 +1615,7 @@ export const GET = withApi(
   { rateLimit: 'api', permission: 'my-feature:read' },
   async ({ workspaceId }) => getMyFeature(workspaceId)
 );
-```
+````
 
 ## 3. Create Server Component
 
@@ -1621,7 +1634,8 @@ export default async function MyFeaturePage() {
 - Integration test with Testcontainers
 - Contract test for API response
 - E2E test for critical flow
-```
+
+````
 
 ### 8.3 Code Review Checklist
 
@@ -1654,23 +1668,23 @@ export default async function MyFeaturePage() {
 - [ ] Unit tests for business logic
 - [ ] Integration test if touching DB
 - [ ] Contract test if changing API response
-```
+````
 
 ---
 
 ## Summary: Prioritized Action Plan
 
-| Week | Focus | Key Deliverables |
-|------|-------|------------------|
-| 0 | Decisions | ADR for serverless vs container, update README |
-| 1-2 | Service Layer | Create app-services package, extract 3 services |
-| 3 | RSC Migration | Convert dashboard + transactions to RSC |
-| 4 | Infrastructure | Connection pooling, queue idempotency, DLQ |
-| 5 | Auth & Rate Limits | Unified withApi wrapper, tenant quotas |
-| 6-7 | Observability | OpenTelemetry in web, trace propagation |
-| 8 | Caching | Redis caching, cursor pagination |
-| 9-10 | Testing | Test pyramid, CI gates |
-| 11-12 | AI Safety | Eval suites, cost controls, guardrails |
+| Week  | Focus              | Key Deliverables                                |
+| ----- | ------------------ | ----------------------------------------------- |
+| 0     | Decisions          | ADR for serverless vs container, update README  |
+| 1-2   | Service Layer      | Create app-services package, extract 3 services |
+| 3     | RSC Migration      | Convert dashboard + transactions to RSC         |
+| 4     | Infrastructure     | Connection pooling, queue idempotency, DLQ      |
+| 5     | Auth & Rate Limits | Unified withApi wrapper, tenant quotas          |
+| 6-7   | Observability      | OpenTelemetry in web, trace propagation         |
+| 8     | Caching            | Redis caching, cursor pagination                |
+| 9-10  | Testing            | Test pyramid, CI gates                          |
+| 11-12 | AI Safety          | Eval suites, cost controls, guardrails          |
 
 **Estimated effort:** 12 weeks, 2 engineers, ~500 engineering hours
 
@@ -1678,13 +1692,13 @@ export default async function MyFeaturePage() {
 
 ## Appendix: File Locations
 
-| Component | Current Location | Target Location |
-|-----------|-----------------|-----------------|
-| Tenant Context | N/A (scattered) | `packages/app-services/src/shared/tenant-context.ts` |
-| Rate Limiting | N/A | `packages/app-services/src/shared/rate-limit.ts` |
-| Transaction Service | `apps/web/src/app/api/transactions/route.ts` | `packages/app-services/src/transactions/service.ts` |
-| Dashboard Data | `apps/web/src/app/[locale]/(app)/dashboard/page.tsx` | `packages/app-services/src/dashboard/service.ts` |
-| Queue Idempotency | N/A | `apps/worker/src/lib/queues.ts` |
-| DLQ Handler | N/A | `apps/worker/src/lib/dlq.ts` |
-| Web Tracing | N/A | `apps/web/instrumentation.ts` |
-| Eval Suite | N/A | `packages/ai/src/eval/` |
+| Component           | Current Location                                     | Target Location                                      |
+| ------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| Tenant Context      | N/A (scattered)                                      | `packages/app-services/src/shared/tenant-context.ts` |
+| Rate Limiting       | N/A                                                  | `packages/app-services/src/shared/rate-limit.ts`     |
+| Transaction Service | `apps/web/src/app/api/transactions/route.ts`         | `packages/app-services/src/transactions/service.ts`  |
+| Dashboard Data      | `apps/web/src/app/[locale]/(app)/dashboard/page.tsx` | `packages/app-services/src/dashboard/service.ts`     |
+| Queue Idempotency   | N/A                                                  | `apps/worker/src/lib/queues.ts`                      |
+| DLQ Handler         | N/A                                                  | `apps/worker/src/lib/dlq.ts`                         |
+| Web Tracing         | N/A                                                  | `apps/web/instrumentation.ts`                        |
+| Eval Suite          | N/A                                                  | `packages/ai/src/eval/`                              |
