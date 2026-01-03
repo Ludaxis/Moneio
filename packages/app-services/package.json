@@ -8,6 +8,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./permissions": "./src/shared/permissions.ts",
     "./shared": "./src/shared/index.ts",
     "./transactions": "./src/transactions/index.ts",
     "./dashboard": "./src/dashboard/index.ts",

@@ -4,11 +4,11 @@ import {
   getPermissionsForRole,
   isAtLeastAdmin,
   isOwnerRole,
-} from '@moneio/app-services';
+} from '@moneio/app-services/permissions';
 import { prisma } from '@moneio/db';
 
 // Re-export for backward compatibility
-export type { WorkspaceRole } from '@moneio/app-services';
+export type { WorkspaceRole } from '@moneio/app-services/permissions';
 
 /**
  * Check if a user has a specific permission in a workspace
