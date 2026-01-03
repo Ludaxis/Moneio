@@ -4,8 +4,6 @@
  * Uses React cache() for request-scoped deduplication.
  */
 
-import { cache } from 'react';
-
 import type {
   TransactionListQuery,
   TransactionListDto,
@@ -16,6 +14,19 @@ import type {
   MatchSuggestionDto,
 } from './dto';
 import { TransactionRepository } from './repository';
+
+// React's cache() is only available in RSC context
+// Provide a passthrough fallback for non-RSC environments (tests, etc.)
+let cache: <T extends (...args: unknown[]) => unknown>(fn: T) => T;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+  cache = require('react').cache;
+} catch {
+  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+}
+if (typeof cache !== 'function') {
+  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+}
 
 const repository = new TransactionRepository();
 

@@ -42,7 +42,10 @@ export function sanitizeOcrText(text: string): string {
       // Neutralize potential role markers (don't remove, just neutralize)
       .replace(/\b(system|assistant|user|human|ai):/gi, '$1 -')
       // Remove potential instruction patterns
-      .replace(/\b(ignore|forget|disregard)\s+(all\s+)?(previous|above|prior)\s+(instructions?|context|rules?)/gi, '[filtered]')
+      .replace(
+        /\b(ignore|forget|disregard)\s+(all\s+)?(previous|above|prior)\s+(instructions?|context|rules?)/gi,
+        '[filtered]'
+      )
       .replace(/\b(you\s+are|act\s+as|pretend\s+to\s+be|from\s+now\s+on)/gi, '[filtered]')
       // Limit length to prevent context overflow
       .slice(0, MAX_OCR_TEXT_LENGTH)

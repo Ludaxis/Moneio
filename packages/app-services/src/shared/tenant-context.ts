@@ -9,10 +9,25 @@ import { prisma } from '@moneio/db';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import { headers, cookies } from 'next/headers';
-import { cache } from 'react';
 
 import { UnauthorizedError, ForbiddenError, ValidationError } from './errors';
 import { roleHasPermission, type WorkspaceRole } from './permissions';
+
+// React's cache() is only available in RSC context
+// Provide a passthrough fallback for non-RSC environments (tests, etc.)
+let cache: <T extends (...args: unknown[]) => unknown>(fn: T) => T;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+  cache = require('react').cache;
+} catch {
+  // Fallback: just return the function as-is (no caching)
+  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+}
+
+// Validate cache is a function, fallback if not (e.g., in test environments)
+if (typeof cache !== 'function') {
+  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+}
 
 // Re-export for convenience
 export type { WorkspaceRole } from './permissions';

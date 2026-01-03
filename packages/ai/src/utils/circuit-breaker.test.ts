@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import {
-  CircuitBreaker,
-  CircuitBreakerOpenError,
-  getCircuitBreaker,
-} from './circuit-breaker';
+import { CircuitBreaker, CircuitBreakerOpenError, getCircuitBreaker } from './circuit-breaker';
 
 describe('CircuitBreaker', () => {
   let breaker: CircuitBreaker;

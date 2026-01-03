@@ -6,9 +6,21 @@
 
 import { prisma } from '@moneio/db';
 import { calculateRunway, getRunwayDescription, type MonthlySummary } from '@moneio/domain';
-import { cache } from 'react';
 
 import type { DashboardMetricsDto, MoneyDto, MonthlyDataDto, TransactionSummaryDto } from './dto';
+
+// React's cache() is only available in RSC context
+// Provide a passthrough fallback for non-RSC environments (tests, etc.)
+let cache: <T extends (...args: unknown[]) => unknown>(fn: T) => T;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+  cache = require('react').cache;
+} catch {
+  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+}
+if (typeof cache !== 'function') {
+  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+}
 
 /**
  * Get date range from period string

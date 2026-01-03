@@ -142,7 +142,9 @@ export class CircuitBreaker {
     if (this.state === 'HALF_OPEN') {
       // Any failure in HALF_OPEN opens the circuit again
       this.state = 'OPEN';
-      console.log(`[CircuitBreaker:${this.serviceName}] Circuit OPEN - failure during recovery test`);
+      console.log(
+        `[CircuitBreaker:${this.serviceName}] Circuit OPEN - failure during recovery test`
+      );
     } else if (this.failures >= this.config.failureThreshold) {
       this.state = 'OPEN';
       console.log(
