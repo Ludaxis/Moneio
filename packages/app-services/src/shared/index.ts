@@ -13,6 +13,18 @@ export {
   ConflictError,
 } from './errors';
 
+// Permissions (single source of truth)
+export {
+  PERMISSIONS,
+  ROLE_PERMISSIONS,
+  roleHasPermission,
+  getPermissionsForRole,
+  isAtLeastAdmin,
+  isOwnerRole,
+  type WorkspaceRole,
+  type Permission,
+} from './permissions';
+
 // Tenant context
 export {
   getTenantContext,
@@ -21,7 +33,6 @@ export {
   requirePermission,
   type TenantContext,
   type Workspace,
-  type WorkspaceRole,
 } from './tenant-context';
 
 // API wrapper

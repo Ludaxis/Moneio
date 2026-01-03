@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 
 import type { LlmClient } from '../extraction/invoice-extractor';
 import type { AiConfig, ModelInfo } from '../types';
+import { getOpenAiCircuitBreaker } from '../utils/circuit-breaker';
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
 const DEFAULT_MAX_TOKENS = 4096;
@@ -43,35 +44,41 @@ export class OpenAiClient implements LlmClient {
   /**
    * Complete a prompt using OpenAI's chat completions API
    *
+   * Uses circuit breaker pattern to prevent cascade failures when API is unavailable.
+   *
    * @param prompt - The prompt text to complete
    * @param _schema - Optional schema (unused, we use JSON mode instead)
    * @returns The model's response text
    */
   async complete(prompt: string, _schema?: unknown): Promise<string> {
-    const response = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert document data extractor. Always respond with valid JSON only, no markdown or explanations.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: this.maxTokens,
-      temperature: this.temperature,
-      response_format: { type: 'json_object' },
+    const circuitBreaker = getOpenAiCircuitBreaker();
+
+    return circuitBreaker.execute(async () => {
+      const response = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an expert document data extractor. Always respond with valid JSON only, no markdown or explanations.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: this.maxTokens,
+        temperature: this.temperature,
+        response_format: { type: 'json_object' },
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('OpenAI returned empty response');
+      }
+
+      return content;
     });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('OpenAI returned empty response');
-    }
-
-    return content;
   }
 
   /**

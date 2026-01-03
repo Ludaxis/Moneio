@@ -12,8 +12,10 @@ import { headers, cookies } from 'next/headers';
 import { cache } from 'react';
 
 import { UnauthorizedError, ForbiddenError, ValidationError } from './errors';
+import { roleHasPermission, type WorkspaceRole } from './permissions';
 
-export type WorkspaceRole = 'owner' | 'admin' | 'member';
+// Re-export for convenience
+export type { WorkspaceRole } from './permissions';
 
 export interface Workspace {
   id: string;
@@ -190,107 +192,10 @@ export const getTenantContextFromRequest = cache(
 
 /**
  * Check if user has a specific permission
+ * Uses centralized permission definitions from ./permissions.ts
  */
-const rolePermissions: Record<WorkspaceRole, string[]> = {
-  owner: [
-    'workspace:read',
-    'workspace:update',
-    'workspace:delete',
-    'workspace:invite',
-    'workspace:manage_members',
-    'document:read',
-    'document:create',
-    'document:update',
-    'document:delete',
-    'document:approve',
-    'invoice:read',
-    'invoice:create',
-    'invoice:update',
-    'invoice:delete',
-    'invoice:approve',
-    'transaction:read',
-    'transaction:create',
-    'transaction:update',
-    'transaction:delete',
-    'transaction:categorize',
-    'transaction:approve',
-    'report:read',
-    'report:export',
-    'settings:read',
-    'settings:update',
-    'category:read',
-    'category:create',
-    'category:update',
-    'category:delete',
-    'rule:read',
-    'rule:create',
-    'rule:update',
-    'rule:delete',
-    'gl:read',
-    'gl:create',
-    'gl:update',
-    'gl:delete',
-    'gl:post',
-    'gl:close',
-  ],
-  admin: [
-    'workspace:read',
-    'workspace:update',
-    'workspace:invite',
-    'document:read',
-    'document:create',
-    'document:update',
-    'document:delete',
-    'document:approve',
-    'invoice:read',
-    'invoice:create',
-    'invoice:update',
-    'invoice:delete',
-    'invoice:approve',
-    'transaction:read',
-    'transaction:create',
-    'transaction:update',
-    'transaction:delete',
-    'transaction:categorize',
-    'transaction:approve',
-    'report:read',
-    'report:export',
-    'settings:read',
-    'category:read',
-    'category:create',
-    'category:update',
-    'category:delete',
-    'rule:read',
-    'rule:create',
-    'rule:update',
-    'rule:delete',
-    'gl:read',
-    'gl:create',
-    'gl:update',
-    'gl:delete',
-    'gl:post',
-  ],
-  member: [
-    'workspace:read',
-    'document:read',
-    'document:create',
-    'document:update',
-    'invoice:read',
-    'invoice:create',
-    'invoice:update',
-    'transaction:read',
-    'transaction:categorize',
-    'report:read',
-    'settings:read',
-    'category:read',
-    'rule:read',
-    'gl:read',
-  ],
-};
-
 export function hasPermission(role: WorkspaceRole, permission: string): boolean {
-  const permissions = rolePermissions[role] || [];
-  return permissions.includes(permission);
+  return roleHasPermission(role, permission);
 }
 
 export function requirePermission(ctx: TenantContext, permission: string): void {

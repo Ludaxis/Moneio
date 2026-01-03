@@ -4,6 +4,7 @@ import type { ReceiptExtraction } from '@moneio/domain';
 import { receiptExtractionSchema } from '@moneio/domain';
 
 import type { AiProposal, WorkspaceContext } from '../types';
+import { sanitizeOcrText } from '../utils/sanitize';
 
 import type { ReceiptExtractorAdapter } from './extractor';
 import type { LlmClient } from './invoice-extractor';
@@ -32,7 +33,10 @@ export class ReceiptExtractor implements ReceiptExtractorAdapter {
   }
 
   private buildPrompt(ocrPayload: OcrPayload, context: WorkspaceContext): string {
-    const fullText = ocrPayload.pages.map((p) => p.text).join('\n\n');
+    const rawText = ocrPayload.pages.map((p) => p.text).join('\n\n');
+
+    // Sanitize OCR text to prevent prompt injection attacks
+    const fullText = sanitizeOcrText(rawText);
 
     return `You are an expert receipt data extractor. Extract structured data from the following receipt.
 

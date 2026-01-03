@@ -3,6 +3,7 @@ import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/ge
 
 import type { LlmClient } from '../extraction/invoice-extractor';
 import type { AiConfig, ModelInfo } from '../types';
+import { getGeminiCircuitBreaker } from '../utils/circuit-breaker';
 
 // Use stable GA models - preview models have inconsistent JSON support
 const DEFAULT_MODEL = 'gemini-2.0-flash';
@@ -40,41 +41,47 @@ export class GeminiClient implements LlmClient {
   /**
    * Complete a prompt using Gemini's generateContent API
    *
+   * Uses circuit breaker pattern to prevent cascade failures when API is unavailable.
+   *
    * @param prompt - The prompt text to complete
    * @param _schema - Optional schema (unused, we use JSON instructions instead)
    * @returns The model's response text
    */
   async complete(prompt: string, _schema?: unknown): Promise<string> {
-    const systemPrompt =
-      'You are an expert document data extractor. Always respond with valid JSON only, no markdown or explanations.';
+    const circuitBreaker = getGeminiCircuitBreaker();
 
-    // Try with the configured model first, then fallback
-    const modelsToTry = [this.model, FALLBACK_MODEL].filter((m, i, arr) => arr.indexOf(m) === i);
+    return circuitBreaker.execute(async () => {
+      const systemPrompt =
+        'You are an expert document data extractor. Always respond with valid JSON only, no markdown or explanations.';
 
-    let lastError: Error | null = null;
+      // Try with the configured model first, then fallback
+      const modelsToTry = [this.model, FALLBACK_MODEL].filter((m, i, arr) => arr.indexOf(m) === i);
 
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`[Gemini] Trying model: ${modelName}`);
-        const result = await this.tryGenerate(modelName, systemPrompt, prompt, true);
-        if (result) return result;
-      } catch (error) {
-        console.warn(`[Gemini] Model ${modelName} with JSON mode failed:`, error);
-        lastError = error instanceof Error ? error : new Error(String(error));
+      let lastError: Error | null = null;
 
-        // Try without JSON mode as fallback
+      for (const modelName of modelsToTry) {
         try {
-          console.log(`[Gemini] Retrying ${modelName} without JSON mode`);
-          const result = await this.tryGenerate(modelName, systemPrompt, prompt, false);
+          console.log(`[Gemini] Trying model: ${modelName}`);
+          const result = await this.tryGenerate(modelName, systemPrompt, prompt, true);
           if (result) return result;
-        } catch (retryError) {
-          console.warn(`[Gemini] Model ${modelName} without JSON mode also failed:`, retryError);
-          lastError = retryError instanceof Error ? retryError : new Error(String(retryError));
+        } catch (error) {
+          console.warn(`[Gemini] Model ${modelName} with JSON mode failed:`, error);
+          lastError = error instanceof Error ? error : new Error(String(error));
+
+          // Try without JSON mode as fallback
+          try {
+            console.log(`[Gemini] Retrying ${modelName} without JSON mode`);
+            const result = await this.tryGenerate(modelName, systemPrompt, prompt, false);
+            if (result) return result;
+          } catch (retryError) {
+            console.warn(`[Gemini] Model ${modelName} without JSON mode also failed:`, retryError);
+            lastError = retryError instanceof Error ? retryError : new Error(String(retryError));
+          }
         }
       }
-    }
 
-    throw lastError || new Error('All Gemini models failed');
+      throw lastError || new Error('All Gemini models failed');
+    });
   }
 
   private async tryGenerate(
@@ -93,19 +100,19 @@ export class GeminiClient implements LlmClient {
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         },
         {
           category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         },
         {
           category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         },
         {
           category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         },
       ],
     });

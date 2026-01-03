@@ -288,15 +288,41 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Extraction already approved' }, { status: 400 });
     }
 
-    // Approve extraction
-    const updated = await prisma.extraction.update({
-      where: { id: extractionId },
+    // Use optimistic locking to prevent race conditions
+    // Only update if the version hasn't changed since we read it
+    const currentVersion = extraction.version;
+
+    // Approve extraction with optimistic lock check
+    const updateResult = await prisma.extraction.updateMany({
+      where: {
+        id: extractionId,
+        version: currentVersion,
+        approved: false, // Double-check not approved
+      },
       data: {
         approved: true,
         approvedAt: new Date(),
         approvedBy: user.id,
+        version: { increment: 1 }, // Increment version for future updates
       },
     });
+
+    // If no rows were updated, someone else approved it first
+    if (updateResult.count === 0) {
+      return NextResponse.json(
+        { error: 'Extraction was modified by another user. Please refresh and try again.' },
+        { status: 409 }
+      );
+    }
+
+    // Fetch the updated extraction
+    const updated = await prisma.extraction.findUnique({
+      where: { id: extractionId },
+    });
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Extraction not found after update' }, { status: 404 });
+    }
 
     // Check if invoice already exists (backward compatibility)
     let invoiceId: string | null = null;

@@ -1,105 +1,14 @@
+import {
+  type WorkspaceRole,
+  roleHasPermission,
+  getPermissionsForRole,
+  isAtLeastAdmin,
+  isOwnerRole,
+} from '@moneio/app-services';
 import { prisma } from '@moneio/db';
 
-export type WorkspaceRole = 'owner' | 'admin' | 'member';
-
-// Permission definitions by role
-const rolePermissions: Record<WorkspaceRole, string[]> = {
-  owner: [
-    'workspace:read',
-    'workspace:update',
-    'workspace:delete',
-    'workspace:invite',
-    'workspace:manage_members',
-    'document:read',
-    'document:create',
-    'document:update',
-    'document:delete',
-    'document:approve',
-    'invoice:read',
-    'invoice:create',
-    'invoice:update',
-    'invoice:delete',
-    'invoice:approve',
-    'transaction:read',
-    'transaction:create',
-    'transaction:update',
-    'transaction:delete',
-    'transaction:categorize',
-    'transaction:approve',
-    'report:read',
-    'report:export',
-    'settings:read',
-    'settings:update',
-    'category:read',
-    'category:create',
-    'category:update',
-    'category:delete',
-    'rule:read',
-    'rule:create',
-    'rule:update',
-    'rule:delete',
-    'gl:read',
-    'gl:create',
-    'gl:update',
-    'gl:delete',
-    'gl:post',
-    'gl:close',
-  ],
-  admin: [
-    'workspace:read',
-    'workspace:update',
-    'workspace:invite',
-    'workspace:manage_members',
-    'document:read',
-    'document:create',
-    'document:update',
-    'document:delete',
-    'document:approve',
-    'invoice:read',
-    'invoice:create',
-    'invoice:update',
-    'invoice:delete',
-    'invoice:approve',
-    'transaction:read',
-    'transaction:create',
-    'transaction:update',
-    'transaction:delete',
-    'transaction:categorize',
-    'transaction:approve',
-    'report:read',
-    'report:export',
-    'settings:read',
-    'category:read',
-    'category:create',
-    'category:update',
-    'category:delete',
-    'rule:read',
-    'rule:create',
-    'rule:update',
-    'rule:delete',
-    'gl:read',
-    'gl:create',
-    'gl:update',
-    'gl:delete',
-    'gl:post',
-  ],
-  member: [
-    'workspace:read',
-    'document:read',
-    'document:create',
-    'document:update',
-    'invoice:read',
-    'invoice:create',
-    'invoice:update',
-    'transaction:read',
-    'transaction:categorize',
-    'report:read',
-    'settings:read',
-    'category:read',
-    'rule:read',
-    'gl:read',
-  ],
-};
+// Re-export for backward compatibility
+export type { WorkspaceRole } from '@moneio/app-services';
 
 /**
  * Check if a user has a specific permission in a workspace
@@ -123,9 +32,7 @@ export async function hasPermission(
   }
 
   const role = membership.role as WorkspaceRole;
-  const permissions = rolePermissions[role] || [];
-
-  return permissions.includes(permission);
+  return roleHasPermission(role, permission);
 }
 
 /**
@@ -152,7 +59,7 @@ export async function getUserRole(
  */
 export async function isAdmin(userId: string, workspaceId: string): Promise<boolean> {
   const role = await getUserRole(userId, workspaceId);
-  return role === 'owner' || role === 'admin';
+  return role !== null && isAtLeastAdmin(role);
 }
 
 /**
@@ -160,15 +67,11 @@ export async function isAdmin(userId: string, workspaceId: string): Promise<bool
  */
 export async function isOwner(userId: string, workspaceId: string): Promise<boolean> {
   const role = await getUserRole(userId, workspaceId);
-  return role === 'owner';
+  return role !== null && isOwnerRole(role);
 }
 
-/**
- * Get permissions for a role
- */
-export function getPermissionsForRole(role: WorkspaceRole): string[] {
-  return rolePermissions[role] || [];
-}
+// Re-export getPermissionsForRole from app-services
+export { getPermissionsForRole };
 
 /**
  * Require permission (throws if not authorized)

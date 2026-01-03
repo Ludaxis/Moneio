@@ -3,6 +3,7 @@ import type { BankTransaction, Category, UUID } from '@moneio/core-ledger';
 
 import type { LlmClient } from '../extraction/invoice-extractor';
 import type { AiProposal, WorkspaceContext } from '../types';
+import { sanitizeTransactionDescription, sanitizeCounterpartyName } from '../utils/sanitize';
 
 export interface CategoryProposal {
   categoryId: UUID;
@@ -94,13 +95,20 @@ export class TransactionCategorizer implements TransactionCategorizerAdapter {
     const isExpense = amount < 0;
     const isIncome = amount > 0;
 
+    // Sanitize user-controlled inputs to prevent prompt injection
+    const sanitizedDescription = sanitizeTransactionDescription(transaction.descriptionRaw);
+    const sanitizedCounterparty = sanitizeCounterpartyName(transaction.counterparty);
+    const sanitizedReference = transaction.reference
+      ? transaction.reference.replace(/"/g, '\\"').slice(0, 100)
+      : 'None';
+
     return `You are an expert financial transaction categorizer for a small business accounting system.
 
 TRANSACTION TO CATEGORIZE:
-- Description: "${transaction.descriptionRaw}"
+- Description: "${sanitizedDescription}"
 - Amount: ${Math.abs(amount).toFixed(2)} ${transaction.amount.currency} (${isExpense ? 'EXPENSE/OUTFLOW' : isIncome ? 'INCOME/INFLOW' : 'TRANSFER'})
-- Counterparty: ${transaction.counterparty || 'Not specified'}
-- Reference: ${transaction.reference || 'None'}
+- Counterparty: ${sanitizedCounterparty}
+- Reference: ${sanitizedReference}
 - Date: ${transaction.postedAt}
 
 AVAILABLE CATEGORIES:

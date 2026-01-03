@@ -4,6 +4,7 @@ import type { InvoiceExtraction } from '@moneio/domain';
 import { invoiceExtractionSchema } from '@moneio/domain';
 
 import type { AiProposal, ModelInfo, WorkspaceContext } from '../types';
+import { sanitizeOcrText } from '../utils/sanitize';
 
 import type { InvoiceExtractorAdapter } from './extractor';
 
@@ -41,14 +42,17 @@ export class InvoiceExtractor implements InvoiceExtractorAdapter {
   }
 
   private buildPrompt(ocrPayload: OcrPayload, context: WorkspaceContext): string {
-    const fullText = ocrPayload.pages.map((p) => p.text).join('\n\n');
+    const rawText = ocrPayload.pages.map((p) => p.text).join('\n\n');
 
     // Check for empty OCR text
-    if (!fullText || fullText.trim().length < 10) {
+    if (!rawText || rawText.trim().length < 10) {
       throw new Error('Cannot extract invoice: OCR text is empty or too short');
     }
 
-    console.log(`[InvoiceExtractor] OCR text length: ${fullText.length} chars`);
+    // Sanitize OCR text to prevent prompt injection attacks
+    const fullText = sanitizeOcrText(rawText);
+
+    console.log(`[InvoiceExtractor] OCR text length: ${fullText.length} chars (sanitized)`);
     console.log(`[InvoiceExtractor] OCR text preview: ${fullText.substring(0, 500)}...`);
 
     return `You are an expert invoice data extractor. Extract structured data ONLY from the document text provided below.
@@ -60,9 +64,8 @@ CRITICAL INSTRUCTIONS:
 - Numbers should be extracted exactly as they appear (e.g., if the document says "€5000.00", extract 5000)
 - Dates should be converted to YYYY-MM-DD format
 
-=== DOCUMENT TEXT START ===
+DOCUMENT TEXT:
 ${fullText}
-=== DOCUMENT TEXT END ===
 
 Context:
 - Locale: ${context.locale}

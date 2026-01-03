@@ -245,10 +245,11 @@ export function validateJournalEntry(lines: JournalLine[]): JournalValidationRes
 
   const difference = Math.abs(totalDebits - totalCredits);
 
-  // Allow for small floating point differences (up to 0.01)
-  if (difference > 0.01) {
+  // Accounting entries must balance exactly - no tolerance allowed
+  // Note: All amounts should be in integer centums to avoid floating point issues
+  if (difference !== 0) {
     errors.push(
-      `Total debits (${totalDebits.toFixed(2)}) must equal total credits (${totalCredits.toFixed(2)})`
+      `Total debits (${totalDebits.toFixed(2)}) must equal total credits (${totalCredits.toFixed(2)}). Difference: ${difference.toFixed(2)}`
     );
   }
 
