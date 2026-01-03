@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type { Invoice } from '@/components/invoices';
 import { InvoiceList, InvoiceDetailDialog } from '@/components/invoices';
+import { extractLocaleFromPath } from '@/lib/i18n';
 
 type InvoiceStatus = 'pending' | 'approved' | 'paid' | 'void';
 
@@ -32,8 +33,7 @@ export default function InvoicesPage() {
   const searchParams = useSearchParams();
   const workspaceId = searchParams.get('workspace');
 
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   // State
   const [invoices, setInvoices] = useState<Invoice[]>([]);

@@ -124,7 +124,7 @@ export function WelcomeChecklist({
       {/* Header */}
       <button
         onClick={handleToggle}
-        className="flex w-full items-center justify-between p-4 text-left hover:bg-accent/50 transition-colors"
+        className="flex w-full items-center justify-between p-4 text-start hover:bg-accent/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">

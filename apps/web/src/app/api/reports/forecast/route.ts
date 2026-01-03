@@ -1,5 +1,5 @@
 /**
- * Cash Flow Forecast API
+ * Cash Flow Forecast API (serverless-friendly)
  *
  * GET /api/reports/forecast?workspaceId=xxx&months=6
  *
@@ -7,8 +7,12 @@
  * - Historical months for context
  * - Projected months with confidence levels
  * - Summary with insights
+ *
+ * Centralized through @moneio/app-services with shared auth, permissions,
+ * rate limiting, and observability.
  */
 
+import { withApi, reports } from '@moneio/app-services';
 import { prisma } from '@moneio/db';
 import {
   detectRecurringPatterns,
@@ -18,64 +22,76 @@ import {
   type ForecastRecurringItem,
   type MonthlySummary,
 } from '@moneio/domain';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import { traceApiRoute } from '@moneio/observability/integrations/nextjs';
+import type { NextRequest } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase';
-import { hasPermission } from '@/lib/workspace';
+import { formatJalaliMonthLabel } from '@/lib/jalali';
+import { initWebObservability } from '@/lib/observability';
+
+const { forecastQuerySchema } = reports;
+
+initWebObservability();
 
 export const dynamic = 'force-dynamic';
 
-const querySchema = z.object({
-  workspaceId: z.string().uuid(),
-  months: z.coerce.number().int().min(3).max(12).default(6),
-});
+/**
+ * Calculate historical monthly summaries from transactions
+ */
+function calculateHistoricalMonths(
+  transactions: Array<{
+    postedAt: Date;
+    amount: { toNumber(): number };
+  }>
+): MonthlySummary[] {
+  const monthlyMap = new Map<string, { income: number; expenses: number }>();
+
+  for (const tx of transactions) {
+    const month = tx.postedAt.toISOString().substring(0, 7); // YYYY-MM
+    const data = monthlyMap.get(month) || { income: 0, expenses: 0 };
+    const amount = tx.amount.toNumber();
+
+    if (amount > 0) {
+      data.income += amount;
+    } else {
+      data.expenses += Math.abs(amount);
+    }
+
+    monthlyMap.set(month, data);
+  }
+
+  // Convert to sorted array
+  return Array.from(monthlyMap.entries())
+    .map(([month, data]) => ({
+      month,
+      income: data.income,
+      expenses: data.expenses,
+      netCashflow: data.income - data.expenses,
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+/**
+ * Get current total balance from most recent transaction balances
+ */
+async function getCurrentBalance(workspaceId: string): Promise<number> {
+  const accountBalances = await prisma.$queryRaw<Array<{ balance: number | null }>>`
+    SELECT DISTINCT ON (bank_account_id) balance
+    FROM bank_transactions
+    WHERE workspace_id = ${workspaceId}::uuid
+      AND balance IS NOT NULL
+    ORDER BY bank_account_id, posted_at DESC
+  `;
+
+  return accountBalances.reduce((sum, row) => sum + (row.balance ? Number(row.balance) : 0), 0);
+}
 
 /**
  * GET /api/reports/forecast
  * Generate cash flow forecast for a workspace
  */
-export async function GET(request: Request) {
-  try {
-    const supabase = createServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const parsed = querySchema.safeParse({
-      workspaceId: searchParams.get('workspaceId'),
-      months: searchParams.get('months') || 6,
-    });
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid parameters', details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const { workspaceId, months } = parsed.data;
-
-    // Check permission
-    const canRead = await hasPermission(user.id, workspaceId, 'transaction:read');
-    if (!canRead) {
-      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
-    }
-
-    // Get workspace for base currency
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId },
-      select: { baseCurrency: true },
-    });
-
-    if (!workspace) {
-      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
-    }
+const forecastHandler = withApi(
+  async ({ workspaceId, workspace, query }) => {
+    const months = query.months;
 
     // Get historical transaction data (12 months)
     const twelveMonthsAgo = new Date();
@@ -99,6 +115,12 @@ export async function GET(request: Request) {
         },
       },
       orderBy: { postedAt: 'desc' },
+    });
+
+    // Get workspace calendar system
+    const workspaceData = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { calendarSystem: true },
     });
 
     // Group transactions by month for historical summaries
@@ -159,15 +181,23 @@ export async function GET(request: Request) {
 
     const forecast = generateForecast(forecastInput);
 
+    // Helper to format month label based on calendar system
+    const formatLabel = (month: string, originalLabel: string) => {
+      if (workspaceData?.calendarSystem === 'jalali') {
+        return formatJalaliMonthLabel(month);
+      }
+      return originalLabel;
+    };
+
     // Format response
-    return NextResponse.json({
+    return {
       currency: forecast.currency,
       currentBalance: forecast.currentBalance,
       overallConfidence: forecast.overallConfidence,
       generatedAt: forecast.generatedAt.toISOString(),
       months: forecast.months.map((m) => ({
         month: m.month,
-        label: m.label,
+        label: formatLabel(m.month, m.label),
         projectedIncome: m.projectedIncome,
         projectedExpenses: m.projectedExpenses,
         netCashflow: m.netCashflow,
@@ -209,60 +239,15 @@ export async function GET(request: Request) {
         recurringIncomeDetected: recurringIncome.length,
         transactionsAnalyzed: transactions.length,
       },
-    });
-  } catch (error) {
-    console.error('Failed to generate forecast:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    };
+  },
+  {
+    querySchema: forecastQuerySchema,
+    permission: 'report:read',
+    rateLimit: { type: 'workspace', limiter: 'api' },
   }
-}
+);
 
-/**
- * Calculate historical monthly summaries from transactions
- */
-function calculateHistoricalMonths(
-  transactions: Array<{
-    postedAt: Date;
-    amount: { toNumber(): number };
-  }>
-): MonthlySummary[] {
-  const monthlyMap = new Map<string, { income: number; expenses: number }>();
-
-  for (const tx of transactions) {
-    const month = tx.postedAt.toISOString().substring(0, 7); // YYYY-MM
-    const data = monthlyMap.get(month) || { income: 0, expenses: 0 };
-    const amount = tx.amount.toNumber();
-
-    if (amount > 0) {
-      data.income += amount;
-    } else {
-      data.expenses += Math.abs(amount);
-    }
-
-    monthlyMap.set(month, data);
-  }
-
-  // Convert to sorted array
-  return Array.from(monthlyMap.entries())
-    .map(([month, data]) => ({
-      month,
-      income: data.income,
-      expenses: data.expenses,
-      netCashflow: data.income - data.expenses,
-    }))
-    .sort((a, b) => a.month.localeCompare(b.month));
-}
-
-/**
- * Get current total balance from most recent transaction balances
- */
-async function getCurrentBalance(workspaceId: string): Promise<number> {
-  const accountBalances = await prisma.$queryRaw<Array<{ balance: number | null }>>`
-    SELECT DISTINCT ON (bank_account_id) balance
-    FROM bank_transactions
-    WHERE workspace_id = ${workspaceId}::uuid
-      AND balance IS NOT NULL
-    ORDER BY bank_account_id, posted_at DESC
-  `;
-
-  return accountBalances.reduce((sum, row) => sum + (row.balance ? Number(row.balance) : 0), 0);
-}
+export const GET = traceApiRoute('reports.forecast', (request: NextRequest) =>
+  forecastHandler(request)
+);

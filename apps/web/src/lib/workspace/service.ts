@@ -10,6 +10,20 @@ interface CreateWorkspaceInput {
   ownerEmail?: string;
 }
 
+interface MemberWithUser {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  role: WorkspaceRole;
+  createdAt: Date;
+  updatedAt: Date;
+  user: {
+    email: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
+}
+
 /**
  * Ensure a user exists in the database (upsert from Supabase Auth)
  */
@@ -116,7 +130,7 @@ export async function getWorkspace(workspaceId: string, userId: string) {
  */
 export async function updateWorkspace(
   workspaceId: string,
-  data: { name?: string; baseCurrency?: string; locale?: string }
+  data: { name?: string; baseCurrency?: string; locale?: string; calendarSystem?: string }
 ) {
   return prisma.workspace.update({
     where: { id: workspaceId },
@@ -132,5 +146,91 @@ export async function deleteWorkspace(workspaceId: string) {
   // Cascade delete is configured in Prisma schema
   return prisma.workspace.delete({
     where: { id: workspaceId },
+  });
+}
+
+/**
+ * List members with user info for a workspace
+ */
+export async function listWorkspaceMembers(workspaceId: string): Promise<MemberWithUser[]> {
+  return prisma.workspaceMember.findMany({
+    where: { workspaceId },
+    include: {
+      user: {
+        select: {
+          email: true,
+          name: true,
+          avatarUrl: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  }) as unknown as MemberWithUser[];
+}
+
+/**
+ * Add a member by email (user must already exist)
+ */
+export async function addWorkspaceMember(
+  workspaceId: string,
+  email: string,
+  role: WorkspaceRole
+): Promise<MemberWithUser> {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const existing = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId, userId: user.id } },
+  });
+  if (existing) {
+    throw new Error('User is already a member of this workspace');
+  }
+
+  const member = await prisma.workspaceMember.create({
+    data: {
+      workspaceId,
+      userId: user.id,
+      role,
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+          name: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  });
+
+  return member as unknown as MemberWithUser;
+}
+
+/**
+ * Update a member's role
+ */
+export async function updateWorkspaceMemberRole(
+  memberId: string,
+  role: WorkspaceRole
+): Promise<MemberWithUser> {
+  const member = await prisma.workspaceMember.update({
+    where: { id: memberId },
+    data: { role },
+    include: {
+      user: { select: { email: true, name: true, avatarUrl: true } },
+    },
+  });
+
+  return member as unknown as MemberWithUser;
+}
+
+/**
+ * Remove a workspace member
+ */
+export async function removeWorkspaceMember(memberId: string) {
+  return prisma.workspaceMember.delete({
+    where: { id: memberId },
   });
 }

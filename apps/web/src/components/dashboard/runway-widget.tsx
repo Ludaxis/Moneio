@@ -2,8 +2,11 @@
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { Clock, Calendar, AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface RunwayData {
   netBurn: number;
@@ -11,7 +14,7 @@ interface RunwayData {
     months: number;
     status: 'critical' | 'warning' | 'healthy' | 'excellent';
   };
-  cashZeroDate?: string;
+  cashZeroDate?: Date;
   currency: string;
 }
 
@@ -20,6 +23,9 @@ interface RunwayWidgetProps {
 }
 
 export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
+  const t = useTranslations('dashboard.runway');
+  const { formatCurrency, formatShortDate } = useLocaleFormat();
+
   const [data, setData] = useState<RunwayData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,11 +43,11 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
       const runway = forecast.summary?.cashRunway || { months: 0, status: 'healthy' };
 
       // Calculate cash zero date if burning cash
-      let cashZeroDate: string | undefined;
+      let cashZeroDate: Date | undefined;
       if (netBurn < 0 && runway.months < 24) {
         const date = new Date();
         date.setMonth(date.getMonth() + runway.months);
-        cashZeroDate = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        cashZeroDate = date;
       }
 
       setData({
@@ -63,23 +69,14 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
     }
   }, [workspaceId, fetchData]);
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const formatRunway = (months: number) => {
-    if (months >= 24) return '2+ years';
+    if (months >= 24) return t('twoYearsPlus');
     const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
     if (years > 0) {
-      return `${years} yr${years > 1 ? 's' : ''}, ${remainingMonths} mth`;
+      return t('yearsAndMonths', { years, months: remainingMonths });
     }
-    return `${months} months`;
+    return t('monthsCount', { count: months });
   };
 
   const getStatusStyles = (status: RunwayData['runway']['status']) => {
@@ -135,9 +132,9 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-5 w-5" />
-          <span className="font-medium">Runway</span>
+          <span className="font-medium">{t('runway')}</span>
         </div>
-        <p className="mt-4 text-sm text-muted-foreground">Not enough data to calculate runway.</p>
+        <p className="mt-4 text-sm text-muted-foreground">{t('notEnoughData')}</p>
       </div>
     );
   }
@@ -149,14 +146,14 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-5 w-5" />
-          <span className="font-medium">Net Burn</span>
+          <span className="font-medium">{t('netBurn')}</span>
         </div>
         {data.runway.status === 'critical' && <AlertTriangle className="h-5 w-5 text-danger-500" />}
       </div>
 
       <p className="mt-2 text-4xl font-bold tabular-nums text-foreground tracking-tight">
         {formatCurrency(data.netBurn, data.currency)}
-        <span className="text-lg font-normal text-muted-foreground">/mo</span>
+        <span className="text-lg font-normal text-muted-foreground">{t('perMonth')}</span>
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
@@ -164,7 +161,7 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
         <div className={`rounded-lg ${statusStyles.bg} p-4 ring-1 ${statusStyles.ring}`}>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Clock className={`h-4 w-4 ${statusStyles.icon}`} />
-            <span>Runway</span>
+            <span>{t('runway')}</span>
           </div>
           <p className={`mt-1 text-xl font-bold ${statusStyles.text}`}>
             {formatRunway(data.runway.months)}
@@ -175,9 +172,11 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
         <div className="rounded-lg bg-muted/50 p-4 ring-1 ring-border">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span>Cash Zero</span>
+            <span>{t('cashZero')}</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-foreground">{data.cashZeroDate || 'N/A'}</p>
+          <p className="mt-1 text-xl font-bold text-foreground">
+            {data.cashZeroDate ? formatShortDate(data.cashZeroDate) : t('notApplicable')}
+          </p>
         </div>
       </div>
 
@@ -185,7 +184,7 @@ export function RunwayWidget({ workspaceId }: RunwayWidgetProps) {
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
           <span>0</span>
-          <span>12 months</span>
+          <span>{t('twelveMonths')}</span>
           <span>24+</span>
         </div>
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">

@@ -19,6 +19,7 @@ import { z } from 'zod';
 
 import { createPrismaReportRepository } from '@/lib/repositories/report-repository';
 import { createServerClient } from '@/lib/supabase';
+import { formatCurrency, transformMoney } from '@/lib/utils/money-transform';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
@@ -32,23 +33,6 @@ const querySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
 });
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-function transformMoney(money: { amount: number; currency: string }) {
-  return {
-    amount: money.amount,
-    currency: money.currency,
-    formatted: formatCurrency(money.amount, money.currency),
-  };
-}
 
 export async function GET(request: Request) {
   try {
@@ -101,18 +85,58 @@ export async function GET(request: Request) {
       where: { workspaceId, isActive: true },
     });
 
-    // If no GL accounts, return empty Balance Sheet
+    // If no GL accounts, generate simplified Balance Sheet from transactions
     if (glAccountCount === 0) {
+      // Get all transactions up to asOfDate to calculate net position
+      const transactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          postedAt: {
+            lte: new Date(asOfDate),
+          },
+        },
+      });
+
+      // Get bank accounts for cash balances
+      const bankAccounts = await prisma.bankAccount.findMany({
+        where: { workspaceId },
+        select: { id: true, name: true, currentBalance: true },
+      });
+
+      // Calculate total cash from bank accounts (currentBalance is Decimal)
+      let totalCash = 0;
+      const cashItems = bankAccounts.map((account) => {
+        const balance = account.currentBalance ? account.currentBalance.toNumber() : 0;
+        totalCash += balance;
+        return {
+          accountId: account.id,
+          accountCode: '',
+          accountName: account.name,
+          balance: {
+            amount: balance,
+            currency: baseCurrency,
+            formatted: formatCurrency(balance, baseCurrency),
+          },
+          depth: 0,
+          isSubtotal: false,
+        };
+      });
+
+      // Calculate net income from transactions (retained earnings proxy)
+      let netIncome = 0;
+      for (const tx of transactions) {
+        netIncome += tx.amount.toNumber(); // Positive = income, negative = expense
+      }
+
+      // Simple balance sheet structure (amounts already in decimal)
+      const totalAssets = totalCash;
+      const totalLiabilities = 0; // Would need invoice data for accounts payable
+      const totalEquity = netIncome; // Simplified: all earnings are equity
+
       const emptyMoney = {
         amount: 0,
         currency: baseCurrency,
         formatted: formatCurrency(0, baseCurrency),
-      };
-      const emptySection = {
-        name: '',
-        key: '',
-        subsections: [],
-        total: emptyMoney,
       };
 
       return NextResponse.json({
@@ -123,25 +147,100 @@ export async function GET(request: Request) {
           asOfDate,
         },
         sections: {
-          assets: { ...emptySection, name: 'Assets', key: 'assets' },
-          liabilities: { ...emptySection, name: 'Liabilities', key: 'liabilities' },
-          equity: { ...emptySection, name: 'Equity', key: 'equity' },
+          assets: {
+            name: 'Assets',
+            key: 'assets',
+            subsections: [
+              {
+                name: 'Current Assets',
+                key: 'currentAssets',
+                items: cashItems.length > 0 ? cashItems : [],
+                subtotal: {
+                  amount: totalCash,
+                  currency: baseCurrency,
+                  formatted: formatCurrency(totalCash, baseCurrency),
+                },
+              },
+            ],
+            total: {
+              amount: totalAssets,
+              currency: baseCurrency,
+              formatted: formatCurrency(totalAssets, baseCurrency),
+            },
+          },
+          liabilities: {
+            name: 'Liabilities',
+            key: 'liabilities',
+            subsections: [],
+            total: emptyMoney,
+          },
+          equity: {
+            name: 'Equity',
+            key: 'equity',
+            subsections: [
+              {
+                name: 'Retained Earnings',
+                key: 'retainedEarnings',
+                items: [
+                  {
+                    accountId: 'retained-earnings',
+                    accountCode: '',
+                    accountName: 'Net Income (YTD)',
+                    balance: {
+                      amount: netIncome,
+                      currency: baseCurrency,
+                      formatted: formatCurrency(netIncome, baseCurrency),
+                    },
+                    depth: 0,
+                    isSubtotal: false,
+                  },
+                ],
+                subtotal: {
+                  amount: netIncome,
+                  currency: baseCurrency,
+                  formatted: formatCurrency(netIncome, baseCurrency),
+                },
+              },
+            ],
+            total: {
+              amount: totalEquity,
+              currency: baseCurrency,
+              formatted: formatCurrency(totalEquity, baseCurrency),
+            },
+          },
         },
         summaries: {
-          totalAssets: emptyMoney,
+          totalAssets: {
+            amount: totalAssets,
+            currency: baseCurrency,
+            formatted: formatCurrency(totalAssets, baseCurrency),
+          },
           totalLiabilities: emptyMoney,
-          totalEquity: emptyMoney,
-          totalLiabilitiesAndEquity: emptyMoney,
-          isBalanced: true,
-          difference: emptyMoney,
+          totalEquity: {
+            amount: totalEquity,
+            currency: baseCurrency,
+            formatted: formatCurrency(totalEquity, baseCurrency),
+          },
+          totalLiabilitiesAndEquity: {
+            amount: totalEquity,
+            currency: baseCurrency,
+            formatted: formatCurrency(totalEquity, baseCurrency),
+          },
+          isBalanced: Math.abs(totalAssets - totalEquity) < 0.01, // Allow 1 cent tolerance
+          difference: {
+            amount: totalAssets - totalEquity,
+            currency: baseCurrency,
+            formatted: formatCurrency(totalAssets - totalEquity, baseCurrency),
+          },
         },
         ratios: {
-          currentRatio: 0,
-          quickRatio: 0,
-          debtToEquity: 0,
+          currentRatio: totalLiabilities > 0 ? totalAssets / totalLiabilities : 0,
+          quickRatio: totalLiabilities > 0 ? totalAssets / totalLiabilities : 0,
+          debtToEquity: totalEquity > 0 ? totalLiabilities / totalEquity : 0,
         },
+        _simplified: true,
         _notice:
-          'No GL accounts configured. Set up your Chart of Accounts to generate Balance Sheet reports.',
+          'Simplified Balance Sheet generated from bank accounts. Set up Chart of Accounts for detailed reports.',
       });
     }
 

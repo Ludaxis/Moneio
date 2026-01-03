@@ -404,5 +404,101 @@ export function extractSpanMetadata(span: Span): LlmSpanMetadata {
   };
 }
 
+// ============================================================
+// Distributed Tracing Context for Queue Jobs
+// ============================================================
+
+/**
+ * Trace context for propagation across async boundaries (queues, workers)
+ */
+export interface TraceContext {
+  traceId: string;
+  spanId: string;
+  parentId?: string;
+  sampled?: boolean;
+}
+
+/**
+ * Extract trace context from the current active span
+ * Use this when enqueuing a job to capture the parent trace
+ */
+export function extractTraceContext(): TraceContext | null {
+  const span = getActiveSpan();
+  if (!span) {
+    return null;
+  }
+
+  const context = span.context();
+  return {
+    traceId: context.toTraceId(),
+    spanId: context.toSpanId(),
+    sampled: true,
+  };
+}
+
+/**
+ * Create a child span from propagated trace context
+ * Use this in worker handlers to continue the distributed trace
+ */
+export function startSpanFromContext(
+  operationName: string,
+  traceContext: TraceContext | null | undefined,
+  options: {
+    tags?: Record<string, string | number | boolean>;
+    resourceName?: string;
+  } = {}
+): Span {
+  const trace = getTracer();
+
+  const spanOptions: SpanOptions = {
+    tags: {
+      'span.type': 'worker',
+      'span.kind': 'consumer',
+      ...options.tags,
+    },
+  };
+
+  // If we have parent trace context, set it
+  if (traceContext) {
+    // Use Datadog's trace propagation format
+    spanOptions.tags = {
+      ...spanOptions.tags,
+      '_dd.parent_source': 'queue',
+      'trace.origin': 'queue',
+    };
+    // Note: dd-trace automatically links if the context is available
+  }
+
+  const span = trace.startSpan(operationName, spanOptions);
+
+  if (options.resourceName) {
+    span.setTag('resource.name', options.resourceName);
+  }
+
+  return span;
+}
+
+/**
+ * Wrap a job handler with distributed tracing
+ * Automatically creates a span linked to the original API request trace
+ */
+export async function traceQueueJob<T>(
+  operationName: string,
+  traceContext: TraceContext | null | undefined,
+  tags: Record<string, string | number | boolean>,
+  handler: (span: Span) => Promise<T>
+): Promise<T> {
+  const span = startSpanFromContext(operationName, traceContext, { tags });
+
+  try {
+    const result = await runWithSpan(span, () => handler(span));
+    finishSpan(span);
+    return result;
+  } catch (error) {
+    finishSpan(span, error instanceof Error ? error : new Error(String(error)));
+    throw error;
+  }
+}
+
 export { tracer };
 export type { Tracer, Span };

@@ -122,7 +122,7 @@ export function SuggestedQuestions({ onSelect }: SuggestedQuestionsProps) {
           <button
             key={index}
             onClick={() => onSelect(suggestion.text)}
-            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${categoryColors[suggestion.category]}`}
+            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-start text-sm font-medium transition-all ${categoryColors[suggestion.category]}`}
           >
             {suggestion.icon}
             <span>{suggestion.text}</span>

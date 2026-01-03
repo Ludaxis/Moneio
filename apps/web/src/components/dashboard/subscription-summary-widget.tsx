@@ -13,6 +13,8 @@ import Link from 'next/link';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useLocaleFormat } from '@/hooks/use-locale-format';
+
 interface CategoryBreakdown {
   category: string;
   monthly: string;
@@ -40,6 +42,7 @@ interface SubscriptionSummaryWidgetProps {
 }
 
 export function SubscriptionSummaryWidget({ workspaceId }: SubscriptionSummaryWidgetProps) {
+  const { formatCurrencyPrecise, formatNumber } = useLocaleFormat();
   const [data, setData] = useState<SubscriptionsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,12 +140,10 @@ export function SubscriptionSummaryWidget({ workspaceId }: SubscriptionSummaryWi
             <p className="text-sm text-muted-foreground">Monthly Total</p>
             <div className="flex items-end gap-2">
               <p className="text-3xl font-bold text-foreground">
-                {summary.currency}{' '}
-                {monthlyTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {formatCurrencyPrecise(monthlyTotal, summary.currency)}
               </p>
               <p className="mb-1 text-sm text-muted-foreground">
-                ({summary.currency}{' '}
-                {annualTotal.toLocaleString('en-US', { minimumFractionDigits: 0 })}/year)
+                ({formatNumber(annualTotal)}/year)
               </p>
             </div>
           </div>
@@ -165,9 +166,7 @@ export function SubscriptionSummaryWidget({ workspaceId }: SubscriptionSummaryWi
               <TrendingDown className="h-5 w-5 text-success-600" />
               <div>
                 <p className="text-sm font-medium text-success-700">
-                  {summary.currency}{' '}
-                  {potentialSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })} potential
-                  savings
+                  {formatCurrencyPrecise(potentialSavings, summary.currency)} potential savings
                 </p>
                 <p className="text-xs text-success-600">Review flagged subscriptions</p>
               </div>
@@ -183,10 +182,7 @@ export function SubscriptionSummaryWidget({ workspaceId }: SubscriptionSummaryWi
                   <div key={cat.category} className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">{cat.category}</span>
                     <span className="text-sm font-medium text-foreground">
-                      {summary.currency}{' '}
-                      {parseFloat(cat.monthly).toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                      })}
+                      {formatCurrencyPrecise(parseFloat(cat.monthly), summary.currency)}
                       <span className="ml-1 text-xs text-muted-foreground">({cat.count})</span>
                     </span>
                   </div>

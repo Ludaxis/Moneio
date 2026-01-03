@@ -23,3 +23,13 @@ export { ForecastChart } from './forecast-chart';
 // Mobile-optimized components
 export { KPICard } from './kpi-card';
 export { KPISwiper, KPISwiperItem } from './kpi-swiper';
+
+// Skeleton components for loading states
+export {
+  DashboardSkeleton,
+  MetricsSkeleton,
+  ChartSkeleton,
+  TransactionsSkeleton,
+  WidgetSkeleton,
+  AISummarySkeleton,
+} from './skeletons';

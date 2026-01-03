@@ -2,7 +2,10 @@
 
 import { useFadeIn, useStaggerAnimation } from '@moneio/ui/hooks/use-gsap';
 import { ArrowDownLeft, ArrowUpRight, Clock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
+
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface Transaction {
   id: string;
@@ -18,27 +21,10 @@ interface RecentActivityProps {
   loading?: boolean;
 }
 
-function formatCurrency(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Math.abs(value));
-}
-
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
 export function RecentActivity({ transactions, loading }: RecentActivityProps) {
+  const t = useTranslations('dashboard');
+  const tTransactions = useTranslations('transactions');
+  const { formatCurrencyPrecise, formatShortDate } = useLocaleFormat();
   const containerRef = useFadeIn({
     duration: 0.5,
     delay: 0.2,
@@ -48,6 +34,17 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
     stagger: 0.08,
     duration: 0.35,
   }) as React.RefObject<HTMLDivElement>;
+
+  const formatDate = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return t('today');
+    if (diffDays === 1) return t('yesterday');
+    if (diffDays < 7) return t('daysAgo', { count: diffDays });
+    return formatShortDate(date);
+  };
 
   if (loading) {
     return (
@@ -64,13 +61,13 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
 
   return (
     <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
-      <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+      <h2 className="text-lg font-semibold text-foreground">{t('recentActivity')}</h2>
       <div ref={listRef} className="mt-4 space-y-1">
         {transactions.length === 0 ? (
           <div className="flex h-48 items-center justify-center">
             <div className="text-center">
               <Clock className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">No recent transactions</p>
+              <p className="mt-2 text-sm text-muted-foreground">{t('noRecentTransactions')}</p>
             </div>
           </div>
         ) : (
@@ -93,10 +90,10 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground line-clamp-1">
-                    {tx.description || 'No description'}
+                    {tx.description || tTransactions('noDescription')}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {tx.categoryName || 'Uncategorized'} &bull; {formatDate(tx.date)}
+                    {tx.categoryName || tTransactions('uncategorized')} &bull; {formatDate(tx.date)}
                   </p>
                 </div>
               </div>
@@ -106,7 +103,7 @@ export function RecentActivity({ transactions, loading }: RecentActivityProps) {
                 }`}
               >
                 {tx.amount < 0 ? '-' : '+'}
-                {formatCurrency(tx.amount, tx.currency)}
+                {formatCurrencyPrecise(Math.abs(tx.amount), tx.currency)}
               </p>
             </div>
           ))

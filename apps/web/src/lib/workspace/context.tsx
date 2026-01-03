@@ -9,6 +9,7 @@ interface Workspace {
   id: string;
   name: string;
   baseCurrency: string;
+  calendarSystem: string;
   role: string;
 }
 

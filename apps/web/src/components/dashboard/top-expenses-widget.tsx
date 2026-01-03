@@ -3,8 +3,13 @@
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { chartPalette } from '@moneio/ui/lib/chart-theme';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useIsRTL } from '@/hooks/use-direction';
+import { useLocaleFormat } from '@/hooks/use-locale-format';
+import { useTranslateCategory } from '@/hooks/use-translate-category';
 
 interface ExpenseCategory {
   categoryId: string;
@@ -29,6 +34,17 @@ export function TopExpensesWidget({
   startDate: propStartDate,
   endDate: propEndDate,
 }: TopExpensesWidgetProps) {
+  const t = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
+  const { formatCurrency, formatNumber } = useLocaleFormat();
+  const translateCategoryHook = useTranslateCategory();
+
+  // Helper function to translate category name
+  const translateCategory = (categoryName: string | null): string => {
+    if (!categoryName) return tCommon('uncategorized');
+    return translateCategoryHook(categoryName) || categoryName;
+  };
+  const isRTL = useIsRTL();
   const [expenses, setExpenses] = useState<ExpenseCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -74,15 +90,6 @@ export function TopExpensesWidget({
     }
   }, [workspaceId, fetchExpenses]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const maxAmount = expenses.length > 0 ? Math.max(...expenses.map((e) => e.amount)) : 0;
 
   if (loading) {
@@ -109,11 +116,11 @@ export function TopExpensesWidget({
 
   return (
     <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <h3 className="font-semibold text-foreground">Top Expenses</h3>
+      <h3 className="font-semibold text-foreground">{t('topExpenses')}</h3>
 
       {expenses.length === 0 ? (
         <div className="mt-6 text-center py-8">
-          <p className="text-sm text-muted-foreground">No expenses recorded for this period.</p>
+          <p className="text-sm text-muted-foreground">{t('noExpensesForPeriod')}</p>
         </div>
       ) : (
         <div className="mt-6 space-y-4">
@@ -132,10 +139,10 @@ export function TopExpensesWidget({
                       style={{ backgroundColor: chartPalette[index % chartPalette.length] }}
                     />
                     <span className="text-sm font-medium text-foreground truncate">
-                      {expense.categoryName || 'Uncategorized'}
+                      {translateCategory(expense.categoryName)}
                     </span>
                     <span className="text-xs text-muted-foreground flex-shrink-0">
-                      ({expense.transactionCount})
+                      ({formatNumber(expense.transactionCount)})
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -150,17 +157,19 @@ export function TopExpensesWidget({
                         ) : (
                           <TrendingDown className="h-3 w-3 mr-0.5" />
                         )}
-                        {Math.abs(change).toFixed(0)}%
+                        {formatNumber(Math.abs(change), { maximumFractionDigits: 0 })}%
                       </span>
                     )}
                     <span className="text-sm font-semibold tabular-nums text-foreground">
-                      {formatCurrency(expense.amount)}
+                      {formatCurrency(expense.amount, currency)}
                     </span>
                   </div>
                 </div>
                 <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-700 group-hover:opacity-80"
+                    className={`h-full rounded-full transition-all duration-700 group-hover:opacity-80 ${
+                      isRTL ? 'ms-auto' : ''
+                    }`}
                     style={{
                       width: `${percentage}%`,
                       backgroundColor: chartPalette[index % chartPalette.length],
@@ -176,9 +185,9 @@ export function TopExpensesWidget({
       {expenses.length > 0 && (
         <div className="mt-6 pt-4 border-t border-border">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">Total</span>
+            <span className="text-sm font-medium text-muted-foreground">{t('total')}</span>
             <span className="text-lg font-bold tabular-nums text-foreground">
-              {formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0))}
+              {formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0), currency)}
             </span>
           </div>
         </div>

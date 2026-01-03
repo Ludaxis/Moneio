@@ -5,6 +5,8 @@ import { Sparkles, TrendingDown, TrendingUp, AlertTriangle, Lightbulb, X } from 
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useLocaleFormat } from '@/hooks/use-locale-format';
+
 interface AIInsight {
   id: string;
   type: 'warning' | 'opportunity' | 'info' | 'alert';
@@ -26,6 +28,7 @@ interface AIInsightsBannerProps {
 }
 
 export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
+  const { formatCurrency, formatNumber } = useLocaleFormat();
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -44,6 +47,7 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
 
       if (healthRes.ok) {
         const health = await healthRes.json();
+        const formattedScore = `${formatNumber(health.overallScore)}/${formatNumber(100)}`;
 
         // Add insight based on health score
         if (health.overallScore < 40) {
@@ -54,7 +58,7 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
             description:
               health.recommendations[0] || 'Your financial health score is below optimal levels.',
             metric: {
-              value: `${health.overallScore}/100`,
+              value: formattedScore,
               direction: 'down',
             },
           });
@@ -65,7 +69,7 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
             title: 'Room for Improvement',
             description: health.recommendations[0] || 'Consider reviewing your financial metrics.',
             metric: {
-              value: `${health.overallScore}/100`,
+              value: formattedScore,
             },
           });
         }
@@ -133,7 +137,7 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, formatCurrency, formatNumber]);
 
   useEffect(() => {
     if (workspaceId) {
@@ -231,7 +235,7 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
                     <p className="mt-1 text-sm text-muted-foreground">{insight.description}</p>
                   </div>
                   {insight.metric && (
-                    <div className="flex-shrink-0 text-right">
+                    <div className="flex-shrink-0 text-end">
                       <div className="flex items-center gap-1">
                         {insight.metric.direction === 'up' && (
                           <TrendingUp className="h-4 w-4 text-success-600" />
@@ -267,13 +271,4 @@ export function AIInsightsBanner({ workspaceId }: AIInsightsBannerProps) {
       })}
     </div>
   );
-}
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }

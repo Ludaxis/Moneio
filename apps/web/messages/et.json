@@ -58,7 +58,18 @@
     "members": "Liikmed",
     "name": "Tööruumi nimi",
     "currency": "Baasvaluuta",
-    "invite": "Kutsu liige"
+    "invite": "Kutsu liige",
+    "team": "Meeskond",
+    "manageAccess": "Halda ligipääsu",
+    "inviteMember": "Lisa meeskonnaliige",
+    "memberEmail": "Liikme e-post",
+    "role": "Roll",
+    "owner": "Omanik",
+    "admin": "Admin",
+    "member": "Liige",
+    "addMember": "Lisa",
+    "noMembers": "Teisi liikmeid pole.",
+    "onlyAdminsOwners": "Ainult omanikud ja adminid saavad liikmeid hallata."
   },
   "documents": {
     "title": "Dokumendid",
@@ -151,5 +162,26 @@
     "example1": "Millised olid minu suurimad kulud eelmisel kuul?",
     "example2": "Näita tasumata arveid",
     "example3": "Arvuta minu KM kohustus"
+  },
+  "landing": {
+    "subtitle": "Tehisintellektil põhinev raamatupidamisassistent väikeettevõtetele",
+    "features": {
+      "invoiceExtractionTitle": "Arvete töötlemine",
+      "invoiceExtractionBody": "Laadi üles arved ja kviitungid – AI loeb andmed automaatselt välja.",
+      "smartCategorizationTitle": "Tark kategoriseerimine",
+      "smartCategorizationBody": "Tehingud kategoriseeritakse automaatselt ja õpivad sinu parandustest.",
+      "financialInsightsTitle": "Finantsülevaated",
+      "financialInsightsBody": "Küsi oma rahanduse kohta lihtsas keeles ja saa kohesed vastused."
+    }
+  },
+  "profile": {
+    "title": "Profiil",
+    "loggedInAs": "Sisse logitud kui",
+    "fullName": "Täisnimi",
+    "avatarUrl": "Avatar URL",
+    "avatarHint": "Aseta otsene pildilink (PNG/JPG/SVG).",
+    "memberSince": "Liige alates {date}",
+    "saveProfile": "Salvesta profiil",
+    "saved": "Profiil uuendatud"
   }
 }

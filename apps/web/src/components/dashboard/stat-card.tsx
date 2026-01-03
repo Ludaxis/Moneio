@@ -2,6 +2,7 @@
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 
 interface StatCardProps {
@@ -17,6 +18,7 @@ interface StatCardProps {
 }
 
 export function StatCard({ label, value, trend, loading, delay = 0, hint }: StatCardProps) {
+  const t = useTranslations('dashboard');
   const containerRef = useFadeIn({
     duration: 0.4,
     delay,
@@ -54,10 +56,10 @@ export function StatCard({ label, value, trend, loading, delay = 0, hint }: Stat
           {trend.direction === 'stable' && (
             <>
               <Minus className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">No change</span>
+              <span className="text-muted-foreground">{t('noChange')}</span>
             </>
           )}
-          <span className="text-muted-foreground">vs last month</span>
+          <span className="text-muted-foreground">{t('vsLastMonth')}</span>
         </div>
       )}
     </div>

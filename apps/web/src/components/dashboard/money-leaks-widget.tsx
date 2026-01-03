@@ -12,8 +12,11 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface MoneyLeak {
   id: string;
@@ -57,6 +60,10 @@ const typeIcons: Record<string, React.ReactNode> = {
 };
 
 export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
+  const t = useTranslations('dashboard');
+  const tSubscriptions = useTranslations('subscriptions');
+  const { formatCurrency } = useLocaleFormat();
+
   const [data, setData] = useState<MoneyLeaksData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +111,7 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
       <div className="rounded-lg border border-border bg-card p-6">
         <div className="flex items-center gap-2">
           <PiggyBank className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold text-foreground">Money Leaks</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('moneyLeaks')}</h2>
         </div>
         <div className="mt-4 flex items-center gap-2 text-sm text-danger-600">
           <AlertCircle className="h-4 w-4" />
@@ -125,11 +132,11 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <PiggyBank className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold text-foreground">Money Leaks</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('moneyLeaks')}</h2>
         </div>
         {hasLeaks && (
           <span className="rounded-full bg-danger-100 px-2 py-0.5 text-xs font-medium text-danger-700">
-            {summary.totalLeaks} found
+            {t('leaksFound', { count: summary.totalLeaks })}
           </span>
         )}
       </div>
@@ -139,19 +146,18 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
           <div className="rounded-full bg-success-100 p-3">
             <PiggyBank className="h-6 w-6 text-success-600" />
           </div>
-          <p className="mt-3 text-sm font-medium text-foreground">No money leaks detected!</p>
+          <p className="mt-3 text-sm font-medium text-foreground">{t('noLeaksDetected')}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your finances look healthy. We&apos;ll keep monitoring.
+            {t('financesHealthy')}
           </p>
         </div>
       ) : (
         <>
           {/* Potential Savings */}
           <div className="mt-4 rounded-lg bg-warning-50 p-4">
-            <p className="text-sm text-warning-700">Potential Annual Savings</p>
+            <p className="text-sm text-warning-700">{t('potentialSavings')}</p>
             <p className="mt-1 text-2xl font-bold text-warning-900">
-              {summary.currency}{' '}
-              {potentialSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {formatCurrency(potentialSavings, summary.currency)}
             </p>
           </div>
 
@@ -172,17 +178,14 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{leak.title}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {leak.currency}{' '}
-                      {parseFloat(leak.annualImpact).toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                      })}
-                      /year
+                      {formatCurrency(parseFloat(leak.annualImpact), leak.currency)}
+                      {tSubscriptions('perYear')}
                     </p>
                   </div>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${colors.bg} ${colors.text}`}
                   >
-                    {leak.severity}
+                    {t(`severity.${leak.severity}`)}
                   </span>
                 </div>
               );
@@ -194,7 +197,7 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
             href={`/subscriptions?workspaceId=${workspaceId}`}
             className="mt-4 flex items-center justify-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            View all leaks
+            {t('viewAllLeaks')}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </>

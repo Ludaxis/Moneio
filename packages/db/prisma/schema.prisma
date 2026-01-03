@@ -33,12 +33,13 @@ model User {
 }
 
 model Workspace {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String
-  baseCurrency String   @default("EUR") @map("base_currency") @db.VarChar(3)
-  locale       String   @default("en") @db.VarChar(5)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  baseCurrency   String   @default("EUR") @map("base_currency") @db.VarChar(3)
+  locale         String   @default("en") @db.VarChar(5)
+  calendarSystem String   @default("gregorian") @map("calendar_system") @db.VarChar(10)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   members                    WorkspaceMember[]
   documents                  Document[]
@@ -264,6 +265,7 @@ model BankAccount {
   workspaceId   String   @map("workspace_id") @db.Uuid
   plaidItemId   String?  @map("plaid_item_id") @db.Uuid
   plaidAccountId String? @map("plaid_account_id") // Plaid account_id
+  glAccountId   String?  @map("gl_account_id") @db.Uuid
   name          String
   officialName  String?  @map("official_name")
   accountNumber String?  @map("account_number")
@@ -280,6 +282,7 @@ model BankAccount {
 
   workspace    Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   plaidItem    PlaidItem?        @relation(fields: [plaidItemId], references: [id], onDelete: SetNull)
+  glAccount    GLAccount?        @relation(fields: [glAccountId], references: [id], onDelete: SetNull)
   transactions BankTransaction[]
 
   @@unique([plaidItemId, plaidAccountId])
@@ -456,6 +459,7 @@ model GLAccount {
   journalLines JournalLine[]
   balances     GLBalance[]
   categories   Category[]
+  bankAccounts BankAccount[]
 
   @@unique([workspaceId, accountCode])
   @@index([workspaceId, accountType])

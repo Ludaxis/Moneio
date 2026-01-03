@@ -1,5 +1,5 @@
 /**
- * Financial Health Score API
+ * Financial Health Score API (serverless-friendly)
  *
  * GET /api/reports/health-score?workspaceId=xxx
  *
@@ -7,8 +7,12 @@
  * - Overall score (0-100) and grade (A-F)
  * - Individual metric scores with explanations
  * - Recommendations for improvement
+ *
+ * Centralized through @moneio/app-services with shared auth, permissions,
+ * rate limiting, and observability.
  */
 
+import { withApi, reports } from '@moneio/app-services';
 import { prisma } from '@moneio/db';
 import {
   calculateHealthScore,
@@ -19,63 +23,78 @@ import {
   type HealthScoreInput,
   type MonthlySummary,
 } from '@moneio/domain';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
+import { traceApiRoute } from '@moneio/observability/integrations/nextjs';
+import type { NextRequest } from 'next/server';
 
-import { createServerClient } from '@/lib/supabase';
-import { hasPermission } from '@/lib/workspace';
+import { initWebObservability } from '@/lib/observability';
+
+const { healthScoreQuerySchema } = reports;
+
+initWebObservability();
 
 export const dynamic = 'force-dynamic';
 
-const querySchema = z.object({
-  workspaceId: z.string().uuid(),
-});
+/**
+ * Calculate monthly summaries from transactions
+ */
+function calculateMonthlySummaries(
+  transactions: Array<{
+    postedAt: Date;
+    amount: { toNumber(): number };
+  }>
+): MonthlySummary[] {
+  const monthlyMap = new Map<string, { income: number; expenses: number }>();
+
+  for (const tx of transactions) {
+    const month = tx.postedAt.toISOString().substring(0, 7);
+    const data = monthlyMap.get(month) || { income: 0, expenses: 0 };
+    const amount = tx.amount.toNumber();
+
+    if (amount > 0) {
+      data.income += amount;
+    } else {
+      data.expenses += Math.abs(amount);
+    }
+
+    monthlyMap.set(month, data);
+  }
+
+  return Array.from(monthlyMap.entries())
+    .map(([month, data]) => ({
+      month,
+      income: data.income,
+      expenses: data.expenses,
+      netCashflow: data.income - data.expenses,
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+/**
+ * Get current total balance
+ */
+async function getCurrentBalance(workspaceId: string): Promise<number> {
+  const accountBalances = await prisma.$queryRaw<Array<{ balance: number | null }>>`
+    SELECT DISTINCT ON (bank_account_id) balance
+    FROM bank_transactions
+    WHERE workspace_id = ${workspaceId}::uuid
+      AND balance IS NOT NULL
+    ORDER BY bank_account_id, posted_at DESC
+  `;
+
+  return accountBalances.reduce((sum, row) => sum + (row.balance ? Number(row.balance) : 0), 0);
+}
+
+function roundToTwo(value: number): number {
+  if (!isFinite(value)) return value;
+  return Math.round(value * 100) / 100;
+}
 
 /**
  * GET /api/reports/health-score
  * Calculate financial health score for a workspace
  */
-export async function GET(request: Request) {
-  try {
-    const supabase = createServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const parsed = querySchema.safeParse({
-      workspaceId: searchParams.get('workspaceId'),
-    });
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid parameters', details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const { workspaceId } = parsed.data;
-
-    // Check permission
-    const canRead = await hasPermission(user.id, workspaceId, 'transaction:read');
-    if (!canRead) {
-      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
-    }
-
-    // Get workspace for base currency
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId },
-      select: { baseCurrency: true },
-    });
-
-    if (!workspace) {
-      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
-    }
-
+const healthScoreHandler = withApi(
+  async ({ workspaceId, workspace }) => {
     // Get transaction data for the last 12 months
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
@@ -168,7 +187,7 @@ export async function GET(request: Request) {
     const healthScore = calculateHealthScore(healthInput);
 
     // Format response
-    return NextResponse.json({
+    return {
       overallScore: healthScore.overallScore,
       rating: healthScore.rating,
       grade: healthScore.grade,
@@ -198,64 +217,15 @@ export async function GET(request: Request) {
         monthsAnalyzed: monthlyData.length,
         transactionsAnalyzed: transactions.length,
       },
-    });
-  } catch (error) {
-    console.error('Failed to calculate health score:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    };
+  },
+  {
+    querySchema: healthScoreQuerySchema,
+    permission: 'report:read',
+    rateLimit: { type: 'workspace', limiter: 'api' },
   }
-}
+);
 
-/**
- * Calculate monthly summaries from transactions
- */
-function calculateMonthlySummaries(
-  transactions: Array<{
-    postedAt: Date;
-    amount: { toNumber(): number };
-  }>
-): MonthlySummary[] {
-  const monthlyMap = new Map<string, { income: number; expenses: number }>();
-
-  for (const tx of transactions) {
-    const month = tx.postedAt.toISOString().substring(0, 7);
-    const data = monthlyMap.get(month) || { income: 0, expenses: 0 };
-    const amount = tx.amount.toNumber();
-
-    if (amount > 0) {
-      data.income += amount;
-    } else {
-      data.expenses += Math.abs(amount);
-    }
-
-    monthlyMap.set(month, data);
-  }
-
-  return Array.from(monthlyMap.entries())
-    .map(([month, data]) => ({
-      month,
-      income: data.income,
-      expenses: data.expenses,
-      netCashflow: data.income - data.expenses,
-    }))
-    .sort((a, b) => a.month.localeCompare(b.month));
-}
-
-/**
- * Get current total balance
- */
-async function getCurrentBalance(workspaceId: string): Promise<number> {
-  const accountBalances = await prisma.$queryRaw<Array<{ balance: number | null }>>`
-    SELECT DISTINCT ON (bank_account_id) balance
-    FROM bank_transactions
-    WHERE workspace_id = ${workspaceId}::uuid
-      AND balance IS NOT NULL
-    ORDER BY bank_account_id, posted_at DESC
-  `;
-
-  return accountBalances.reduce((sum, row) => sum + (row.balance ? Number(row.balance) : 0), 0);
-}
-
-function roundToTwo(value: number): number {
-  if (!isFinite(value)) return value;
-  return Math.round(value * 100) / 100;
-}
+export const GET = traceApiRoute('reports.healthScore', (request: NextRequest) =>
+  healthScoreHandler(request)
+);

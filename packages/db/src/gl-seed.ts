@@ -2,11 +2,56 @@
  * General Ledger Seed Data
  *
  * Default Chart of Accounts structure for new workspaces
+ * Including category-to-GL account mappings for automatic GL posting
  */
 
 import type { AccountType, NormalBalance } from '@prisma/client';
 
 import { prisma } from './client';
+
+// ============================================================
+// Category to GL Account Mappings
+// ============================================================
+
+/**
+ * Default mappings from category names to GL account codes
+ * Used when seeding default categories to auto-link them to GL accounts
+ */
+export const categoryGlMappings: Record<string, string> = {
+  // Income categories
+  'Sales Revenue': '4100',
+  'Service Revenue': '4200',
+  'Other Income': '4300',
+  'Interest Income': '4300',
+  Revenue: '4100',
+  Income: '4100',
+
+  // Expense categories - Operating
+  'Salaries & Wages': '5230',
+  Payroll: '5230',
+  Rent: '5210',
+  'Rent Expense': '5210',
+  Utilities: '5220',
+  'Office Supplies': '5240',
+  'Professional Services': '5250',
+  Consulting: '5250',
+  Legal: '5250',
+  Accounting: '5250',
+  Insurance: '5260',
+  'Marketing & Advertising': '5270',
+  Marketing: '5270',
+  Advertising: '5270',
+  'Travel & Entertainment': '5280',
+  Travel: '5280',
+
+  // Expense categories - Other
+  'Bank Fees': '5310',
+  'Interest Expense': '5320',
+
+  // Generic fallbacks
+  Expenses: '5200', // Operating Expenses parent
+  'Operating Expenses': '5200',
+};
 
 interface DefaultAccount {
   accountCode: string;
@@ -432,4 +477,94 @@ export async function hasChartOfAccounts(workspaceId: string): Promise<boolean> 
     where: { workspaceId },
   });
   return count > 0;
+}
+
+/**
+ * Get the GL account ID for a category name
+ * Returns null if no mapping exists
+ */
+export async function getGLAccountIdForCategory(
+  workspaceId: string,
+  categoryName: string
+): Promise<string | null> {
+  const accountCode = categoryGlMappings[categoryName];
+  if (!accountCode) return null;
+
+  const account = await prisma.gLAccount.findFirst({
+    where: { workspaceId, accountCode },
+    select: { id: true },
+  });
+
+  return account?.id ?? null;
+}
+
+/**
+ * Get the default bank GL account (1110 - Cash and Bank)
+ */
+export async function getDefaultBankGLAccountId(workspaceId: string): Promise<string | null> {
+  const account = await prisma.gLAccount.findFirst({
+    where: { workspaceId, accountCode: '1110' },
+    select: { id: true },
+  });
+
+  return account?.id ?? null;
+}
+
+/**
+ * Link existing categories to their GL accounts based on the default mappings
+ * This is useful for migrating existing workspaces
+ */
+export async function linkCategoriesToGLAccounts(workspaceId: string): Promise<number> {
+  let linked = 0;
+
+  // Get all categories without GL mapping
+  const categories = await prisma.category.findMany({
+    where: { workspaceId, glAccountId: null },
+  });
+
+  // Get all GL accounts for the workspace
+  const glAccounts = await prisma.gLAccount.findMany({
+    where: { workspaceId },
+    select: { id: true, accountCode: true },
+  });
+
+  const accountCodeToId = new Map(glAccounts.map((a) => [a.accountCode, a.id]));
+
+  for (const category of categories) {
+    const accountCode = categoryGlMappings[category.name];
+    if (accountCode) {
+      const glAccountId = accountCodeToId.get(accountCode);
+      if (glAccountId) {
+        await prisma.category.update({
+          where: { id: category.id },
+          data: { glAccountId },
+        });
+        linked++;
+      }
+    }
+  }
+
+  return linked;
+}
+
+/**
+ * Link existing bank accounts to their GL account (1110 - Cash and Bank)
+ * This is useful for migrating existing workspaces
+ */
+export async function linkBankAccountsToGL(workspaceId: string): Promise<number> {
+  // Get the default bank GL account
+  const bankGLAccount = await prisma.gLAccount.findFirst({
+    where: { workspaceId, accountCode: '1110' },
+    select: { id: true },
+  });
+
+  if (!bankGLAccount) return 0;
+
+  // Update all bank accounts without GL mapping
+  const result = await prisma.bankAccount.updateMany({
+    where: { workspaceId, glAccountId: null },
+    data: { glAccountId: bankGLAccount.id },
+  });
+
+  return result.count;
 }

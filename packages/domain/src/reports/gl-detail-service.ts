@@ -53,14 +53,12 @@ export class GLDetailService {
     );
 
     // Calculate summary
-    const totalDebits = createMoney(
-      activeAccounts.reduce((sum, a) => sum + a.totalDebits.amount, 0),
-      baseCurrency
-    );
-    const totalCredits = createMoney(
-      activeAccounts.reduce((sum, a) => sum + a.totalCredits.amount, 0),
-      baseCurrency
-    );
+    // Note: a.totalDebits.amount is already in cents (minor units), so we don't use createMoney
+    // which would multiply by 100 again. Instead, construct the Money object directly.
+    const totalDebitsAmount = activeAccounts.reduce((sum, a) => sum + a.totalDebits.amount, 0);
+    const totalCreditsAmount = activeAccounts.reduce((sum, a) => sum + a.totalCredits.amount, 0);
+    const totalDebits = { amount: totalDebitsAmount, currency: baseCurrency, decimalPlaces: 2 };
+    const totalCredits = { amount: totalCreditsAmount, currency: baseCurrency, decimalPlaces: 2 };
     const entryCount = activeAccounts.reduce((sum, a) => sum + a.entries.length, 0);
 
     const metadata: ReportMetadata = {

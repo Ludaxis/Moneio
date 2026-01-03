@@ -5,6 +5,8 @@ import { getChartColor, tooltipStyle } from '@moneio/ui/lib/chart-theme';
 import type React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
+import { useLocaleFormat } from '@/hooks/use-locale-format';
+
 interface CategoryData {
   categoryId: string;
   categoryName: string;
@@ -21,16 +23,8 @@ interface CategoryBreakdownProps {
   baseCurrency: string;
 }
 
-function formatCurrency(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export function CategoryBreakdown({ data, loading, baseCurrency }: CategoryBreakdownProps) {
+  const { formatCurrency } = useLocaleFormat();
   const containerRef = useFadeIn({
     duration: 0.5,
     delay: 0.1,

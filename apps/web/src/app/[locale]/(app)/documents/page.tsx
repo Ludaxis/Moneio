@@ -19,6 +19,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 
 import { DocumentUploader } from '@/components/documents';
+import { extractLocaleFromPath } from '@/lib/i18n';
 import { useWorkspace } from '@/lib/workspace';
 
 type DocumentStatus =
@@ -69,6 +70,7 @@ const STATUS_OPTIONS: DocumentStatus[] = [
 export default function DocumentsPage() {
   const t = useTranslations('documents');
   const tCommon = useTranslations('common');
+  const tWorkspace = useTranslations('workspace');
   const { workspace, loading: workspaceLoading } = useWorkspace();
   const pathname = usePathname();
   const router = useRouter();
@@ -82,8 +84,7 @@ export default function DocumentsPage() {
   const limit = 20;
 
   // Extract locale from pathname
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   const fetchDocuments = useCallback(async () => {
     if (!workspace) return;
@@ -181,7 +182,7 @@ export default function DocumentsPage() {
           href={`/${locale}/workspace/new`}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          Create Workspace
+          {tWorkspace('create')}
         </Link>
       </div>
     );

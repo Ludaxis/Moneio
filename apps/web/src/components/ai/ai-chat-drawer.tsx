@@ -202,7 +202,7 @@ export function AIChatDrawer({ isOpen, onClose, pageContext, className }: AIChat
                     key={q.id}
                     onClick={() => handleQuickQuestion(q.label)}
                     className={cn(
-                      'text-left p-3 rounded-lg border border-border',
+                      'text-start p-3 rounded-lg border border-border',
                       'text-sm text-foreground',
                       'hover:bg-accent transition-colors',
                       'touch-target'

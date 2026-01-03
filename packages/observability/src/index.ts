@@ -46,8 +46,12 @@ export {
   getActiveSpan,
   runWithSpan,
   extractSpanMetadata,
+  // Distributed tracing for queues
+  extractTraceContext,
+  startSpanFromContext,
+  traceQueueJob,
 } from './tracer';
-export type { DatadogConfig, DatadogSite } from './tracer';
+export type { DatadogConfig, DatadogSite, TraceContext } from './tracer';
 
 // LLM instrumentation
 export {

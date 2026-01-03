@@ -135,14 +135,14 @@ export function InvoiceDetailDialog({
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium text-muted-foreground">
+                    <th className="px-3 py-2 text-start font-medium text-muted-foreground">
                       Description
                     </th>
-                    <th className="px-3 py-2 text-right font-medium text-muted-foreground">Qty</th>
-                    <th className="px-3 py-2 text-right font-medium text-muted-foreground">
+                    <th className="px-3 py-2 text-end font-medium text-muted-foreground">Qty</th>
+                    <th className="px-3 py-2 text-end font-medium text-muted-foreground">
                       Unit Price
                     </th>
-                    <th className="px-3 py-2 text-right font-medium text-muted-foreground">
+                    <th className="px-3 py-2 text-end font-medium text-muted-foreground">
                       Amount
                     </th>
                   </tr>
@@ -153,13 +153,13 @@ export function InvoiceDetailDialog({
                       <td className="px-3 py-2 text-foreground">
                         {item.description || 'No description'}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                      <td className="px-3 py-2 text-end tabular-nums text-muted-foreground">
                         {item.quantity}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                      <td className="px-3 py-2 text-end tabular-nums text-muted-foreground">
                         {formatCurrency(item.unitPrice, invoice.currency, locale)}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
+                      <td className="px-3 py-2 text-end tabular-nums font-medium text-foreground">
                         {formatCurrency(item.amount, invoice.currency, locale)}
                       </td>
                     </tr>

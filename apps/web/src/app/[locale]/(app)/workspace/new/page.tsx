@@ -6,16 +6,20 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef } from 'react';
 
+import { extractLocaleFromPath } from '@/lib/i18n';
+
 const currencies = [
-  { code: 'EUR', name: 'Euro' },
-  { code: 'USD', name: 'US Dollar' },
-  { code: 'GBP', name: 'British Pound' },
-  { code: 'CHF', name: 'Swiss Franc' },
-  { code: 'SEK', name: 'Swedish Krona' },
-  { code: 'NOK', name: 'Norwegian Krone' },
-  { code: 'DKK', name: 'Danish Krone' },
-  { code: 'PLN', name: 'Polish Zloty' },
-  { code: 'CZK', name: 'Czech Koruna' },
+  { code: 'USD', nameKey: 'usDollar' },
+  { code: 'EUR', nameKey: 'euro' },
+  { code: 'IRR', nameKey: 'iranianRial' },
+  { code: 'AED', nameKey: 'uaeDirham' },
+  { code: 'GBP', nameKey: 'britishPound' },
+  { code: 'CHF', nameKey: 'swissFranc' },
+  { code: 'SEK', nameKey: 'swedishKrona' },
+  { code: 'NOK', nameKey: 'norwegianKrone' },
+  { code: 'DKK', nameKey: 'danishKrone' },
+  { code: 'PLN', nameKey: 'polishZloty' },
+  { code: 'CZK', nameKey: 'czechKoruna' },
 ];
 
 const CREATION_STEPS = [
@@ -29,10 +33,10 @@ const CREATION_STEPS = [
 export default function NewWorkspacePage() {
   const t = useTranslations('workspace');
   const tCommon = useTranslations('common');
+  const tCurrencies = useTranslations('currencies');
   const router = useRouter();
   const pathname = usePathname();
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   const [name, setName] = useState('');
   const [baseCurrency, setBaseCurrency] = useState('EUR');
@@ -227,12 +231,12 @@ export default function NewWorkspacePage() {
             >
               {currencies.map((currency) => (
                 <option key={currency.code} value={currency.code}>
-                  {currency.code} - {currency.name}
+                  {currency.code} - {tCurrencies(currency.nameKey)}
                 </option>
               ))}
             </select>
             <p className="mt-1 text-xs text-muted-foreground">
-              Default currency for reporting. You can still use other currencies.
+              {t('currencyDescription')}
             </p>
           </div>
 

@@ -5,7 +5,7 @@
  * Classifies activities into Operating, Investing, and Financing.
  */
 
-import type { CurrencyCode, UUID } from '@moneio/core-ledger';
+import type { CurrencyCode, Money, UUID } from '@moneio/core-ledger';
 import { createMoney } from '@moneio/core-ledger';
 
 import type { ReportRepository, GLAccountData, JournalLineData } from './repository';
@@ -76,10 +76,12 @@ export class CashFlowService {
     const netCashFromOperating = operatingSection.netCashFlow;
     const netCashFromInvesting = investingSection.netCashFlow;
     const netCashFromFinancing = financingSection.netCashFlow;
-    const netChangeInCash = createMoney(
-      netCashFromOperating.amount + netCashFromInvesting.amount + netCashFromFinancing.amount,
-      baseCurrency
-    );
+    // Don't use createMoney - amounts are already in minor units (cents)
+    const netChangeInCash: Money = {
+      amount: netCashFromOperating.amount + netCashFromInvesting.amount + netCashFromFinancing.amount,
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     const metadata: ReportMetadata = {
       generatedAt: new Date().toISOString(),
@@ -131,7 +133,12 @@ export class CashFlowService {
       // Skip cash accounts - their change is the result, not a line item
       if (this.isCashAccount(account)) continue;
 
-      const netAmount = line.debitAmount - line.creditAmount;
+      // For indirect method: credit increases cash effect, debit decreases it
+      // - Decrease in assets (credit > debit) = source of cash (positive)
+      // - Increase in assets (debit > credit) = use of cash (negative)
+      // - Increase in liabilities (credit > debit) = source of cash (positive)
+      // - Decrease in liabilities (debit > credit) = use of cash (negative)
+      const netAmount = line.creditAmount - line.debitAmount;
       const classification = this.classifyAccount(account);
       const description = this.getLineDescription(account);
 
@@ -201,10 +208,12 @@ export class CashFlowService {
     // Sort by absolute amount (largest first)
     lineItems.sort((a, b) => Math.abs(b.amount.amount) - Math.abs(a.amount.amount));
 
-    const netCashFlow = createMoney(
-      lineItems.reduce((sum, item) => sum + item.amount.amount, 0),
-      baseCurrency
-    );
+    // Don't use createMoney - amounts are already in minor units
+    const netCashFlow: Money = {
+      amount: lineItems.reduce((sum, item) => sum + item.amount.amount, 0),
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     return {
       name: 'Cash Flows from Operating Activities',
@@ -232,10 +241,12 @@ export class CashFlowService {
 
     lineItems.sort((a, b) => Math.abs(b.amount.amount) - Math.abs(a.amount.amount));
 
-    const netCashFlow = createMoney(
-      lineItems.reduce((sum, item) => sum + item.amount.amount, 0),
-      baseCurrency
-    );
+    // Don't use createMoney - amounts are already in minor units
+    const netCashFlow: Money = {
+      amount: lineItems.reduce((sum, item) => sum + item.amount.amount, 0),
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     return {
       name: 'Cash Flows from Investing Activities',
@@ -263,10 +274,12 @@ export class CashFlowService {
 
     lineItems.sort((a, b) => Math.abs(b.amount.amount) - Math.abs(a.amount.amount));
 
-    const netCashFlow = createMoney(
-      lineItems.reduce((sum, item) => sum + item.amount.amount, 0),
-      baseCurrency
-    );
+    // Don't use createMoney - amounts are already in minor units
+    const netCashFlow: Money = {
+      amount: lineItems.reduce((sum, item) => sum + item.amount.amount, 0),
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     return {
       name: 'Cash Flows from Financing Activities',

@@ -1,144 +1,267 @@
-'use client';
+/**
+ * Dashboard Page - Server Component
+ *
+ * Fetches initial dashboard data on the server and passes to client component.
+ * Uses Suspense for streaming and progressive loading.
+ */
 
-import { useTranslations } from 'next-intl';
-import { useEffect, useState, useCallback } from 'react';
+import { prisma } from '@moneio/db';
+import { getIntlLocale, type Locale } from '@moneio/i18n';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { Suspense } from 'react';
 
-import {
-  SmartAISummary,
-  InsightFeedWidget,
-  BalanceCard,
-  RunwayWidget,
-  CashflowChart,
-  TopExpensesWidget,
-  PendingActionsWidget,
-  OperatingExpensesChart,
-  HealthScoreWidget,
-  ForecastChart,
-  RecentActivity,
-  DateRangePicker,
-  getDefaultDateRange,
-  type DateRange,
-} from '@/components/dashboard';
-import { useWorkspace } from '@/hooks/use-workspace';
+import { DashboardSkeleton } from '@/components/dashboard/skeletons';
 
-interface DashboardMetrics {
-  period: { start: string; end: string };
-  baseCurrency: string;
-  totalIncome: { amount: number; currency: string; formatted: string };
-  totalExpenses: { amount: number; currency: string; formatted: string };
-  netCashflow: { amount: number; currency: string; formatted: string };
-  burnRate: { amount: number; currency: string; formatted: string };
-  trend: {
-    currentMonth: { amount: number; currency: string };
-    previousMonth: { amount: number; currency: string };
-    changePercentage: number;
-    direction: 'up' | 'down' | 'stable';
-  };
-  categoryBreakdown: Array<{
-    categoryId: string;
-    categoryName: string;
-    type: 'income' | 'expense';
-    amount: number;
-    currency: string;
-    percentage: number;
-    transactionCount: number;
-  }>;
-  monthlyData: Array<{
-    month: string;
-    monthLabel: string;
-    income: number;
-    expenses: number;
-    netCashflow: number;
-  }>;
-}
+import { DashboardClient } from './dashboard-client';
 
-interface Transaction {
-  id: string;
-  postedAt: string;
-  description: string;
-  amount: number;
-  currency: string;
-  categoryName: string | null;
-}
+// Import service functions directly (they use cache() for deduplication)
+// Note: In production, these would be imported from @moneio/app-services/dashboard
+// For now, we fetch via API to avoid cross-package import issues
+async function fetchDashboardData(
+  workspaceId: string,
+  baseCurrency: string,
+  dateRange: { startDate: string; endDate: string },
+  intlLocale: string
+) {
+  // Fetch metrics directly from database using the service logic
+  const transactions = await prisma.bankTransaction.findMany({
+    where: {
+      workspaceId,
+      postedAt: {
+        gte: new Date(dateRange.startDate),
+        lte: new Date(dateRange.endDate),
+      },
+    },
+    include: {
+      categorizations: {
+        where: { approved: true },
+        take: 1,
+        include: { category: true },
+      },
+    },
+  });
 
-export default function DashboardPage() {
-  const t = useTranslations('navigation');
-  const { workspaceId, baseCurrency, loading: workspaceLoading } = useWorkspace();
+  let totalIncome = 0;
+  let totalExpenses = 0;
+  const monthlyData = new Map<string, { income: number; expenses: number }>();
 
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange);
+  for (const tx of transactions) {
+    const amount = Number(tx.amount);
+    const month = tx.postedAt.toISOString().slice(0, 7);
 
-  const fetchDashboardData = useCallback(async () => {
-    if (!workspaceId) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        workspaceId,
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
-      });
-      if (baseCurrency) params.set('baseCurrency', baseCurrency);
-
-      const [metricsRes, transactionsRes] = await Promise.all([
-        fetch(`/api/dashboard/metrics?${params.toString()}`),
-        fetch(`/api/transactions?workspaceId=${workspaceId}&pageSize=5`),
-      ]);
-
-      if (!metricsRes.ok) {
-        throw new Error('Failed to fetch dashboard metrics');
-      }
-
-      const metricsData = await metricsRes.json();
-      setMetrics(metricsData);
-
-      if (transactionsRes.ok) {
-        const txData = await transactionsRes.json();
-        setTransactions(txData.transactions || []);
-      }
-    } catch (err) {
-      console.error('Dashboard fetch error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-    } finally {
-      setLoading(false);
+    if (!monthlyData.has(month)) {
+      monthlyData.set(month, { income: 0, expenses: 0 });
     }
-  }, [workspaceId, dateRange, baseCurrency]);
 
-  useEffect(() => {
-    if (workspaceId) {
-      fetchDashboardData();
+    const data = monthlyData.get(month)!;
+    if (amount >= 0) {
+      totalIncome += amount;
+      data.income += amount;
+    } else {
+      totalExpenses += Math.abs(amount);
+      data.expenses += Math.abs(amount);
     }
-  }, [workspaceId, fetchDashboardData]);
+  }
 
-  const isLoading = workspaceLoading || loading;
-
-  // Format currency helper
-  const formatCurrency = (amount: number, currency: string = baseCurrency) => {
-    return new Intl.NumberFormat('en-US', {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat(intlLocale, {
       style: 'currency',
-      currency,
+      currency: baseCurrency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
   };
 
-  // Calculate comparison for balance cards
-  const getComparison = () => {
-    if (!metrics?.trend) return undefined;
-    return {
-      period: 'vs last period',
-      percentage: Math.abs(metrics.trend.changePercentage),
-      direction: metrics.trend.direction,
-    };
-  };
+  const monthlyDataArray = Array.from(monthlyData.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, data]) => ({
+      month,
+      monthLabel: new Date(month + '-01').toLocaleDateString(intlLocale, {
+        month: 'short',
+        year: '2-digit',
+      }),
+      income: data.income,
+      expenses: data.expenses,
+      netCashflow: data.income - data.expenses,
+    }));
 
-  // Show message if no workspace
-  if (!workspaceLoading && !workspaceId) {
+  const netCashflow = totalIncome - totalExpenses;
+  const burnRate = totalExpenses / (monthlyDataArray.length || 1);
+
+  return {
+    period: dateRange,
+    baseCurrency,
+    totalIncome: {
+      amount: totalIncome,
+      currency: baseCurrency,
+      formatted: formatCurrency(totalIncome),
+    },
+    totalExpenses: {
+      amount: totalExpenses,
+      currency: baseCurrency,
+      formatted: formatCurrency(totalExpenses),
+    },
+    netCashflow: {
+      amount: netCashflow,
+      currency: baseCurrency,
+      formatted: formatCurrency(netCashflow),
+    },
+    burnRate: { amount: burnRate, currency: baseCurrency, formatted: formatCurrency(burnRate) },
+    trend: {
+      percentageChange: 0,
+      direction: 'stable' as const,
+      currentMonth: { amount: 0, currency: baseCurrency },
+      previousMonth: { amount: 0, currency: baseCurrency },
+    },
+    monthlyData: monthlyDataArray,
+  };
+}
+
+async function fetchRecentTransactions(workspaceId: string, limit: number = 5) {
+  const transactions = await prisma.bankTransaction.findMany({
+    where: { workspaceId },
+    orderBy: { postedAt: 'desc' },
+    take: limit,
+    include: {
+      categorizations: {
+        where: { approved: true },
+        take: 1,
+        include: {
+          category: {
+            select: { name: true },
+          },
+        },
+      },
+    },
+  });
+
+  return transactions.map((tx) => ({
+    id: tx.id,
+    postedAt: tx.postedAt.toISOString(),
+    description: tx.description,
+    amount: tx.amount.toString(),
+    currency: tx.currency,
+    categoryName: tx.categorizations[0]?.category.name ?? null,
+  }));
+}
+
+interface DashboardPageProps {
+  params: { locale: Locale };
+  searchParams: Promise<{
+    workspace?: string;
+    startDate?: string;
+    endDate?: string;
+  }>;
+}
+
+/**
+ * Get default date range (last 30 days)
+ */
+function getDefaultDateRange(): { startDate: string; endDate: string } {
+  const now = new Date();
+  const endDate = now.toISOString().split('T')[0];
+  const startDate = new Date(now.setDate(now.getDate() - 30)).toISOString().split('T')[0];
+  return { startDate, endDate };
+}
+
+/**
+ * Get workspace ID from cookies or query params
+ */
+async function getWorkspaceId(
+  searchParams: { workspace?: string },
+  userId: string
+): Promise<{ workspaceId: string; baseCurrency: string } | null> {
+  // Check query param first
+  if (searchParams.workspace) {
+    const workspace = await prisma.workspace.findFirst({
+      where: {
+        id: searchParams.workspace,
+        members: { some: { userId } },
+      },
+      select: { id: true, baseCurrency: true },
+    });
+    if (workspace) {
+      return { workspaceId: workspace.id, baseCurrency: workspace.baseCurrency };
+    }
+  }
+
+  // Fall back to first workspace user has access to
+  const membership = await prisma.workspaceMember.findFirst({
+    where: { userId },
+    include: {
+      workspace: {
+        select: { id: true, baseCurrency: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (membership) {
+    return {
+      workspaceId: membership.workspace.id,
+      baseCurrency: membership.workspace.baseCurrency,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Create Supabase client for server component
+ */
+async function getUser() {
+  const cookieStore = await cookies();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user;
+}
+
+/**
+ * Server component that fetches data and renders dashboard
+ */
+async function DashboardContent({
+  searchParams,
+  locale: _locale,
+  intlLocale,
+}: {
+  searchParams: { workspace?: string; startDate?: string; endDate?: string };
+  locale: Locale;
+  intlLocale: string;
+}) {
+  const t = await getTranslations('navigation');
+  const user = await getUser();
+
+  if (!user) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
+        <div className="rounded-xl border border-border bg-card p-12 text-center shadow-sm">
+          <p className="text-muted-foreground">Please sign in to view your dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const workspaceData = await getWorkspaceId(searchParams, user.id);
+
+  if (!workspaceData) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
@@ -151,151 +274,53 @@ export default function DashboardPage() {
     );
   }
 
-  // Show error state
-  if (error && !loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
-        <div className="rounded-xl border border-destructive bg-destructive/10 p-6 shadow-sm">
-          <p className="text-sm text-destructive">{error}</p>
-          <button
-            onClick={fetchDashboardData}
-            className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+  const { workspaceId, baseCurrency } = workspaceData;
+
+  // Determine date range from URL or defaults
+  const defaultRange = getDefaultDateRange();
+  const dateRange = {
+    startDate: searchParams.startDate || defaultRange.startDate,
+    endDate: searchParams.endDate || defaultRange.endDate,
+  };
+
+  // Fetch initial data on the server
+  let metrics = null;
+  let transactions: Awaited<ReturnType<typeof fetchRecentTransactions>> = [];
+
+  try {
+    [metrics, transactions] = await Promise.all([
+      fetchDashboardData(workspaceId, baseCurrency, dateRange, intlLocale),
+      fetchRecentTransactions(workspaceId, 5),
+    ]);
+  } catch (error) {
+    console.error('Failed to fetch dashboard data:', error);
+    // Continue with null metrics - client will show error state
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with Date Range Picker */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
-        </div>
-        <DateRangePicker value={dateRange} onChange={setDateRange} />
-      </div>
+    <DashboardClient
+      workspaceId={workspaceId}
+      baseCurrency={baseCurrency}
+      initialMetrics={metrics}
+      initialTransactions={transactions}
+      initialDateRange={dateRange}
+    />
+  );
+}
 
-      {/* Smart AI Summary - Comprehensive Financial Insights */}
-      {workspaceId && (
-        <SmartAISummary
-          workspaceId={workspaceId}
-          startDate={dateRange.startDate}
-          endDate={dateRange.endDate}
-        />
-      )}
+export default async function DashboardPage({ searchParams, params }: DashboardPageProps) {
+  const { locale } = params;
+  unstable_setRequestLocale(locale);
+  const intlLocale = getIntlLocale(locale);
+  const resolvedSearchParams = await searchParams;
 
-      {/* Balance Cards Row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <BalanceCard
-          type="cash"
-          label="Cash Balance"
-          value={metrics?.netCashflow.formatted || formatCurrency(0, baseCurrency)}
-          lastUpdated="Updated just now"
-          comparison={getComparison()}
-          loading={isLoading}
-          delay={0}
-        />
-        <BalanceCard
-          type="bank"
-          label="Total Income"
-          value={metrics?.totalIncome.formatted || formatCurrency(0, baseCurrency)}
-          lastUpdated={dateRange.label}
-          loading={isLoading}
-          delay={0.1}
-        />
-        <BalanceCard
-          type="card"
-          label="Total Expenses"
-          value={metrics?.totalExpenses.formatted || formatCurrency(0, baseCurrency)}
-          lastUpdated={dateRange.label}
-          loading={isLoading}
-          delay={0.2}
-        />
-        <BalanceCard
-          type="savings"
-          label="Burn Rate"
-          value={metrics?.burnRate.formatted || formatCurrency(0, baseCurrency)}
-          lastUpdated="Monthly average"
-          loading={isLoading}
-          delay={0.3}
-        />
-      </div>
-
-      {/* Full-width Cash Flow Chart */}
-      <CashflowChart
-        data={metrics?.monthlyData || []}
-        loading={isLoading}
-        baseCurrency={baseCurrency}
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent
+        searchParams={resolvedSearchParams}
+        locale={locale}
+        intlLocale={intlLocale}
       />
-
-      {/* Two Column Layout for Widgets */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Left Column */}
-        <div className="space-y-6">
-          {/* Operating Expenses */}
-          {workspaceId && (
-            <OperatingExpensesChart
-              workspaceId={workspaceId}
-              currency={baseCurrency}
-              startDate={dateRange.startDate}
-              endDate={dateRange.endDate}
-            />
-          )}
-
-          {/* Top Expenses */}
-          {workspaceId && (
-            <TopExpensesWidget
-              workspaceId={workspaceId}
-              currency={baseCurrency}
-              startDate={dateRange.startDate}
-              endDate={dateRange.endDate}
-            />
-          )}
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Forecast Chart */}
-          {workspaceId && <ForecastChart workspaceId={workspaceId} months={6} />}
-
-          {/* AI Insight Feed */}
-          {workspaceId && <InsightFeedWidget workspaceId={workspaceId} />}
-
-          {/* Runway Widget */}
-          {workspaceId && <RunwayWidget workspaceId={workspaceId} />}
-
-          {/* Health Score */}
-          {workspaceId && <HealthScoreWidget workspaceId={workspaceId} />}
-        </div>
-      </div>
-
-      {/* Pending Actions - Full Width */}
-      {workspaceId && <PendingActionsWidget workspaceId={workspaceId} />}
-
-      {/* Recent Activity */}
-      <RecentActivity
-        transactions={transactions.map((tx) => ({
-          id: tx.id,
-          description: tx.description || 'No description',
-          amount: tx.amount,
-          currency: tx.currency,
-          date: tx.postedAt,
-          categoryName: tx.categoryName || undefined,
-        }))}
-        loading={isLoading}
-      />
-    </div>
+    </Suspense>
   );
 }

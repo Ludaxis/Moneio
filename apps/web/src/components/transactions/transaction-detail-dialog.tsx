@@ -1,27 +1,28 @@
 'use client';
 
+import { defaultLocale, getIntlLocale, type Locale } from '@moneio/i18n';
 import { cn } from '@moneio/ui';
 import {
   Button,
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@moneio/ui/primitives';
 import {
-  CheckCircle2,
-  X,
   ArrowRight,
   Calendar,
+  CheckCircle2,
   CreditCard,
-  Tag,
   FileText,
   Loader2,
   Sparkles,
+  Tag,
+  X,
 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ConfidenceBadge, ExplanationPopover } from '@/components/ai';
 import { CategorySelector } from '@/components/categories';
@@ -30,9 +31,9 @@ interface Transaction {
   id: string;
   postedAt: string;
   description: string | null;
-  amount: number;
+  amount: number | string;
   currency: string;
-  balance: number | null;
+  balance: number | string | null;
   categoryId: string | null;
   categoryName: string | null;
   pendingSuggestions?: Array<{
@@ -51,20 +52,25 @@ interface TransactionDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCategoryApproved: () => void;
-  locale?: string;
+  locale?: Locale;
 }
 
-function formatCurrency(value: number, currency: string, locale: string = 'en-US'): string {
-  return new Intl.NumberFormat(locale, {
+function formatCurrency(
+  value: number | string,
+  currency: string,
+  intlLocale: string
+): string {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  return new Intl.NumberFormat(intlLocale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value);
+  }).format(numValue);
 }
 
-function formatDate(dateStr: string, locale: string = 'en-US'): string {
-  return new Date(dateStr).toLocaleDateString(locale, {
+function formatDate(dateStr: string, intlLocale: string): string {
+  return new Date(dateStr).toLocaleDateString(intlLocale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -83,8 +89,9 @@ export function TransactionDetailDialog({
   open,
   onOpenChange,
   onCategoryApproved,
-  locale = 'en-US',
+  locale = defaultLocale,
 }: TransactionDetailDialogProps) {
+  const intlLocale = useMemo(() => getIntlLocale(locale), [locale]);
   const [loading, setLoading] = useState<'approve' | 'reject' | 'match' | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
@@ -199,7 +206,7 @@ export function TransactionDetailDialog({
 
   if (!transaction) return null;
 
-  const isExpense = transaction.amount < 0;
+  const isExpense = Number(transaction.amount) < 0;
   const hasApprovedCategory = !!transaction.categoryId;
 
   return (
@@ -225,23 +232,23 @@ export function TransactionDetailDialog({
             <div className="mt-2 flex items-center justify-between">
               <span
                 className={cn(
-                  'text-2xl font-bold',
-                  isExpense ? 'text-danger-600' : 'text-success-600'
-                )}
-              >
-                {formatCurrency(transaction.amount, transaction.currency, locale)}
-              </span>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                {formatDate(transaction.postedAt, locale)}
-              </div>
-            </div>
-            {transaction.balance !== null && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Balance after: {formatCurrency(transaction.balance, transaction.currency, locale)}
-              </p>
+              'text-2xl font-bold',
+              isExpense ? 'text-danger-600' : 'text-success-600'
             )}
+          >
+            {formatCurrency(transaction.amount, transaction.currency, intlLocale)}
+          </span>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            {formatDate(transaction.postedAt, intlLocale)}
           </div>
+        </div>
+        {transaction.balance !== null && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Balance after: {formatCurrency(transaction.balance, transaction.currency, intlLocale)}
+          </p>
+        )}
+      </div>
 
           {/* Current Category */}
           {hasApprovedCategory && (
@@ -339,7 +346,7 @@ export function TransactionDetailDialog({
                     {formatCurrency(
                       matchSuggestion.matchedInvoice.total,
                       transaction.currency,
-                      locale
+                      intlLocale
                     )}
                     )
                   </span>
