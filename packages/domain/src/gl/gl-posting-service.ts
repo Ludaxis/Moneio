@@ -78,10 +78,7 @@ export class GLPostingService {
     );
 
     if (existingEntry && existingEntry.status !== 'REVERSED') {
-      throw new GLPostingError(
-        'Transaction has already been posted to GL',
-        'ALREADY_POSTED'
-      );
+      throw new GLPostingError('Transaction has already been posted to GL', 'ALREADY_POSTED');
     }
 
     // Determine amount (always work with positive number for journal lines)
@@ -150,10 +147,7 @@ export class GLPostingService {
   /**
    * Post a transaction by ID (fetches all required data)
    */
-  async postTransactionById(
-    transactionId: string,
-    userId: string
-  ): Promise<PostTransactionResult> {
+  async postTransactionById(transactionId: string, userId: string): Promise<PostTransactionResult> {
     const data = await this.repository.getTransactionWithRelations(transactionId);
 
     if (!data) {
@@ -199,12 +193,7 @@ export class GLPostingService {
 
     // Mark original as reversed
     const now = new Date().toISOString();
-    await this.repository.updateJournalEntryStatus(
-      originalEntry.id,
-      'REVERSED',
-      now,
-      userId
-    );
+    await this.repository.updateJournalEntryStatus(originalEntry.id, 'REVERSED', now, userId);
 
     // Create reversal entry (swap debits and credits)
     const reversalNumber = await this.repository.getNextEntryNumber(workspaceId);
@@ -376,10 +365,7 @@ export class GLPostingService {
   /**
    * Build description for journal entry
    */
-  private buildEntryDescription(
-    transactionDescription: string | null,
-    isIncome: boolean
-  ): string {
+  private buildEntryDescription(transactionDescription: string | null, isIncome: boolean): string {
     if (transactionDescription) {
       return transactionDescription;
     }

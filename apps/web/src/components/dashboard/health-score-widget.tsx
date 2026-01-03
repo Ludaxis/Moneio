@@ -119,9 +119,10 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
   // Helper to translate summary
   const translateSummary = (summary: string, rating: string, metrics: HealthMetric[]): string => {
     // Find the worst performing metric for the {area} parameter
-    const worstMetric = metrics.reduce((worst, current) =>
-      current.score < worst.score ? current : worst
-    , metrics[0]);
+    const worstMetric = metrics.reduce(
+      (worst, current) => (current.score < worst.score ? current : worst),
+      metrics[0]
+    );
 
     const area = worstMetric ? translateMetricName(worstMetric.name).toLowerCase() : '';
 
@@ -221,7 +222,9 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-foreground">{formatNumber(data.overallScore)}</span>
+            <span className="text-3xl font-bold text-foreground">
+              {formatNumber(data.overallScore)}
+            </span>
             <span className="text-sm font-medium text-muted-foreground">{data.grade}</span>
           </div>
         </div>

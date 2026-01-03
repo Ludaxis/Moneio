@@ -336,9 +336,7 @@ export default function InsightsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('description')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
         </div>
         <div className="flex items-center gap-2">
           {summary && summary.unread > 0 && (
@@ -441,7 +439,8 @@ export default function InsightsPage() {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {parseFloat(digest.summary.comparedToLastWeek.netChange) >= 0 ? '+' : ''}
-                  {formatNumber(parseFloat(digest.summary.comparedToLastWeek.netChange))}% {t('vsLastWeek')}
+                  {formatNumber(parseFloat(digest.summary.comparedToLastWeek.netChange))}%{' '}
+                  {t('vsLastWeek')}
                 </p>
               </div>
 
@@ -460,7 +459,8 @@ export default function InsightsPage() {
                   {getForecastStatus(digest.forecast.cashflowStatus)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t('nextWeek')} {formatCurrency(digest.forecast.nextWeekProjection, digest.currency)}
+                  {t('nextWeek')}{' '}
+                  {formatCurrency(digest.forecast.nextWeekProjection, digest.currency)}
                 </p>
               </div>
 
@@ -489,9 +489,7 @@ export default function InsightsPage() {
               )}
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted-foreground">
-              {t('noDigestData')}
-            </p>
+            <p className="mt-4 text-sm text-muted-foreground">{t('noDigestData')}</p>
           )}
         </div>
       )}
@@ -595,9 +593,7 @@ export default function InsightsPage() {
             {insights.length === 0 ? t('noInsightsYet') : t('noInsightsMatch')}
           </p>
           <p className="text-sm text-muted-foreground">
-            {insights.length === 0
-              ? t('willNotify')
-              : t('tryAdjustingFilters')}
+            {insights.length === 0 ? t('willNotify') : t('tryAdjustingFilters')}
           </p>
         </div>
       ) : (

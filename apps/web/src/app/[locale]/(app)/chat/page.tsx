@@ -121,9 +121,7 @@ export default function ChatPage() {
         <div className="text-center">
           <Bot className="mx-auto h-12 w-12 text-muted-foreground" />
           <h2 className="mt-4 text-lg font-semibold text-foreground">{t('noWorkspace')}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t('noWorkspaceDesc')}
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t('noWorkspaceDesc')}</p>
         </div>
       </div>
     );

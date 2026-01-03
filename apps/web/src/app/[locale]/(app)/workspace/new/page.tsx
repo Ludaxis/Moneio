@@ -235,9 +235,7 @@ export default function NewWorkspacePage() {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t('currencyDescription')}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('currencyDescription')}</p>
           </div>
 
           {error && (

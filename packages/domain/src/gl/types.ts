@@ -122,9 +122,7 @@ export interface BulkPostResult {
 export interface GLPostingRepository {
   // Transaction queries
   getTransactionById(id: UUID): Promise<TransactionForPosting | null>;
-  getTransactionWithRelations(
-    id: UUID
-  ): Promise<{
+  getTransactionWithRelations(id: UUID): Promise<{
     transaction: TransactionForPosting;
     category: CategoryForPosting | null;
     bankAccount: BankAccountForPosting;

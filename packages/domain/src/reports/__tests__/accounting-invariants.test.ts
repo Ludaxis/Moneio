@@ -19,7 +19,12 @@ import { BalanceSheetService } from '../balance-sheet-service';
 import { CashFlowService } from '../cash-flow-service';
 import { GLDetailService } from '../gl-detail-service';
 import { ProfitLossService } from '../profit-loss-service';
-import type { ReportRepository, GLAccountData, GLAccountBalance, JournalLineData } from '../repository';
+import type {
+  ReportRepository,
+  GLAccountData,
+  GLAccountBalance,
+  JournalLineData,
+} from '../repository';
 
 // ============================================
 // Test Fixtures
@@ -85,19 +90,73 @@ describe('INVARIANT 1: Trial Balance (Debits = Credits)', () => {
 
     const journalLinesByAccount: Record<string, JournalLineData[]> = {
       cash: [
-        { entryId: 'je-1', entryNumber: 'JE-001', entryDate: '2024-01-15', description: 'Sale', accountId: 'cash', debitAmount: 1000, creditAmount: 0, status: 'POSTED' },
-        { entryId: 'je-2', entryNumber: 'JE-002', entryDate: '2024-01-20', description: 'Expense', accountId: 'cash', debitAmount: 0, creditAmount: 300, status: 'POSTED' },
+        {
+          entryId: 'je-1',
+          entryNumber: 'JE-001',
+          entryDate: '2024-01-15',
+          description: 'Sale',
+          accountId: 'cash',
+          debitAmount: 1000,
+          creditAmount: 0,
+          status: 'POSTED',
+        },
+        {
+          entryId: 'je-2',
+          entryNumber: 'JE-002',
+          entryDate: '2024-01-20',
+          description: 'Expense',
+          accountId: 'cash',
+          debitAmount: 0,
+          creditAmount: 300,
+          status: 'POSTED',
+        },
       ],
       ar: [
-        { entryId: 'je-3', entryNumber: 'JE-003', entryDate: '2024-01-25', description: 'Credit Sale', accountId: 'ar', debitAmount: 500, creditAmount: 0, status: 'POSTED' },
+        {
+          entryId: 'je-3',
+          entryNumber: 'JE-003',
+          entryDate: '2024-01-25',
+          description: 'Credit Sale',
+          accountId: 'ar',
+          debitAmount: 500,
+          creditAmount: 0,
+          status: 'POSTED',
+        },
       ],
       ap: [],
       revenue: [
-        { entryId: 'je-1', entryNumber: 'JE-001', entryDate: '2024-01-15', description: 'Sale', accountId: 'revenue', debitAmount: 0, creditAmount: 1000, status: 'POSTED' },
-        { entryId: 'je-3', entryNumber: 'JE-003', entryDate: '2024-01-25', description: 'Credit Sale', accountId: 'revenue', debitAmount: 0, creditAmount: 500, status: 'POSTED' },
+        {
+          entryId: 'je-1',
+          entryNumber: 'JE-001',
+          entryDate: '2024-01-15',
+          description: 'Sale',
+          accountId: 'revenue',
+          debitAmount: 0,
+          creditAmount: 1000,
+          status: 'POSTED',
+        },
+        {
+          entryId: 'je-3',
+          entryNumber: 'JE-003',
+          entryDate: '2024-01-25',
+          description: 'Credit Sale',
+          accountId: 'revenue',
+          debitAmount: 0,
+          creditAmount: 500,
+          status: 'POSTED',
+        },
       ],
       expense: [
-        { entryId: 'je-2', entryNumber: 'JE-002', entryDate: '2024-01-20', description: 'Expense', accountId: 'expense', debitAmount: 300, creditAmount: 0, status: 'POSTED' },
+        {
+          entryId: 'je-2',
+          entryNumber: 'JE-002',
+          entryDate: '2024-01-20',
+          description: 'Expense',
+          accountId: 'expense',
+          debitAmount: 300,
+          creditAmount: 0,
+          status: 'POSTED',
+        },
       ],
     };
 
@@ -132,10 +191,28 @@ describe('INVARIANT 1: Trial Balance (Debits = Credits)', () => {
     // Intentionally unbalanced: DR 1000, CR 800
     const journalLinesByAccount: Record<string, JournalLineData[]> = {
       cash: [
-        { entryId: 'je-1', entryNumber: 'JE-001', entryDate: '2024-01-15', description: 'Sale', accountId: 'cash', debitAmount: 1000, creditAmount: 0, status: 'POSTED' },
+        {
+          entryId: 'je-1',
+          entryNumber: 'JE-001',
+          entryDate: '2024-01-15',
+          description: 'Sale',
+          accountId: 'cash',
+          debitAmount: 1000,
+          creditAmount: 0,
+          status: 'POSTED',
+        },
       ],
       revenue: [
-        { entryId: 'je-1', entryNumber: 'JE-001', entryDate: '2024-01-15', description: 'Sale', accountId: 'revenue', debitAmount: 0, creditAmount: 800, status: 'POSTED' },
+        {
+          entryId: 'je-1',
+          entryNumber: 'JE-001',
+          entryDate: '2024-01-15',
+          description: 'Sale',
+          accountId: 'revenue',
+          debitAmount: 0,
+          creditAmount: 800,
+          status: 'POSTED',
+        },
       ],
     };
 
@@ -265,7 +342,16 @@ describe('INVARIANT 3: Cash Flow Reconciliation', () => {
     // Cash flow works on changes in non-cash accounts
     // AR decrease of 30000 means cash increased by 30000 (customer paid)
     const journalLines: JournalLineData[] = [
-      { entryId: 'je-1', entryNumber: 'JE-001', entryDate: '2024-01-15', description: 'Payment received', accountId: 'ar', debitAmount: 0, creditAmount: 30000, status: 'POSTED' },
+      {
+        entryId: 'je-1',
+        entryNumber: 'JE-001',
+        entryDate: '2024-01-15',
+        description: 'Payment received',
+        accountId: 'ar',
+        debitAmount: 0,
+        creditAmount: 30000,
+        status: 'POSTED',
+      },
     ];
 
     mockRepo.getGLAccounts.mockResolvedValue(accounts);
@@ -366,11 +452,11 @@ describe('INVARIANT 4: P&L Formula Verification', () => {
 describe('INVARIANT 5: Money Conversion Consistency', () => {
   it('cents to display conversion is reversible', () => {
     const testCases = [
-      { cents: 10000, expectedDisplay: 100.00 },
+      { cents: 10000, expectedDisplay: 100.0 },
       { cents: 2644633, expectedDisplay: 26446.33 },
       { cents: 1, expectedDisplay: 0.01 },
       { cents: 0, expectedDisplay: 0 },
-      { cents: -50000, expectedDisplay: -500.00 },
+      { cents: -50000, expectedDisplay: -500.0 },
       { cents: 123456789, expectedDisplay: 1234567.89 },
     ];
 
@@ -392,9 +478,9 @@ describe('INVARIANT 5: Money Conversion Consistency', () => {
     // Test amounts up to €1 billion (100,000,000,000 cents)
     const amounts = [
       100000000000, // €1 billion
-      99999999999,  // Just under €1 billion
-      12345678901,  // Random large amount
-      1,            // Minimum
+      99999999999, // Just under €1 billion
+      12345678901, // Random large amount
+      1, // Minimum
     ];
 
     amounts.forEach((cents) => {
@@ -462,18 +548,52 @@ describe('INVARIANT 7: Running Balance Correctness', () => {
   });
 
   it('running balance accumulates correctly for multiple transactions', async () => {
-    const accounts: GLAccountData[] = [
-      createAccount('cash', '1110', 'Cash', 'ASSET', 'cash'),
-    ];
+    const accounts: GLAccountData[] = [createAccount('cash', '1110', 'Cash', 'ASSET', 'cash')];
 
     // Opening: 1000
     // +500 (debit), -200 (credit), +300 (debit), -100 (credit)
     // Expected running balances: 1500, 1300, 1600, 1500
     const lines: JournalLineData[] = [
-      { entryId: 'je-1', entryNumber: 'JE-001', entryDate: '2024-01-10', description: 'Deposit 1', accountId: 'cash', debitAmount: 500, creditAmount: 0, status: 'POSTED' },
-      { entryId: 'je-2', entryNumber: 'JE-002', entryDate: '2024-01-15', description: 'Payment 1', accountId: 'cash', debitAmount: 0, creditAmount: 200, status: 'POSTED' },
-      { entryId: 'je-3', entryNumber: 'JE-003', entryDate: '2024-01-20', description: 'Deposit 2', accountId: 'cash', debitAmount: 300, creditAmount: 0, status: 'POSTED' },
-      { entryId: 'je-4', entryNumber: 'JE-004', entryDate: '2024-01-25', description: 'Payment 2', accountId: 'cash', debitAmount: 0, creditAmount: 100, status: 'POSTED' },
+      {
+        entryId: 'je-1',
+        entryNumber: 'JE-001',
+        entryDate: '2024-01-10',
+        description: 'Deposit 1',
+        accountId: 'cash',
+        debitAmount: 500,
+        creditAmount: 0,
+        status: 'POSTED',
+      },
+      {
+        entryId: 'je-2',
+        entryNumber: 'JE-002',
+        entryDate: '2024-01-15',
+        description: 'Payment 1',
+        accountId: 'cash',
+        debitAmount: 0,
+        creditAmount: 200,
+        status: 'POSTED',
+      },
+      {
+        entryId: 'je-3',
+        entryNumber: 'JE-003',
+        entryDate: '2024-01-20',
+        description: 'Deposit 2',
+        accountId: 'cash',
+        debitAmount: 300,
+        creditAmount: 0,
+        status: 'POSTED',
+      },
+      {
+        entryId: 'je-4',
+        entryNumber: 'JE-004',
+        entryDate: '2024-01-25',
+        description: 'Payment 2',
+        accountId: 'cash',
+        debitAmount: 0,
+        creditAmount: 100,
+        status: 'POSTED',
+      },
     ];
 
     mockRepo.getGLAccounts.mockResolvedValue(accounts);

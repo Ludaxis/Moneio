@@ -219,9 +219,7 @@ export function InsightFeedWidget({ workspaceId }: InsightFeedWidgetProps) {
             <Check className="h-6 w-6 text-success-600" />
           </div>
           <p className="mt-3 text-sm font-medium text-foreground">{t('allCaughtUp')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('noNewInsightsDesc')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('noNewInsightsDesc')}</p>
         </div>
       ) : (
         <>

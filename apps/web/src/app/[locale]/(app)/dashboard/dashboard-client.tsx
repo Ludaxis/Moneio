@@ -32,7 +32,11 @@ import { useLocaleFormat } from '@/hooks/use-locale-format';
 // In-memory cache to keep dashboard data when navigating away/back
 const dashboardCache = new Map<
   string,
-  { metrics: DashboardMetricsDto | null; transactions: TransactionSummaryDto[]; dateRange: DateRange }
+  {
+    metrics: DashboardMetricsDto | null;
+    transactions: TransactionSummaryDto[];
+    dateRange: DateRange;
+  }
 >();
 
 // Types from app-services (inline to avoid import issues)
@@ -76,7 +80,14 @@ interface DashboardClientProps {
 }
 
 // Map date range label keys to translation namespace
-const dateRangeTranslationKeys = ['last7Days', 'last30Days', 'last3Months', 'last6Months', 'last12Months', 'customRange'];
+const dateRangeTranslationKeys = [
+  'last7Days',
+  'last30Days',
+  'last3Months',
+  'last6Months',
+  'last12Months',
+  'customRange',
+];
 
 export function DashboardClient({
   workspaceId,
@@ -281,9 +292,7 @@ export function DashboardClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {formatDateWithWeekday(new Date())}
-          </p>
+          <p className="text-sm text-muted-foreground">{formatDateWithWeekday(new Date())}</p>
         </div>
         <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
       </div>

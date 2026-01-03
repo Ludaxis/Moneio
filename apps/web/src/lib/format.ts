@@ -8,11 +8,7 @@
 
 import { defaultLocale, intlLocaleMap, type Locale } from '@moneio/i18n';
 
-import {
-  formatJalaliDate,
-  formatJalaliRelativeTime,
-  formatJalaliWithWeekday,
-} from './jalali';
+import { formatJalaliDate, formatJalaliRelativeTime, formatJalaliWithWeekday } from './jalali';
 
 export type CalendarSystem = 'gregorian' | 'jalali';
 

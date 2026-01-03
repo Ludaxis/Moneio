@@ -466,9 +466,7 @@ describe('Financial Health Score Calculator', () => {
       };
 
       const result = calculateHealthScore(input);
-      const predictabilityMetric = result.metrics.find(
-        (m) => m.name === 'Expense Predictability'
-      );
+      const predictabilityMetric = result.metrics.find((m) => m.name === 'Expense Predictability');
 
       expect(predictabilityMetric?.score).toBeGreaterThan(70);
     });
@@ -488,9 +486,7 @@ describe('Financial Health Score Calculator', () => {
       };
 
       const result = calculateHealthScore(input);
-      const predictabilityMetric = result.metrics.find(
-        (m) => m.name === 'Expense Predictability'
-      );
+      const predictabilityMetric = result.metrics.find((m) => m.name === 'Expense Predictability');
 
       expect(predictabilityMetric?.score).toBeLessThan(50);
     });

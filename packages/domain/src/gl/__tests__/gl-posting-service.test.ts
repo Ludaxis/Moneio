@@ -370,9 +370,7 @@ describe('GLPostingService', () => {
 
     it('should skip already posted transactions', async () => {
       const postSpy = vi.spyOn(service, 'postTransactionById');
-      postSpy.mockRejectedValue(
-        new GLPostingError('Transaction already posted', 'ALREADY_POSTED')
-      );
+      postSpy.mockRejectedValue(new GLPostingError('Transaction already posted', 'ALREADY_POSTED'));
 
       const result = await service.bulkPost({
         transactionIds: ['tx-1'],

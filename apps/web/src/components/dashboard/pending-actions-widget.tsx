@@ -185,7 +185,6 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
     }
   }, [workspaceId, fetchPendingItems]);
 
-
   if (loading) {
     return (
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -230,7 +229,9 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {counts.invoices}
               </p>
-              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 truncate">{tInvoices('title')}</p>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 truncate">
+                {tInvoices('title')}
+              </p>
             </div>
           )}
           {counts.documents > 0 && (
@@ -248,7 +249,9 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
                 {counts.uncategorized}
               </p>
-              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 truncate">{tTransactions('uncategorized')}</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 truncate">
+                {tTransactions('uncategorized')}
+              </p>
             </div>
           )}
         </div>

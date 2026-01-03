@@ -80,11 +80,7 @@ export interface JalaliDate {
  * Convert a Gregorian date to Jalali
  */
 export function toJalali(date: Date): JalaliDate {
-  const { jy, jm, jd } = jalaali.toJalaali(
-    date.getFullYear(),
-    date.getMonth() + 1,
-    date.getDate()
-  );
+  const { jy, jm, jd } = jalaali.toJalaali(date.getFullYear(), date.getMonth() + 1, date.getDate());
   return { jy, jm, jd };
 }
 

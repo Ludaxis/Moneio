@@ -31,7 +31,10 @@ async function ensureNotLastOwner(workspaceId: string, memberId: string) {
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string; memberId: string } }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string; memberId: string } }
+) {
   try {
     const supabase = createServerClient();
     const {
@@ -95,11 +98,17 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   } catch (error) {
     console.error('Failed to update member role:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: message.includes('Cannot remove') ? 400 : 500 });
+    return NextResponse.json(
+      { error: message },
+      { status: message.includes('Cannot remove') ? 400 : 500 }
+    );
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: { id: string; memberId: string } }) {
+export async function DELETE(
+  _request: Request,
+  { params }: { params: { id: string; memberId: string } }
+) {
   try {
     const supabase = createServerClient();
     const {
@@ -139,6 +148,9 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
   } catch (error) {
     console.error('Failed to remove member:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: message.includes('Cannot remove') ? 400 : 500 });
+    return NextResponse.json(
+      { error: message },
+      { status: message.includes('Cannot remove') ? 400 : 500 }
+    );
   }
 }

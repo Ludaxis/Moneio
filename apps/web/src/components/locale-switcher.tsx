@@ -91,17 +91,11 @@ export function LocaleSwitcher({ compact = false, className }: LocaleSwitcherPro
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        {isPending ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <Globe className="h-5 w-5" />
-        )}
+        {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Globe className="h-5 w-5" />}
         {!compact && (
           <>
             <span className="text-sm font-medium">{currentLocale.nativeName}</span>
-            <ChevronDown
-              className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')}
-            />
+            <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
           </>
         )}
       </button>
@@ -131,9 +125,7 @@ export function LocaleSwitcher({ compact = false, className }: LocaleSwitcherPro
             >
               <span className="text-base">{loc.flag}</span>
               <span className="flex-1 text-start">{loc.nativeName}</span>
-              {loc.code === locale && (
-                <span className="text-xs text-muted-foreground">✓</span>
-              )}
+              {loc.code === locale && <span className="text-xs text-muted-foreground">✓</span>}
             </button>
           ))}
         </div>

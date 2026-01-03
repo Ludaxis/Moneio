@@ -217,9 +217,7 @@ describe('Cash Flow Forecast', () => {
     it('assigns low confidence with minimal data', () => {
       const input: ForecastInput = {
         currentBalance: 50000,
-        historicalMonths: [
-          { month: '2024-01', income: 10000, expenses: 8000, netCashflow: 2000 },
-        ],
+        historicalMonths: [{ month: '2024-01', income: 10000, expenses: 8000, netCashflow: 2000 }],
         recurringExpenses: [],
         recurringIncome: [],
         currency: 'USD',
@@ -452,9 +450,7 @@ describe('Cash Flow Forecast', () => {
     it('handles zero balance', () => {
       const input: ForecastInput = {
         currentBalance: 0,
-        historicalMonths: [
-          { month: '2024-01', income: 5000, expenses: 5000, netCashflow: 0 },
-        ],
+        historicalMonths: [{ month: '2024-01', income: 5000, expenses: 5000, netCashflow: 0 }],
         recurringExpenses: [],
         recurringIncome: [],
         currency: 'USD',
@@ -490,9 +486,7 @@ describe('Cash Flow Forecast', () => {
     it('includes generation timestamp', () => {
       const input: ForecastInput = {
         currentBalance: 50000,
-        historicalMonths: [
-          { month: '2024-01', income: 10000, expenses: 8000, netCashflow: 2000 },
-        ],
+        historicalMonths: [{ month: '2024-01', income: 10000, expenses: 8000, netCashflow: 2000 }],
         recurringExpenses: [],
         recurringIncome: [],
         currency: 'USD',
@@ -506,9 +500,7 @@ describe('Cash Flow Forecast', () => {
     it('preserves currency code', () => {
       const input: ForecastInput = {
         currentBalance: 50000,
-        historicalMonths: [
-          { month: '2024-01', income: 10000, expenses: 8000, netCashflow: 2000 },
-        ],
+        historicalMonths: [{ month: '2024-01', income: 10000, expenses: 8000, netCashflow: 2000 }],
         recurringExpenses: [],
         recurringIncome: [],
         currency: 'EUR',

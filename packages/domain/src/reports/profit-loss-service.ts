@@ -246,9 +246,21 @@ export class ProfitLossService {
       const prevOtherExp = sections.otherExpenses.previousSubtotal?.amount || 0;
 
       // Don't use createMoney - amounts are already in minor units
-      summaries.previousGrossProfit = { amount: prevRevenue - prevCogs, currency: baseCurrency, decimalPlaces: 2 };
-      summaries.previousOperatingIncome = { amount: prevRevenue - prevCogs - prevOpex, currency: baseCurrency, decimalPlaces: 2 };
-      summaries.previousNetIncome = { amount: prevRevenue - prevCogs - prevOpex + prevOtherInc - prevOtherExp, currency: baseCurrency, decimalPlaces: 2 };
+      summaries.previousGrossProfit = {
+        amount: prevRevenue - prevCogs,
+        currency: baseCurrency,
+        decimalPlaces: 2,
+      };
+      summaries.previousOperatingIncome = {
+        amount: prevRevenue - prevCogs - prevOpex,
+        currency: baseCurrency,
+        decimalPlaces: 2,
+      };
+      summaries.previousNetIncome = {
+        amount: prevRevenue - prevCogs - prevOpex + prevOtherInc - prevOtherExp,
+        currency: baseCurrency,
+        decimalPlaces: 2,
+      };
     }
 
     return summaries;

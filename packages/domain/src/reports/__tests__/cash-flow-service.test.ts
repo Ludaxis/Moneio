@@ -115,9 +115,7 @@ describe('CashFlowService', () => {
     });
 
     it('should handle zero net change in cash', async () => {
-      const accounts: GLAccountData[] = [
-        createMockAccount('1', 'Cash', 'ASSET', 'cash'),
-      ];
+      const accounts: GLAccountData[] = [createMockAccount('1', 'Cash', 'ASSET', 'cash')];
 
       vi.mocked(mockRepo.getGLAccounts).mockResolvedValue(accounts);
       vi.mocked(mockRepo.getJournalLines).mockResolvedValue([]);
@@ -625,9 +623,7 @@ describe('CashFlowService', () => {
     it('should handle journal lines with unknown account IDs', async () => {
       const accounts: GLAccountData[] = [createMockAccount('1', 'Cash', 'ASSET', 'cash')];
 
-      const journalLines: JournalLineData[] = [
-        createJournalLine('unknown-account', 1000, 0),
-      ];
+      const journalLines: JournalLineData[] = [createJournalLine('unknown-account', 1000, 0)];
 
       vi.mocked(mockRepo.getGLAccounts).mockResolvedValue(accounts);
       vi.mocked(mockRepo.getJournalLines).mockResolvedValue(journalLines);

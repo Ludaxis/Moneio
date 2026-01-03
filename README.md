@@ -72,6 +72,7 @@ pnpm db:generate  # Generate database migrations
 pnpm db:migrate   # Run database migrations (preferred, versioned)
 pnpm db:push      # Push schema to database (development only)
 ```
+
 # Database connectivity
 
 - Serverless/edge: use the Supabase pooler (port 6543) with `pgbouncer=true&connection_limit=1`.

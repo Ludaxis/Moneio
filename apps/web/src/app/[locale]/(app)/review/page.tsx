@@ -293,9 +293,7 @@ export default function ReviewPage() {
             <Sparkles className="h-6 w-6 text-primary" />
             {t('title')}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('description')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
         </div>
         {highConfidenceCount > 0 && (
           <Button
@@ -401,9 +399,7 @@ export default function ReviewPage() {
               <PartyPopper className="h-8 w-8 text-success-600" />
             </div>
             <h3 className="mt-4 text-xl font-semibold text-foreground">{t('allCaughtUp')}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {t('noPendingSuggestions')}
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{t('noPendingSuggestions')}</p>
           </div>
         ) : (
           <SuggestionList

@@ -24,8 +24,7 @@ function createPrismaClient() {
  * Prisma client singleton
  * In development, reuses the same instance across hot reloads (except when using Data Proxy)
  */
-export const prisma =
-  (!usingDataProxy && global.prisma) || createPrismaClient();
+export const prisma = (!usingDataProxy && global.prisma) || createPrismaClient();
 
 if (!usingDataProxy && process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;

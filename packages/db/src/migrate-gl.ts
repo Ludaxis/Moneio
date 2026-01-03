@@ -54,7 +54,9 @@ function validateJournalEntry(lines: JournalLine[]): {
 
   const difference = Math.abs(totalDebits - totalCredits);
   if (difference > 0.01) {
-    errors.push(`Debits (${totalDebits.toFixed(2)}) must equal credits (${totalCredits.toFixed(2)})`);
+    errors.push(
+      `Debits (${totalDebits.toFixed(2)}) must equal credits (${totalCredits.toFixed(2)})`
+    );
   }
 
   return { isValid: errors.length === 0, errors, totalDebits, totalCredits };
@@ -341,7 +343,9 @@ async function main() {
 
   for (const r of results) {
     console.log(`${r.workspaceName}:`);
-    console.log(`  Chart of Accounts seeded: ${r.chartOfAccountsSeeded ? `Yes (${r.glAccountsCreated} accounts)` : 'Already existed'}`);
+    console.log(
+      `  Chart of Accounts seeded: ${r.chartOfAccountsSeeded ? `Yes (${r.glAccountsCreated} accounts)` : 'Already existed'}`
+    );
     console.log(`  Categories linked: ${r.categoriesLinked}`);
     console.log(`  Bank accounts linked: ${r.bankAccountsLinked}`);
     console.log(`  Journal entries created: ${r.journalEntriesCreated}`);

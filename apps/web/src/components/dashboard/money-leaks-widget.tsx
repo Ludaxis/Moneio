@@ -147,9 +147,7 @@ export function MoneyLeaksWidget({ workspaceId }: MoneyLeaksWidgetProps) {
             <PiggyBank className="h-6 w-6 text-success-600" />
           </div>
           <p className="mt-3 text-sm font-medium text-foreground">{t('noLeaksDetected')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('financesHealthy')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('financesHealthy')}</p>
         </div>
       ) : (
         <>

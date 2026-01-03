@@ -114,9 +114,7 @@ export function InvoiceList({
             <FileText className="h-6 w-6 text-muted-foreground" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-foreground">{tEmpty('noInvoices')}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {tEmpty('uploadDocuments')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{tEmpty('uploadDocuments')}</p>
         </div>
       </div>
     );

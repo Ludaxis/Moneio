@@ -51,9 +51,7 @@ const listHandler = withApi(
   }
 );
 
-export const GET = traceApiRoute('documents.list', (request: NextRequest) =>
-  listHandler(request)
-);
+export const GET = traceApiRoute('documents.list', (request: NextRequest) => listHandler(request));
 
 /**
  * POST /api/documents

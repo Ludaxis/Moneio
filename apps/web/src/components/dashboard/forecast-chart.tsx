@@ -64,7 +64,11 @@ interface ForecastChartProps {
 }
 
 // Map English insight patterns to translation keys
-const insightPatternMap: Array<{ pattern: RegExp; key: string; extractParams?: (match: RegExpMatchArray) => Record<string, string> }> = [
+const insightPatternMap: Array<{
+  pattern: RegExp;
+  key: string;
+  extractParams?: (match: RegExpMatchArray) => Record<string, string>;
+}> = [
   {
     pattern: /Projected monthly deficit of \$?([\d,]+)/i,
     key: 'projectedDeficit',
@@ -160,9 +164,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
         <h2 className="text-lg font-semibold text-foreground">{t('cashFlowForecast')}</h2>
         <div className="mt-6 flex flex-col items-center justify-center py-8 text-center">
           <Calendar className="h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            {t('notEnoughDataForForecast')}
-          </p>
+          <p className="mt-4 text-sm text-muted-foreground">{t('notEnoughDataForForecast')}</p>
         </div>
       </div>
     );
@@ -242,7 +244,9 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
         </div>
         <div className={`rounded-lg p-3 ${runwayStatusColors[runway.status]}`}>
           <p className="text-xs opacity-80">{t('cashRunway')}</p>
-          <p className="mt-1 text-lg font-semibold">{formatNumber(Number(runway.months))}+ {t('months')}</p>
+          <p className="mt-1 text-lg font-semibold">
+            {formatNumber(Number(runway.months))}+ {t('months')}
+          </p>
         </div>
       </div>
 
@@ -354,7 +358,9 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
       <p className="mt-4 text-xs text-muted-foreground">
         {t('basedOnTransactions', {
           transactions: formatNumber(data.dataQuality.transactionsAnalyzed),
-          patterns: formatNumber(data.dataQuality.recurringExpensesDetected + data.dataQuality.recurringIncomeDetected)
+          patterns: formatNumber(
+            data.dataQuality.recurringExpensesDetected + data.dataQuality.recurringIncomeDetected
+          ),
         })}
       </p>
     </div>

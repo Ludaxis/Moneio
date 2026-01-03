@@ -345,7 +345,10 @@ export default function WorkspaceSettingsPage() {
     );
   }
 
-  const hasChanges = name !== workspace.name || baseCurrency !== workspace.baseCurrency || calendarSystem !== (workspace.calendarSystem || 'gregorian');
+  const hasChanges =
+    name !== workspace.name ||
+    baseCurrency !== workspace.baseCurrency ||
+    calendarSystem !== (workspace.calendarSystem || 'gregorian');
 
   return (
     <>
@@ -359,9 +362,7 @@ export default function WorkspaceSettingsPage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-foreground">{t('deleteWorkspace')}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t('deleteModalWarning')}
-                </p>
+                <p className="mt-1 text-sm text-muted-foreground">{t('deleteModalWarning')}</p>
               </div>
               <button
                 onClick={() => {
@@ -473,9 +474,7 @@ export default function WorkspaceSettingsPage() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                {t('currencyDescription')}
-              </p>
+              <p className="mt-1.5 text-xs text-muted-foreground">{t('currencyDescription')}</p>
             </div>
 
             {/* Calendar System */}
@@ -533,8 +532,8 @@ export default function WorkspaceSettingsPage() {
                 )}
               </button>
             </div>
+          </div>
         </div>
-      </div>
 
         {/* Team & Roles */}
         <div className="rounded-xl border border-border bg-card">
@@ -587,7 +586,11 @@ export default function WorkspaceSettingsPage() {
                   disabled={inviteLoading || !inviteEmail.trim()}
                   className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {inviteLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  {inviteLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
                   {tWorkspace('addMember')}
                 </button>
               </div>
@@ -612,21 +615,24 @@ export default function WorkspaceSettingsPage() {
               ) : (
                 <div className="divide-y divide-border">
                   {members.map((member) => {
-                    const disableOwnerDemote =
-                      member.role === 'owner' && ownerCount <= 1;
+                    const disableOwnerDemote = member.role === 'owner' && ownerCount <= 1;
                     const isSelf = member.isCurrentUser;
                     return (
                       <div key={member.id} className="flex items-center gap-2 px-3 py-2 text-sm">
                         <Shield className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1">
-                          <div className="font-medium text-foreground">{member.name || member.email}</div>
+                          <div className="font-medium text-foreground">
+                            {member.name || member.email}
+                          </div>
                           <div className="text-xs text-muted-foreground">{member.email}</div>
                         </div>
                         <div className="w-32">
                           {canManageMembers && !isSelf ? (
                             <select
                               value={member.role}
-                              onChange={(e) => handleRoleChange(member.id, e.target.value as WorkspaceRole)}
+                              onChange={(e) =>
+                                handleRoleChange(member.id, e.target.value as WorkspaceRole)
+                              }
                               disabled={updatingMemberId === member.id || disableOwnerDemote}
                               className="w-full rounded-lg border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
                             >
@@ -635,7 +641,9 @@ export default function WorkspaceSettingsPage() {
                               <option value="owner">{tWorkspace('owner')}</option>
                             </select>
                           ) : (
-                            <span className="text-xs uppercase text-muted-foreground">{member.role}</span>
+                            <span className="text-xs uppercase text-muted-foreground">
+                              {member.role}
+                            </span>
                           )}
                         </div>
                         <div className="w-20 text-right">
@@ -677,9 +685,7 @@ export default function WorkspaceSettingsPage() {
           <div className="space-y-6 p-6">
             <div>
               <label className="block text-sm font-medium text-foreground">{t('theme')}</label>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t('themeDescription')}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('themeDescription')}</p>
               <div className="mt-4">
                 <ThemeSelector />
               </div>
@@ -780,9 +786,7 @@ export default function WorkspaceSettingsPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="font-medium text-foreground">{t('deleteThisWorkspace')}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t('deleteWarningFull')}
-                </p>
+                <p className="mt-1 text-sm text-muted-foreground">{t('deleteWarningFull')}</p>
               </div>
               <button
                 onClick={() => setShowDeleteModal(true)}

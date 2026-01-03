@@ -435,14 +435,14 @@ describe('Balance Sheet Service', () => {
     });
 
     it('uses absolute values for display', async () => {
-      const accounts: GLAccountData[] = [
-        createAccount('cash', '1000', 'Cash', 'ASSET', 'cash'),
-      ];
+      const accounts: GLAccountData[] = [createAccount('cash', '1000', 'Cash', 'ASSET', 'cash')];
 
       // Assets typically have debit balances (positive)
       // but test with negative to ensure abs is used
       mockRepository.getGLAccounts.mockResolvedValue(accounts);
-      mockRepository.getGLAccountBalances.mockResolvedValue([{ accountId: 'cash', balance: -50000 }]);
+      mockRepository.getGLAccountBalances.mockResolvedValue([
+        { accountId: 'cash', balance: -50000 },
+      ]);
 
       const result = await service.generate({
         workspaceId: 'ws-1',

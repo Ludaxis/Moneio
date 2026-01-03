@@ -70,9 +70,7 @@ describe('Cash Runway Calculator', () => {
     it('returns zero runway when balance is depleted', () => {
       const input: RunwayCalculationInput = {
         currentBalance: 0,
-        monthlySummaries: [
-          { month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 },
-        ],
+        monthlySummaries: [{ month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 }],
         currency: 'USD',
       };
 
@@ -86,9 +84,7 @@ describe('Cash Runway Calculator', () => {
     it('returns zero runway when balance is negative', () => {
       const input: RunwayCalculationInput = {
         currentBalance: -5000,
-        monthlySummaries: [
-          { month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 },
-        ],
+        monthlySummaries: [{ month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 }],
         currency: 'USD',
       };
 
@@ -442,9 +438,7 @@ describe('Cash Runway Calculator', () => {
     it('handles single month of data', () => {
       const input: RunwayCalculationInput = {
         currentBalance: 6000,
-        monthlySummaries: [
-          { month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 },
-        ],
+        monthlySummaries: [{ month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 }],
         currency: 'USD',
       };
 
@@ -498,17 +492,13 @@ describe('Cash Runway Calculator', () => {
     it('calculates burn rate as expenses minus income (positive = losing money)', () => {
       const losingMoney: RunwayCalculationInput = {
         currentBalance: 10000,
-        monthlySummaries: [
-          { month: '2024-01', income: 3000, expenses: 5000, netCashflow: -2000 },
-        ],
+        monthlySummaries: [{ month: '2024-01', income: 3000, expenses: 5000, netCashflow: -2000 }],
         currency: 'USD',
       };
 
       const makingMoney: RunwayCalculationInput = {
         currentBalance: 10000,
-        monthlySummaries: [
-          { month: '2024-01', income: 5000, expenses: 3000, netCashflow: 2000 },
-        ],
+        monthlySummaries: [{ month: '2024-01', income: 5000, expenses: 3000, netCashflow: 2000 }],
         currency: 'USD',
       };
 
@@ -522,9 +512,7 @@ describe('Cash Runway Calculator', () => {
     it('includes calculated timestamp', () => {
       const input: RunwayCalculationInput = {
         currentBalance: 10000,
-        monthlySummaries: [
-          { month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 },
-        ],
+        monthlySummaries: [{ month: '2024-01', income: 5000, expenses: 8000, netCashflow: -3000 }],
         currency: 'USD',
       };
 

@@ -187,7 +187,10 @@ export function TopExpensesWidget({
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground">{t('total')}</span>
             <span className="text-lg font-bold tabular-nums text-foreground">
-              {formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0), currency)}
+              {formatCurrency(
+                expenses.reduce((sum, e) => sum + e.amount, 0),
+                currency
+              )}
             </span>
           </div>
         </div>

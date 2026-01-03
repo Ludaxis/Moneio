@@ -30,9 +30,7 @@ export default function HomePage() {
         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
           {t('appName')}
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          {tLanding('subtitle')}
-        </p>
+        <p className="mt-4 text-lg text-muted-foreground">{tLanding('subtitle')}</p>
         <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
           <Link
             href={`/${locale}/dashboard`}

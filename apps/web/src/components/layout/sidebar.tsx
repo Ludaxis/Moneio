@@ -72,20 +72,28 @@ export function Sidebar({ defaultCollapsed = false }: SidebarProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
               M
             </div>
-            <span className="text-lg font-semibold text-sidebar-foreground">{tCommon('appName')}</span>
+            <span className="text-lg font-semibold text-sidebar-foreground">
+              {tCommon('appName')}
+            </span>
           </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="rounded-lg p-2 text-sidebar-foreground hover:bg-sidebar-accent"
-          aria-label={collapsed ? tAccessibility('expandSidebar') : tAccessibility('collapseSidebar')}
+          aria-label={
+            collapsed ? tAccessibility('expandSidebar') : tAccessibility('collapseSidebar')
+          }
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>
 
       {/* Navigation */}
-      <nav id="main-navigation" className="flex-1 space-y-1 p-2" aria-label={tAccessibility('mainNavigation')}>
+      <nav
+        id="main-navigation"
+        className="flex-1 space-y-1 p-2"
+        aria-label={tAccessibility('mainNavigation')}
+      >
         {navItems.map((item) => {
           const isActive = pathname.includes(item.href);
           const Icon = item.icon;

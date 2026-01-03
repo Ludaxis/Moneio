@@ -94,7 +94,10 @@ export default function ProfileSettingsPage() {
           <p className="text-sm text-muted-foreground">{tNav('settings')}</p>
           <h1 className="text-2xl font-bold text-foreground">{tProfile('title')}</h1>
         </div>
-        <Link href={`/${locale}/dashboard${workspace ? `?workspace=${workspace.id}` : ''}`} className="text-sm text-primary hover:underline">
+        <Link
+          href={`/${locale}/dashboard${workspace ? `?workspace=${workspace.id}` : ''}`}
+          className="text-sm text-primary hover:underline"
+        >
           {tCommon('back')}
         </Link>
       </div>

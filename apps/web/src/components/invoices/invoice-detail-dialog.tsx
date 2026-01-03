@@ -142,9 +142,7 @@ export function InvoiceDetailDialog({
                     <th className="px-3 py-2 text-end font-medium text-muted-foreground">
                       Unit Price
                     </th>
-                    <th className="px-3 py-2 text-end font-medium text-muted-foreground">
-                      Amount
-                    </th>
+                    <th className="px-3 py-2 text-end font-medium text-muted-foreground">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">

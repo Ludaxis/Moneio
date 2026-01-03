@@ -22,9 +22,7 @@ interface CalendarProviderProps {
  * Wraps the app to provide access to the workspace's calendar setting
  */
 export function CalendarProvider({ children, calendarSystem }: CalendarProviderProps) {
-  return (
-    <CalendarContext.Provider value={{ calendarSystem }}>{children}</CalendarContext.Provider>
-  );
+  return <CalendarContext.Provider value={{ calendarSystem }}>{children}</CalendarContext.Provider>;
 }
 
 /**

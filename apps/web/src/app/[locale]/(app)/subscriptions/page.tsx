@@ -90,20 +90,22 @@ const severityColors: Record<string, { bg: string; text: string; border: string 
 
 // Map flag types to translation keys
 const flagTypeKeyMap: Record<string, string> = {
-  'expensive': 'expensive',
-  'unused': 'unused',
-  'duplicate': 'duplicate',
-  'price_increase': 'price_increase',
+  expensive: 'expensive',
+  unused: 'unused',
+  duplicate: 'duplicate',
+  price_increase: 'price_increase',
   'price increase': 'price_increase',
 };
 
 // Map suggestion patterns to translation keys
 const suggestionKeyMap: Record<string, string> = {
-  'Review if this subscription is still needed or if there are cheaper alternatives': 'reviewSubscription',
+  'Review if this subscription is still needed or if there are cheaper alternatives':
+    'reviewSubscription',
   'Check if you are still using this service': 'checkIfUsing',
   'Consider cancelling one of these subscriptions': 'cancelOne',
   'Contact the provider about the price increase or look for alternatives': 'contactProvider',
-  'Consider switching to a fee-free bank account or negotiating fee waivers with your current bank': 'switchBank',
+  'Consider switching to a fee-free bank account or negotiating fee waivers with your current bank':
+    'switchBank',
   'Review these charges and contact the merchant if they are duplicates': 'reviewDuplicates',
   'Review this subscription': 'reviewSubscription',
 };
@@ -185,7 +187,7 @@ export default function SubscriptionsPage() {
         const amount = parseFloat(highCostMatch[2].replace(',', '.'));
         return tLeakDescriptions('highMonthlyCost', {
           currency,
-          amount: formatNumber(amount)
+          amount: formatNumber(amount),
         });
       }
 
@@ -202,7 +204,9 @@ export default function SubscriptionsPage() {
       }
 
       // Price increased by {percent}% (from {currency} {old} to {new})
-      const priceMatch = description.match(/^Price increased by ([\d.]+)% \(from (\w+) ([\d.,]+) to ([\d.,]+)\)$/);
+      const priceMatch = description.match(
+        /^Price increased by ([\d.]+)% \(from (\w+) ([\d.,]+) to ([\d.,]+)\)$/
+      );
       if (priceMatch) {
         return tLeakDescriptions('priceIncreased', {
           percent: priceMatch[1],
@@ -213,7 +217,9 @@ export default function SubscriptionsPage() {
       }
 
       // You've paid {currency} {amount} in bank fees ({count} transactions)
-      const bankFeesMatch = description.match(/^You've paid (\w+) ([\d.,]+) in bank fees \((\d+) transactions\)$/);
+      const bankFeesMatch = description.match(
+        /^You've paid (\w+) ([\d.,]+) in bank fees \((\d+) transactions\)$/
+      );
       if (bankFeesMatch) {
         return tLeakDescriptions('bankFeesDetected', {
           currency: bankFeesMatch[1],
@@ -223,7 +229,9 @@ export default function SubscriptionsPage() {
       }
 
       // {count} identical charges of {currency} {amount} detected
-      const identicalMatch = description.match(/^(\d+) identical charges of (\w+) ([\d.,]+) detected$/);
+      const identicalMatch = description.match(
+        /^(\d+) identical charges of (\w+) ([\d.,]+) detected$/
+      );
       if (identicalMatch) {
         return tLeakDescriptions('identicalCharges', {
           count: identicalMatch[1],
@@ -380,9 +388,7 @@ export default function SubscriptionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('description')}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
         </div>
         <button
           onClick={fetchData}
@@ -406,7 +412,10 @@ export default function SubscriptionsPage() {
               {formatCurrency(subscriptionSummary.totalMonthly, subscriptionSummary.currency)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {t('activeOf', { active: formatNumber(subscriptionSummary.activeCount), total: formatNumber(subscriptionSummary.subscriptionCount) })}
+              {t('activeOf', {
+                active: formatNumber(subscriptionSummary.activeCount),
+                total: formatNumber(subscriptionSummary.subscriptionCount),
+              })}
             </p>
           </div>
 
@@ -426,9 +435,14 @@ export default function SubscriptionsPage() {
               <AlertTriangle className="h-4 w-4" />
               <span className="text-sm">{t('issuesFound')}</span>
             </div>
-            <p className="mt-2 text-2xl font-bold text-warning-700">{formatNumber(leaksSummary.totalLeaks)}</p>
+            <p className="mt-2 text-2xl font-bold text-warning-700">
+              {formatNumber(leaksSummary.totalLeaks)}
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {t('newAndFlagged', { newCount: formatNumber(leaksSummary.newLeaks), flaggedCount: formatNumber(subscriptionSummary.flaggedCount) })}
+              {t('newAndFlagged', {
+                newCount: formatNumber(leaksSummary.newLeaks),
+                flaggedCount: formatNumber(subscriptionSummary.flaggedCount),
+              })}
             </p>
           </div>
 
@@ -566,14 +580,10 @@ export default function SubscriptionsPage() {
             <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-lg border border-border bg-card">
               <CreditCard className="h-12 w-12 text-muted-foreground" />
               <p className="text-muted-foreground">
-                {subscriptions.length === 0
-                  ? t('noSubscriptions')
-                  : t('noSubscriptionsFiltered')}
+                {subscriptions.length === 0 ? t('noSubscriptions') : t('noSubscriptionsFiltered')}
               </p>
               {subscriptions.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {t('importMoreTransactions')}
-                </p>
+                <p className="text-sm text-muted-foreground">{t('importMoreTransactions')}</p>
               )}
             </div>
           ) : (
@@ -606,8 +616,12 @@ export default function SubscriptionsPage() {
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           <span>{frequencyLabels[sub.frequency] || sub.frequency}</span>
-                          <span>{formatCurrency(sub.amount, sub.currency)} {t('perCharge')}</span>
-                          <span>{sub.chargeCount} {t('charges')}</span>
+                          <span>
+                            {formatCurrency(sub.amount, sub.currency)} {t('perCharge')}
+                          </span>
+                          <span>
+                            {sub.chargeCount} {t('charges')}
+                          </span>
                           {sub.category && (
                             <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
                               {translateCategory(sub.category)}
@@ -651,7 +665,12 @@ export default function SubscriptionsPage() {
                                   )}
                                   {flag.potentialSavings && (
                                     <p className="mt-1 text-xs font-medium text-success-600">
-                                      {t('potentialSavingsPerYear', { amount: formatCurrencyLocale(parseFloat(flag.potentialSavings), sub.currency) })}
+                                      {t('potentialSavingsPerYear', {
+                                        amount: formatCurrencyLocale(
+                                          parseFloat(flag.potentialSavings),
+                                          sub.currency
+                                        ),
+                                      })}
                                     </p>
                                   )}
                                 </div>
@@ -676,9 +695,7 @@ export default function SubscriptionsPage() {
                 <PiggyBank className="h-8 w-8 text-success-600" />
               </div>
               <p className="font-medium text-foreground">{t('noLeaksDetected')}</p>
-              <p className="text-sm text-muted-foreground">
-                {t('financesHealthy')}
-              </p>
+              <p className="text-sm text-muted-foreground">{t('financesHealthy')}</p>
             </div>
           ) : (
             leaks.map((leak) => {
@@ -692,7 +709,9 @@ export default function SubscriptionsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className={cn('h-5 w-5', colors.text)} />
-                        <h3 className={cn('font-medium', colors.text)}>{translateLeakTitle(leak.title)}</h3>
+                        <h3 className={cn('font-medium', colors.text)}>
+                          {translateLeakTitle(leak.title)}
+                        </h3>
                         <span
                           className={cn(
                             'rounded-full px-2 py-0.5 text-xs font-medium uppercase',
@@ -703,8 +722,12 @@ export default function SubscriptionsPage() {
                           {translateSeverity(leak.severity)}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{translateDescription(leak.description, leak.currency)}</p>
-                      <p className="mt-2 text-sm text-foreground">{translateSuggestion(leak.recommendation)}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {translateDescription(leak.description, leak.currency)}
+                      </p>
+                      <p className="mt-2 text-sm text-foreground">
+                        {translateSuggestion(leak.recommendation)}
+                      </p>
                     </div>
                     <div className="text-end">
                       <p className="text-lg font-bold text-danger-700">

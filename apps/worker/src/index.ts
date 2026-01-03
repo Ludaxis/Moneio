@@ -27,7 +27,13 @@ import {
 // eslint-disable-next-line import/no-duplicates
 import { flushMetrics, getLlmMetricsSummary, getLlmObsConfig } from './lib/datadog';
 import { logger } from './lib/logger';
-import { attachMonitoring, getMetrics, isHealthy, checkDlqHealth, getDlqMetrics } from './lib/monitoring';
+import {
+  attachMonitoring,
+  getMetrics,
+  isHealthy,
+  checkDlqHealth,
+  getDlqMetrics,
+} from './lib/monitoring';
 import { QUEUE_NAMES, getQueues, closeQueues } from './lib/queues';
 import { getRedisConnection, closeRedisConnection } from './lib/redis';
 
@@ -330,7 +336,9 @@ console.log('');
 console.log('Alerting:');
 console.log(`  • DLQ depth threshold: ${process.env.DLQ_DEPTH_THRESHOLD || '10'} jobs`);
 console.log(`  • DLQ age threshold: ${process.env.DLQ_AGE_THRESHOLD_HOURS || '24'} hours`);
-console.log(`  • Consecutive failure alert: ${process.env.ALERT_CONSECUTIVE_FAILURES || '5'} failures`);
+console.log(
+  `  • Consecutive failure alert: ${process.env.ALERT_CONSECUTIVE_FAILURES || '5'} failures`
+);
 console.log(`  • Error rate threshold: ${process.env.ALERT_ERROR_RATE_THRESHOLD || '20'}%`);
 console.log('');
 console.log('Press Ctrl+C to stop');

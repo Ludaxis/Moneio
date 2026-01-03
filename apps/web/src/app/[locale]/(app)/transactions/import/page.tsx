@@ -654,9 +654,7 @@ export default function CsvImportPage() {
                         Category
                       </span>
                     </th>
-                    {mapping.balance && (
-                      <th className="px-4 py-2 text-end font-medium">Balance</th>
-                    )}
+                    {mapping.balance && <th className="px-4 py-2 text-end font-medium">Balance</th>}
                     <th className="w-10 px-2 py-2"></th>
                   </tr>
                 </thead>

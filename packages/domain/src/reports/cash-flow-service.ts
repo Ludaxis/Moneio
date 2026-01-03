@@ -78,7 +78,8 @@ export class CashFlowService {
     const netCashFromFinancing = financingSection.netCashFlow;
     // Don't use createMoney - amounts are already in minor units (cents)
     const netChangeInCash: Money = {
-      amount: netCashFromOperating.amount + netCashFromInvesting.amount + netCashFromFinancing.amount,
+      amount:
+        netCashFromOperating.amount + netCashFromInvesting.amount + netCashFromFinancing.amount,
       currency: baseCurrency,
       decimalPlaces: 2,
     };

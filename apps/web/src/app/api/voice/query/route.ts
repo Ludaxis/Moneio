@@ -46,12 +46,32 @@ const queryHandler = withApi(
 
     // Parse specific month/year from question
     const monthNames = [
-      'january', 'february', 'march', 'april', 'may', 'june',
-      'july', 'august', 'september', 'october', 'november', 'december',
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
     ];
     const shortMonths = [
-      'jan', 'feb', 'mar', 'apr', 'may', 'jun',
-      'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'may',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'oct',
+      'nov',
+      'dec',
     ];
 
     let queryMonth = now.getMonth();
@@ -85,12 +105,8 @@ const queryHandler = withApi(
     const startOfMonth = specificPeriod
       ? new Date(queryYear, queryMonth, 1)
       : new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = specificPeriod
-      ? new Date(queryYear, queryMonth + 1, 0, 23, 59, 59)
-      : now;
-    const periodLabel = specificPeriod
-      ? `${monthNames[queryMonth]} ${queryYear}`
-      : 'this month';
+    const endOfMonth = specificPeriod ? new Date(queryYear, queryMonth + 1, 0, 23, 59, 59) : now;
+    const periodLabel = specificPeriod ? `${monthNames[queryMonth]} ${queryYear}` : 'this month';
 
     // Detect query type and respond quickly
     if (q.includes('cashflow') || q.includes('cash flow')) {
@@ -149,8 +165,16 @@ const queryHandler = withApi(
 
     if (q.includes('spending') || q.includes('spent') || q.includes('expenses')) {
       const merchants = [
-        'aws', 'amazon', 'google', 'microsoft', 'figma',
-        'netflix', 'spotify', 'openai', 'stripe', 'slack',
+        'aws',
+        'amazon',
+        'google',
+        'microsoft',
+        'figma',
+        'netflix',
+        'spotify',
+        'openai',
+        'stripe',
+        'slack',
       ];
       const mentionedMerchant = merchants.find((m) => q.includes(m));
 
@@ -260,7 +284,12 @@ const queryHandler = withApi(
       };
     }
 
-    if (q.includes('invoice') || q.includes('pending') || q.includes('owed') || q.includes('owes')) {
+    if (
+      q.includes('invoice') ||
+      q.includes('pending') ||
+      q.includes('owed') ||
+      q.includes('owes')
+    ) {
       const invoices = await prisma.invoice.findMany({
         where: {
           workspaceId,
@@ -291,13 +320,20 @@ const queryHandler = withApi(
     }
 
     if (
-      q.includes('biggest') || q.includes('largest') || q.includes('top') ||
-      q.includes('most expensive') || q.includes('highest') || q.includes('expensive')
+      q.includes('biggest') ||
+      q.includes('largest') ||
+      q.includes('top') ||
+      q.includes('most expensive') ||
+      q.includes('highest') ||
+      q.includes('expensive')
     ) {
       const wantsSingle =
-        q.includes('the most') || q.includes('the biggest') ||
-        q.includes('the largest') || q.includes('the highest') ||
-        q.includes('what is') || q.includes('what was');
+        q.includes('the most') ||
+        q.includes('the biggest') ||
+        q.includes('the largest') ||
+        q.includes('the highest') ||
+        q.includes('what is') ||
+        q.includes('what was');
       const limit = wantsSingle ? 1 : 5;
 
       const transactions = await prisma.bankTransaction.findMany({
@@ -306,7 +342,13 @@ const queryHandler = withApi(
           postedAt: { gte: startOfMonth, lte: endOfMonth },
           amount: { lt: 0 },
         },
-        select: { description: true, merchantName: true, amount: true, currency: true, postedAt: true },
+        select: {
+          description: true,
+          merchantName: true,
+          amount: true,
+          currency: true,
+          postedAt: true,
+        },
         orderBy: { amount: 'asc' },
         take: limit,
       });
@@ -326,7 +368,10 @@ const queryHandler = withApi(
       }
 
       const list = transactions
-        .map((t) => `${t.merchantName || t.description}: ${formatCurrency(Math.abs(Number(t.amount)), currency)}`)
+        .map(
+          (t) =>
+            `${t.merchantName || t.description}: ${formatCurrency(Math.abs(Number(t.amount)), currency)}`
+        )
         .join(', ');
 
       return { answer: `Your biggest expenses for ${periodLabel}: ${list}` };
@@ -360,6 +405,4 @@ const queryHandler = withApi(
   }
 );
 
-export const POST = traceApiRoute('voice.query', (request: NextRequest) =>
-  queryHandler(request)
-);
+export const POST = traceApiRoute('voice.query', (request: NextRequest) => queryHandler(request));

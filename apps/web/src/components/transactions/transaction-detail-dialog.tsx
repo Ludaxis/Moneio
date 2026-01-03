@@ -55,11 +55,7 @@ interface TransactionDetailDialogProps {
   locale?: Locale;
 }
 
-function formatCurrency(
-  value: number | string,
-  currency: string,
-  intlLocale: string
-): string {
+function formatCurrency(value: number | string, currency: string, intlLocale: string): string {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   return new Intl.NumberFormat(intlLocale, {
     style: 'currency',
@@ -232,23 +228,24 @@ export function TransactionDetailDialog({
             <div className="mt-2 flex items-center justify-between">
               <span
                 className={cn(
-              'text-2xl font-bold',
-              isExpense ? 'text-danger-600' : 'text-success-600'
+                  'text-2xl font-bold',
+                  isExpense ? 'text-danger-600' : 'text-success-600'
+                )}
+              >
+                {formatCurrency(transaction.amount, transaction.currency, intlLocale)}
+              </span>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                {formatDate(transaction.postedAt, intlLocale)}
+              </div>
+            </div>
+            {transaction.balance !== null && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Balance after:{' '}
+                {formatCurrency(transaction.balance, transaction.currency, intlLocale)}
+              </p>
             )}
-          >
-            {formatCurrency(transaction.amount, transaction.currency, intlLocale)}
-          </span>
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            {formatDate(transaction.postedAt, intlLocale)}
           </div>
-        </div>
-        {transaction.balance !== null && (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Balance after: {formatCurrency(transaction.balance, transaction.currency, intlLocale)}
-          </p>
-        )}
-      </div>
 
           {/* Current Category */}
           {hasApprovedCategory && (
