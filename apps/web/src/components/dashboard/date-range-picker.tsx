@@ -2,7 +2,10 @@
 
 import { cn } from '@moneio/ui';
 import { Calendar, ChevronDown, Check } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { useState, useRef, useEffect, useMemo } from 'react';
+
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 export interface DateRange {
   startDate: string;
@@ -16,72 +19,44 @@ interface DateRangePickerProps {
   className?: string;
 }
 
-type PresetKey = '7d' | '30d' | '3m' | '6m' | '1y';
+export type PresetKey = '7d' | '30d' | '3m' | '6m' | '1y';
 
-const presets: Record<
-  PresetKey,
-  { label: string; getDates: () => { startDate: string; endDate: string } }
-> = {
-  '7d': {
-    label: 'Last 7 days',
-    getDates: () => {
-      const end = new Date();
-      const start = new Date();
+// Date calculation functions (static, no translations needed)
+const getPresetDates = (key: PresetKey): { startDate: string; endDate: string } => {
+  const end = new Date();
+  const start = new Date();
+
+  switch (key) {
+    case '7d':
       start.setDate(start.getDate() - 7);
-      return {
-        startDate: start.toISOString().slice(0, 10),
-        endDate: end.toISOString().slice(0, 10),
-      };
-    },
-  },
-  '30d': {
-    label: 'Last 30 days',
-    getDates: () => {
-      const end = new Date();
-      const start = new Date();
+      break;
+    case '30d':
       start.setDate(start.getDate() - 30);
-      return {
-        startDate: start.toISOString().slice(0, 10),
-        endDate: end.toISOString().slice(0, 10),
-      };
-    },
-  },
-  '3m': {
-    label: 'Last 3 months',
-    getDates: () => {
-      const end = new Date();
-      const start = new Date();
+      break;
+    case '3m':
       start.setMonth(start.getMonth() - 3);
-      return {
-        startDate: start.toISOString().slice(0, 10),
-        endDate: end.toISOString().slice(0, 10),
-      };
-    },
-  },
-  '6m': {
-    label: 'Last 6 months',
-    getDates: () => {
-      const end = new Date();
-      const start = new Date();
+      break;
+    case '6m':
       start.setMonth(start.getMonth() - 6);
-      return {
-        startDate: start.toISOString().slice(0, 10),
-        endDate: end.toISOString().slice(0, 10),
-      };
-    },
-  },
-  '1y': {
-    label: 'Last 12 months',
-    getDates: () => {
-      const end = new Date();
-      const start = new Date();
+      break;
+    case '1y':
       start.setFullYear(start.getFullYear() - 1);
-      return {
-        startDate: start.toISOString().slice(0, 10),
-        endDate: end.toISOString().slice(0, 10),
-      };
-    },
-  },
+      break;
+  }
+
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
+};
+
+// Translation keys for presets
+const presetTranslationKeys: Record<PresetKey, string> = {
+  '7d': 'last7Days',
+  '30d': 'last30Days',
+  '3m': 'last3Months',
+  '6m': 'last6Months',
+  '1y': 'last12Months',
 };
 
 // Calculate min date (1 year ago)
@@ -96,20 +71,53 @@ function getMaxDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Note: This returns English label by default - the component will translate it when rendering
 export function getDefaultDateRange(): DateRange {
-  const dates = presets['6m'].getDates();
-  return { ...dates, label: presets['6m'].label };
+  const dates = getPresetDates('6m');
+  return { ...dates, label: 'last6Months' }; // Translation key as label
 }
 
 export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
+  const t = useTranslations('dashboard.dateRange');
+  const tCommon = useTranslations('common');
+  const { formatShortDate } = useLocaleFormat();
+
   const [open, setOpen] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const [customStart, setCustomStart] = useState(value.startDate);
   const [customEnd, setCustomEnd] = useState(value.endDate);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Check if current value is a preset
-  const isPreset = Object.values(presets).some((p) => p.label === value.label);
+  // Build presets with translated labels
+  const presets = useMemo(
+    () =>
+      (Object.keys(presetTranslationKeys) as PresetKey[]).map((key) => ({
+        key,
+        label: t(presetTranslationKeys[key]),
+        getDates: () => getPresetDates(key),
+      })),
+    [t]
+  );
+
+  // Check if current value is a preset (compare by translation key or translated label)
+  const isPreset = presets.some(
+    (p) => p.label === value.label || presetTranslationKeys[p.key] === value.label
+  );
+
+  // Get the display label for the button
+  const displayLabel = useMemo(() => {
+    // Check if the label is a translation key
+    const translationKey = value.label;
+    if (Object.values(presetTranslationKeys).includes(translationKey)) {
+      return t(translationKey);
+    }
+    // Handle 'customRange' and 'Custom' as special cases
+    if (translationKey === 'customRange' || translationKey === 'Custom') {
+      return t('customRange');
+    }
+    // Otherwise, it's a custom label (like date range string)
+    return value.label;
+  }, [value.label, t]);
 
   // Close on click outside
   useEffect(() => {
@@ -124,9 +132,9 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
   }, []);
 
   const handleSelect = (key: PresetKey) => {
-    const preset = presets[key];
-    const dates = preset.getDates();
-    onChange({ ...dates, label: preset.label });
+    const dates = getPresetDates(key);
+    // Store the translation key as label so it persists correctly
+    onChange({ ...dates, label: presetTranslationKeys[key] });
     setShowCustom(false);
     setOpen(false);
   };
@@ -139,14 +147,8 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
 
   const handleApplyCustom = () => {
     if (customStart && customEnd && customStart <= customEnd) {
-      const startLabel = new Date(customStart).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-      const endLabel = new Date(customEnd).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
+      const startLabel = formatShortDate(customStart);
+      const endLabel = formatShortDate(customEnd);
       onChange({
         startDate: customStart,
         endDate: customEnd,
@@ -168,23 +170,23 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
         )}
       >
         <Calendar className="h-4 w-4 text-muted-foreground" />
-        <span className="font-medium text-foreground">{value.label}</span>
+        <span className="font-medium text-foreground">{displayLabel}</span>
         <ChevronDown
           className={cn('h-4 w-4 text-muted-foreground transition-transform', open && 'rotate-180')}
         />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-border bg-popover shadow-lg">
+        <div className="absolute end-0 top-full z-50 mt-2 w-64 rounded-lg border border-border bg-popover shadow-lg">
           {!showCustom ? (
             <div className="p-1">
-              {(Object.keys(presets) as PresetKey[]).map((key) => {
-                const preset = presets[key];
-                const isSelected = value.label === preset.label;
+              {presets.map((preset) => {
+                const isSelected =
+                  value.label === preset.label || presetTranslationKeys[preset.key] === value.label;
                 return (
                   <button
-                    key={key}
-                    onClick={() => handleSelect(key)}
+                    key={preset.key}
+                    onClick={() => handleSelect(preset.key)}
                     className={cn(
                       'flex w-full items-center justify-between rounded-md px-3 py-2 text-sm',
                       'hover:bg-muted transition-colors',
@@ -210,17 +212,17 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                 )}
               >
                 <span className={cn(!isPreset ? 'font-medium text-foreground' : 'text-foreground')}>
-                  Custom range
+                  {t('customRange')}
                 </span>
                 {!isPreset && <Check className="h-4 w-4 text-primary" />}
               </button>
             </div>
           ) : (
             <div className="p-3 space-y-3">
-              <div className="text-sm font-medium text-foreground">Custom Date Range</div>
+              <div className="text-sm font-medium text-foreground">{t('customDateRange')}</div>
               <div className="space-y-2">
                 <div>
-                  <label className="text-xs text-muted-foreground">Start Date</label>
+                  <label className="text-xs text-muted-foreground">{t('startDate')}</label>
                   <input
                     type="date"
                     value={customStart}
@@ -235,7 +237,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">End Date</label>
+                  <label className="text-xs text-muted-foreground">{t('endDate')}</label>
                   <input
                     type="date"
                     value={customEnd}
@@ -255,7 +257,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                   onClick={() => setShowCustom(false)}
                   className="flex-1 px-3 py-2 text-sm rounded-md border border-border hover:bg-muted transition-colors"
                 >
-                  Back
+                  {tCommon('back')}
                 </button>
                 <button
                   onClick={handleApplyCustom}
@@ -266,7 +268,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                     'disabled:opacity-50 disabled:cursor-not-allowed'
                   )}
                 >
-                  Apply
+                  {t('apply')}
                 </button>
               </div>
             </div>

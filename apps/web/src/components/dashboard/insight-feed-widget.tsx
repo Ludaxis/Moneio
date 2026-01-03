@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -74,6 +75,7 @@ const severityConfig: Record<
 };
 
 export function InsightFeedWidget({ workspaceId }: InsightFeedWidgetProps) {
+  const t = useTranslations('dashboard');
   const [data, setData] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -181,7 +183,7 @@ export function InsightFeedWidget({ workspaceId }: InsightFeedWidgetProps) {
       <div className="rounded-lg border border-border bg-card p-6">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold text-foreground">AI Insights</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('aiInsightsTitle')}</h2>
         </div>
         <div className="mt-4 flex items-center gap-2 text-sm text-danger-600">
           <AlertCircle className="h-4 w-4" />
@@ -201,12 +203,12 @@ export function InsightFeedWidget({ workspaceId }: InsightFeedWidgetProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold text-foreground">AI Insights</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('aiInsightsTitle')}</h2>
         </div>
         {summary.unread > 0 && (
           <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
             <Bell className="h-3 w-3" />
-            {summary.unread} new
+            {t('newCount', { count: summary.unread })}
           </span>
         )}
       </div>
@@ -216,9 +218,9 @@ export function InsightFeedWidget({ workspaceId }: InsightFeedWidgetProps) {
           <div className="rounded-full bg-success-100 p-3">
             <Check className="h-6 w-6 text-success-600" />
           </div>
-          <p className="mt-3 text-sm font-medium text-foreground">All caught up!</p>
+          <p className="mt-3 text-sm font-medium text-foreground">{t('allCaughtUp')}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            No new insights at the moment. We&apos;ll notify you when we find something.
+            {t('noNewInsightsDesc')}
           </p>
         </div>
       ) : (
@@ -271,7 +273,7 @@ export function InsightFeedWidget({ workspaceId }: InsightFeedWidgetProps) {
                           className="mt-1 inline-flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          View details
+                          {t('viewDetails')}
                           <ChevronRight className="h-3 w-3" />
                         </Link>
                       )}
@@ -290,7 +292,7 @@ export function InsightFeedWidget({ workspaceId }: InsightFeedWidgetProps) {
             href={`/insights?workspaceId=${workspaceId}`}
             className="mt-4 flex items-center justify-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            View all insights
+            {t('viewAllInsights')}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </>

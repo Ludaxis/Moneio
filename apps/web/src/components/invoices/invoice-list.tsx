@@ -2,6 +2,7 @@
 
 import { useStaggerAnimation } from '@moneio/ui/hooks/use-gsap';
 import { CheckCircle, FileText, Link2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 
 import { InvoiceStatusBadge } from './invoice-status-badge';
@@ -94,6 +95,8 @@ export function InvoiceList({
   onInvoiceClick,
   locale = 'en-US',
 }: InvoiceListProps) {
+  const t = useTranslations('invoices');
+  const tEmpty = useTranslations('emptyStates');
   const listRef = useStaggerAnimation(invoices.length, {
     stagger: 0.05,
     duration: 0.3,
@@ -110,9 +113,9 @@ export function InvoiceList({
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <FileText className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h3 className="mt-4 text-lg font-semibold text-foreground">No invoices yet</h3>
+          <h3 className="mt-4 text-lg font-semibold text-foreground">{tEmpty('noInvoices')}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Upload documents to extract invoices automatically
+            {tEmpty('uploadDocuments')}
           </p>
         </div>
       </div>
@@ -124,13 +127,13 @@ export function InvoiceList({
       {/* Header */}
       <div className="bg-muted/50 px-4 py-3 border-b border-border">
         <div className="grid grid-cols-7 gap-4 text-sm font-medium text-muted-foreground">
-          <div>Invoice #</div>
-          <div>Merchant</div>
-          <div>Issue Date</div>
-          <div>Due Date</div>
-          <div className="text-right">Amount</div>
-          <div>Status</div>
-          <div className="text-center">Match</div>
+          <div>{t('invoiceNumber')}</div>
+          <div>{t('merchant')}</div>
+          <div>{t('issueDate')}</div>
+          <div>{t('dueDate')}</div>
+          <div className="text-end">{t('amount')}</div>
+          <div>{t('status')}</div>
+          <div className="text-center">{t('match')}</div>
         </div>
       </div>
 
@@ -156,7 +159,7 @@ export function InvoiceList({
               <div className="grid grid-cols-7 gap-4 items-center">
                 {/* Invoice Number */}
                 <div className="text-sm font-medium text-foreground truncate">
-                  {invoice.invoiceNumber || 'No number'}
+                  {invoice.invoiceNumber || t('noNumber')}
                 </div>
 
                 {/* Merchant */}
@@ -176,11 +179,11 @@ export function InvoiceList({
                   }`}
                 >
                   {formatDate(invoice.dueDate, locale)}
-                  {overdue && <span className="ml-1 text-xs">(Overdue)</span>}
+                  {overdue && <span className="ms-1 text-xs">({t('overdue')})</span>}
                 </div>
 
                 {/* Amount */}
-                <div className="text-sm font-semibold tabular-nums text-foreground text-right">
+                <div className="text-sm font-semibold tabular-nums text-foreground text-end">
                   {formatCurrency(invoice.total, invoice.currency, locale)}
                 </div>
 

@@ -7,6 +7,9 @@ export {
   seedWorkspaceChartOfAccounts,
   hasChartOfAccounts,
   defaultChartOfAccounts,
+  linkCategoriesToGLAccounts,
+  linkBankAccountsToGL,
+  categoryGlMappings,
 } from './gl-seed';
 
 // Re-export Prisma types for convenience

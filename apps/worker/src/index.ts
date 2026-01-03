@@ -18,6 +18,7 @@ import {
   handleDocExtract,
   handleDocPostprocess,
   handleCategorization,
+  handleGlPost,
   handleFxFetch,
   handleInsightGeneration,
   handleSendNotification,
@@ -26,7 +27,7 @@ import {
 // eslint-disable-next-line import/no-duplicates
 import { flushMetrics, getLlmMetricsSummary, getLlmObsConfig } from './lib/datadog';
 import { logger } from './lib/logger';
-import { attachMonitoring, getMetrics, isHealthy } from './lib/monitoring';
+import { attachMonitoring, getMetrics, isHealthy, checkDlqHealth, getDlqMetrics } from './lib/monitoring';
 import { QUEUE_NAMES, getQueues, closeQueues } from './lib/queues';
 import { getRedisConnection, closeRedisConnection } from './lib/redis';
 
@@ -41,6 +42,7 @@ const config = {
     docExtract: parseInt(process.env.DOC_EXTRACT_CONCURRENCY || '2'),
     docPostprocess: parseInt(process.env.DOC_POSTPROCESS_CONCURRENCY || '2'),
     categorization: parseInt(process.env.CATEGORIZATION_CONCURRENCY || '2'),
+    glPost: parseInt(process.env.GL_POST_CONCURRENCY || '2'),
     fxFetch: parseInt(process.env.FX_FETCH_CONCURRENCY || '1'),
     insightGeneration: parseInt(process.env.INSIGHT_GENERATION_CONCURRENCY || '1'),
     sendNotification: parseInt(process.env.SEND_NOTIFICATION_CONCURRENCY || '2'),
@@ -69,6 +71,9 @@ const workerSettings = {
 const connection = getRedisConnection();
 
 const workers: Worker[] = [];
+
+// Ensure queues and DLQ handlers are initialized before workers start
+getQueues();
 
 // DOC_NORMALIZE Worker
 const docNormalizeWorker = new Worker(QUEUE_NAMES.DOC_NORMALIZE, handleDocNormalize, {
@@ -109,6 +114,14 @@ const categorizationWorker = new Worker(QUEUE_NAMES.CATEGORIZATION, handleCatego
   ...workerSettings,
 });
 workers.push(categorizationWorker);
+
+// GL_POST Worker
+const glPostWorker = new Worker(QUEUE_NAMES.GL_POST, handleGlPost, {
+  connection,
+  concurrency: config.concurrency.glPost,
+  ...workerSettings,
+});
+workers.push(glPostWorker);
 
 // FX_FETCH Worker
 const fxFetchWorker = new Worker(QUEUE_NAMES.FX_FETCH, handleFxFetch, {
@@ -237,16 +250,25 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 // Reduced from 1 minute to 5 minutes to reduce log noise
 const METRICS_LOG_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-setInterval(() => {
+setInterval(async () => {
   const metrics = getMetrics();
   const health = isHealthy();
   const llmMetrics = getLlmMetricsSummary();
+
+  // Check DLQ health
+  const { deadLetter } = getQueues();
+  await checkDlqHealth(deadLetter);
+  const dlqMetrics = getDlqMetrics();
 
   logger.info(
     {
       uptime: Math.round(metrics.uptime / 1000),
       healthy: health.healthy,
       queues: metrics.queues,
+      dlq: {
+        depth: dlqMetrics.depth,
+        oldestJobAgeHours: dlqMetrics.oldestJobAge,
+      },
       llm: llmMetrics
         ? {
             totalCalls: llmMetrics.totalCalls,
@@ -287,6 +309,7 @@ console.log(`  • DOC_OCR            (concurrency: ${config.concurrency.docOcr}
 console.log(`  • DOC_EXTRACT        (concurrency: ${config.concurrency.docExtract})`);
 console.log(`  • DOC_POSTPROCESS    (concurrency: ${config.concurrency.docPostprocess})`);
 console.log(`  • CATEGORIZATION     (concurrency: ${config.concurrency.categorization})`);
+console.log(`  • GL_POST            (concurrency: ${config.concurrency.glPost})`);
 console.log(`  • FX_FETCH           (concurrency: ${config.concurrency.fxFetch})`);
 console.log(`  • INSIGHT_GENERATION (concurrency: ${config.concurrency.insightGeneration})`);
 console.log(`  • SEND_NOTIFICATION  (concurrency: ${config.concurrency.sendNotification})`);
@@ -303,6 +326,12 @@ if (llmObsConfig.enabled) {
   console.log(`  • Datadog LLM Observability: disabled`);
   console.log(`    To enable: DD_LLMOBS_ENABLED=1 DD_LLMOBS_ML_APP=moneio DD_SITE=datadoghq.eu`);
 }
+console.log('');
+console.log('Alerting:');
+console.log(`  • DLQ depth threshold: ${process.env.DLQ_DEPTH_THRESHOLD || '10'} jobs`);
+console.log(`  • DLQ age threshold: ${process.env.DLQ_AGE_THRESHOLD_HOURS || '24'} hours`);
+console.log(`  • Consecutive failure alert: ${process.env.ALERT_CONSECUTIVE_FAILURES || '5'} failures`);
+console.log(`  • Error rate threshold: ${process.env.ALERT_ERROR_RATE_THRESHOLD || '20'}%`);
 console.log('');
 console.log('Press Ctrl+C to stop');
 console.log('');

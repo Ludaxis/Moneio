@@ -10,6 +10,7 @@ const updateWorkspaceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   baseCurrency: z.string().length(3).optional(),
   locale: z.string().max(5).optional(),
+  calendarSystem: z.enum(['gregorian', 'jalali']).optional(),
 });
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {

@@ -3,7 +3,9 @@
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { chartColors, axisStyle, gridStyle, areaChartDefaults } from '@moneio/ui/lib/chart-theme';
 import { ChartTooltip, chartTooltipContentStyle } from '@moneio/ui/patterns';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
+import { useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -13,6 +15,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+
+import { useIsRTL } from '@/hooks/use-direction';
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface MonthlyData {
   month: string;
@@ -28,17 +33,16 @@ interface CashflowChartProps {
   baseCurrency: string;
 }
 
-function formatCurrency(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProps) {
+  const t = useTranslations('dashboard');
+  const { formatCurrency } = useLocaleFormat();
+  const isRTL = useIsRTL();
   const containerRef = useFadeIn({ duration: 0.5, y: 20 }) as React.RefObject<HTMLDivElement>;
+
+  // Reverse data for RTL so newest months appear on the left
+  const chartData = useMemo(() => {
+    return isRTL ? [...data].reverse() : data;
+  }, [data, isRTL]);
 
   if (loading) {
     return (
@@ -51,10 +55,13 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
 
   return (
     <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-foreground">Cashflow</h2>
+      <h2 className="text-lg font-semibold text-foreground">{t('cashflow')}</h2>
       <div className="mt-4 h-64 min-h-[256px]">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <AreaChart
+            data={chartData}
+            margin={{ top: 10, right: isRTL ? 0 : 10, left: isRTL ? 10 : 0, bottom: 0 }}
+          >
             <defs>
               <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -74,13 +81,20 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
               </linearGradient>
             </defs>
             <CartesianGrid {...gridStyle} vertical={false} />
-            <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />
+            <XAxis
+              dataKey="monthLabel"
+              tick={axisStyle}
+              tickLine={false}
+              axisLine={false}
+              reversed={isRTL}
+            />
             <YAxis
               tick={axisStyle}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value, baseCurrency)}
-              width={80}
+              width={100}
+              orientation={isRTL ? 'right' : 'left'}
             />
             <Tooltip
               content={<ChartTooltip currency={baseCurrency} formatLabel={(label) => label} />}
@@ -89,7 +103,7 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
             <Area
               type="monotone"
               dataKey="income"
-              name="Income"
+              name={t('income')}
               stroke={chartColors.income}
               strokeWidth={areaChartDefaults.strokeWidth}
               fill="url(#incomeGradient)"
@@ -104,7 +118,7 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
             <Area
               type="monotone"
               dataKey="expenses"
-              name="Expenses"
+              name={t('expenses')}
               stroke={chartColors.expense}
               strokeWidth={areaChartDefaults.strokeWidth}
               fill="url(#expenseGradient)"
@@ -123,11 +137,11 @@ export function CashflowChart({ data, loading, baseCurrency }: CashflowChartProp
       <div className="mt-4 flex items-center justify-center gap-6 text-sm">
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full bg-chart-income" />
-          <span className="text-muted-foreground">Income</span>
+          <span className="text-muted-foreground">{t('income')}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full bg-chart-expense" />
-          <span className="text-muted-foreground">Expenses</span>
+          <span className="text-muted-foreground">{t('expenses')}</span>
         </div>
       </div>
     </div>

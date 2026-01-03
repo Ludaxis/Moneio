@@ -25,7 +25,8 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const t = useTranslations('navigation');
+  const t = useTranslations('chat');
+  const tCommon = useTranslations('common');
   const { workspaceId, loading: workspaceLoading } = useWorkspace();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -73,7 +74,7 @@ export default function ChatPage() {
         const assistantMessage: Message = {
           id: data.message?.id || `assistant-${Date.now()}`,
           role: 'assistant',
-          content: data.message?.content || 'I apologize, but I could not process your request.',
+          content: data.message?.content || t('errorProcessing'),
           timestamp: new Date(data.message?.timestamp || Date.now()),
           metadata: data.message?.metadata,
         };
@@ -86,8 +87,7 @@ export default function ChatPage() {
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content:
-            'I apologize, but I encountered an error processing your request. Please try again.',
+          content: t('errorGeneral'),
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -108,7 +108,7 @@ export default function ChatPage() {
       <div className="flex h-[calc(100vh-12rem)] items-center justify-center">
         <div className="animate-pulse text-center">
           <Bot className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
+          <p className="mt-4 text-sm text-muted-foreground">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -120,9 +120,9 @@ export default function ChatPage() {
       <div className="flex h-[calc(100vh-12rem)] items-center justify-center">
         <div className="text-center">
           <Bot className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h2 className="mt-4 text-lg font-semibold text-foreground">No Workspace Selected</h2>
+          <h2 className="mt-4 text-lg font-semibold text-foreground">{t('noWorkspace')}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Create or select a workspace to start chatting with your AI CFO.
+            {t('noWorkspaceDesc')}
           </p>
         </div>
       </div>
@@ -137,8 +137,8 @@ export default function ChatPage() {
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-foreground">{t('chat')}</h1>
-          <p className="text-sm text-muted-foreground">Your AI-powered financial assistant</p>
+          <h1 className="text-lg font-semibold text-foreground">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('financialAssistant')}</p>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export default function ChatPage() {
             onSend={sendMessage}
             disabled={!workspaceId}
             loading={loading}
-            placeholder="Ask about spending, income, runway, recurring expenses..."
+            placeholder={t('placeholderLong')}
           />
         </div>
       </div>

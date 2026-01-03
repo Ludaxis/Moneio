@@ -226,6 +226,18 @@
   --tw-space-x-reverse: 1;
 }
 
+/* Persian (Farsi) font - Vazirmatn */
+html.font-persian,
+html.font-persian body {
+  font-family: var(--font-vazirmatn), var(--font-arabic), system-ui, sans-serif;
+}
+
+/* Arabic font - Noto Sans Arabic */
+html.font-arabic,
+html.font-arabic body {
+  font-family: var(--font-arabic), system-ui, sans-serif;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

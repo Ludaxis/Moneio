@@ -4,8 +4,9 @@ import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { axisStyle, gridStyle, chartPalette, areaChartDefaults } from '@moneio/ui/lib/chart-theme';
 import { ChartTooltip, chartTooltipContentStyle } from '@moneio/ui/patterns';
 import { AlertCircle, TrendingUp, Calendar, TrendingDown, Minus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AreaChart,
   Area,
@@ -16,6 +17,9 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
+
+import { useIsRTL } from '@/hooks/use-direction';
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface ForecastMonth {
   month: string;
@@ -59,19 +63,49 @@ interface ForecastChartProps {
   months?: number;
 }
 
-function formatCurrency(value: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+// Map English insight patterns to translation keys
+const insightPatternMap: Array<{ pattern: RegExp; key: string; extractParams?: (match: RegExpMatchArray) => Record<string, string> }> = [
+  {
+    pattern: /Projected monthly deficit of \$?([\d,]+)/i,
+    key: 'projectedDeficit',
+    extractParams: (match) => ({ amount: `$${match[1]}` }),
+  },
+  {
+    pattern: /Warning: Cash may run out in (\d+) month/i,
+    key: 'cashMayRunOut',
+    extractParams: (match) => ({ months: match[1] }),
+  },
+  {
+    pattern: /Positive outlook/i,
+    key: 'positiveOutlook',
+  },
+  {
+    pattern: /Finances appear stable/i,
+    key: 'stableFinances',
+  },
+  {
+    pattern: /High expense variability/i,
+    key: 'highExpenseVariability',
+  },
+  {
+    pattern: /Seasonal.*pattern/i,
+    key: 'seasonalPattern',
+  },
+];
 
 export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
+  const t = useTranslations('dashboard');
+  const tInsights = useTranslations('dashboard.forecastInsights');
+  const { formatCurrency, formatNumber } = useLocaleFormat();
+  const isRTL = useIsRTL();
   const [data, setData] = useState<ForecastData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const chartData = useMemo(() => {
+    if (!data?.months) return [];
+    return isRTL ? [...data.months].reverse() : data.months;
+  }, [data?.months, isRTL]);
 
   const containerRef = useFadeIn({ duration: 0.5, y: 20 }) as React.RefObject<HTMLDivElement>;
 
@@ -111,7 +145,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
   if (error) {
     return (
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('cashFlowForecast')}</h2>
         <div className="mt-4 flex items-center gap-2 text-sm text-danger-600">
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
@@ -123,13 +157,11 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
   if (!data || !data.months || data.months.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('cashFlowForecast')}</h2>
         <div className="mt-6 flex flex-col items-center justify-center py-8 text-center">
           <Calendar className="h-12 w-12 text-muted-foreground" />
           <p className="mt-4 text-sm text-muted-foreground">
-            Not enough data to generate a forecast.
-            <br />
-            Add more transactions to see projections.
+            {t('notEnoughDataForForecast')}
           </p>
         </div>
       </div>
@@ -174,12 +206,12 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
     <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-foreground">Cash Flow Forecast</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('cashFlowForecast')}</h2>
           {trendIcons[data.summary.trend]}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
-            {Math.round(data.overallConfidence)}% confidence
+            {formatNumber(Math.round(data.overallConfidence || 0))}% {t('confidence')}
           </span>
         </div>
       </div>
@@ -187,19 +219,19 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
       {/* Summary Cards */}
       <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="rounded-lg bg-muted/30 p-3">
-          <p className="text-xs text-muted-foreground">Current Balance</p>
+          <p className="text-xs text-muted-foreground">{t('currentBalance')}</p>
           <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
             {formatCurrency(data.currentBalance, data.currency)}
           </p>
         </div>
         <div className="rounded-lg bg-muted/30 p-3">
-          <p className="text-xs text-muted-foreground">Projected End</p>
+          <p className="text-xs text-muted-foreground">{t('projectedEnd')}</p>
           <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
             {formatCurrency(data.summary.endingBalance, data.currency)}
           </p>
         </div>
         <div className="rounded-lg bg-muted/30 p-3">
-          <p className="text-xs text-muted-foreground">Avg Monthly Net</p>
+          <p className="text-xs text-muted-foreground">{t('avgMonthlyNet')}</p>
           <p
             className={`mt-1 text-lg font-semibold tabular-nums ${
               avgMonthlyNet >= 0 ? 'text-chart-income' : 'text-chart-expense'
@@ -209,15 +241,18 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
           </p>
         </div>
         <div className={`rounded-lg p-3 ${runwayStatusColors[runway.status]}`}>
-          <p className="text-xs opacity-80">Cash Runway</p>
-          <p className="mt-1 text-lg font-semibold">{runway.months}+ months</p>
+          <p className="text-xs opacity-80">{t('cashRunway')}</p>
+          <p className="mt-1 text-lg font-semibold">{formatNumber(Number(runway.months))}+ {t('months')}</p>
         </div>
       </div>
 
       {/* Chart */}
       <div className="mt-6 h-64 min-h-[256px]">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <AreaChart data={data.months} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <AreaChart
+            data={chartData}
+            margin={{ top: 10, right: isRTL ? 0 : 10, left: isRTL ? 10 : 0, bottom: 0 }}
+          >
             <defs>
               <linearGradient id="cashGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -229,13 +264,20 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
               </linearGradient>
             </defs>
             <CartesianGrid {...gridStyle} vertical={false} />
-            <XAxis dataKey="label" tick={axisStyle} tickLine={false} axisLine={false} />
+            <XAxis
+              dataKey="label"
+              tick={axisStyle}
+              tickLine={false}
+              axisLine={false}
+              reversed={isRTL}
+            />
             <YAxis
               tick={axisStyle}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value, data.currency)}
-              width={80}
+              width={100}
+              orientation={isRTL ? 'right' : 'left'}
             />
             <Tooltip
               content={<ChartTooltip currency={data.currency} formatLabel={(label) => label} />}
@@ -256,8 +298,8 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
                 strokeDasharray="5 5"
                 strokeOpacity={0.6}
                 label={{
-                  value: 'Lowest',
-                  position: 'right',
+                  value: t('lowest'),
+                  position: isRTL ? 'left' : 'right',
                   fill: 'hsl(var(--chart-expense))',
                   fontSize: 10,
                 }}
@@ -266,7 +308,7 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
             <Area
               type="monotone"
               dataKey="projectedBalance"
-              name="Projected Balance"
+              name={t('projectedBalance')}
               stroke={chartPalette[0]}
               strokeWidth={areaChartDefaults.strokeWidth}
               fill="url(#cashGradient)"
@@ -285,22 +327,35 @@ export function ForecastChart({ workspaceId, months = 6 }: ForecastChartProps) {
       {/* Insights */}
       {data.summary.insights && data.summary.insights.length > 0 && (
         <div className="mt-4 rounded-lg bg-muted/30 p-3">
-          <p className="text-xs font-medium text-muted-foreground">Insights</p>
+          <p className="text-xs font-medium text-muted-foreground">{t('insights')}</p>
           <ul className="mt-1 space-y-1">
-            {data.summary.insights.slice(0, 2).map((insight, i) => (
-              <li key={i} className="text-xs text-foreground">
-                • {insight}
-              </li>
-            ))}
+            {data.summary.insights.slice(0, 2).map((insight, i) => {
+              // Try to translate the insight
+              let translatedInsight = insight;
+              for (const { pattern, key, extractParams } of insightPatternMap) {
+                const match = insight.match(pattern);
+                if (match) {
+                  const params = extractParams ? extractParams(match) : {};
+                  translatedInsight = tInsights(key, params);
+                  break;
+                }
+              }
+              return (
+                <li key={i} className="text-xs text-foreground">
+                  • {translatedInsight}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
 
       {/* Confidence Note */}
       <p className="mt-4 text-xs text-muted-foreground">
-        Based on {data.dataQuality.transactionsAnalyzed} transactions and{' '}
-        {data.dataQuality.recurringExpensesDetected + data.dataQuality.recurringIncomeDetected}{' '}
-        recurring patterns detected.
+        {t('basedOnTransactions', {
+          transactions: formatNumber(data.dataQuality.transactionsAnalyzed),
+          patterns: formatNumber(data.dataQuality.recurringExpensesDetected + data.dataQuality.recurringIncomeDetected)
+        })}
       </p>
     </div>
   );

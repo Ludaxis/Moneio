@@ -20,6 +20,8 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
+import { extractLocaleFromPath } from '@/lib/i18n';
+
 type ImportStep = 'upload' | 'preview' | 'importing' | 'complete';
 
 interface WorkspaceCategory {
@@ -118,8 +120,7 @@ export default function CsvImportPage() {
   const workspaceId = searchParams.get('workspace');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   const [step, setStep] = useState<ImportStep>('upload');
   const [file, setFile] = useState<File | null>(null);
@@ -420,7 +421,12 @@ export default function CsvImportPage() {
         <>
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <p className="mt-4 text-lg font-medium text-foreground">Analyzing CSV...</p>
-          <p className="mt-2 text-sm text-muted-foreground">Detecting columns automatically</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Detecting columns and categorizing transactions with AI
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            This may take up to a minute for large files
+          </p>
         </>
       ) : (
         <>
@@ -486,7 +492,7 @@ export default function CsvImportPage() {
               <thead className="border-b border-border bg-muted/50">
                 <tr>
                   {headers.map((header) => (
-                    <th key={header} className="px-2 py-1 text-left font-medium whitespace-nowrap">
+                    <th key={header} className="px-2 py-1 text-start font-medium whitespace-nowrap">
                       {header}
                     </th>
                   ))}
@@ -639,17 +645,17 @@ export default function CsvImportPage() {
                         title="Select all"
                       />
                     </th>
-                    <th className="px-4 py-2 text-left font-medium">Date</th>
-                    <th className="px-4 py-2 text-left font-medium">Description</th>
-                    <th className="px-4 py-2 text-right font-medium">Amount</th>
-                    <th className="px-4 py-2 text-left font-medium">
+                    <th className="px-4 py-2 text-start font-medium">Date</th>
+                    <th className="px-4 py-2 text-start font-medium">Description</th>
+                    <th className="px-4 py-2 text-end font-medium">Amount</th>
+                    <th className="px-4 py-2 text-start font-medium">
                       <span className="flex items-center gap-1.5">
                         <Sparkles className="h-3.5 w-3.5 text-primary" />
                         Category
                       </span>
                     </th>
                     {mapping.balance && (
-                      <th className="px-4 py-2 text-right font-medium">Balance</th>
+                      <th className="px-4 py-2 text-end font-medium">Balance</th>
                     )}
                     <th className="w-10 px-2 py-2"></th>
                   </tr>
@@ -675,7 +681,7 @@ export default function CsvImportPage() {
                       <td className="px-4 py-2 max-w-[300px] truncate">{tx.description}</td>
                       <td
                         className={cn(
-                          'px-4 py-2 text-right font-tabular-nums whitespace-nowrap',
+                          'px-4 py-2 text-end font-tabular-nums whitespace-nowrap',
                           tx.amount >= 0 ? 'text-success' : 'text-destructive'
                         )}
                       >
@@ -721,7 +727,7 @@ export default function CsvImportPage() {
                         )}
                       </td>
                       {mapping.balance && (
-                        <td className="px-4 py-2 text-right font-tabular-nums whitespace-nowrap">
+                        <td className="px-4 py-2 text-end font-tabular-nums whitespace-nowrap">
                           {tx.balance?.toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,

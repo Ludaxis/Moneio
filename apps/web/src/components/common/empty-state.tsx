@@ -2,6 +2,7 @@
 
 import { cn } from '@moneio/ui';
 import { FileText, Receipt, CreditCard, Building2, Sparkles, type LucideIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export interface EmptyStateProps {
   /** Icon to display */
@@ -157,19 +158,20 @@ export function NoDocumentsEmpty({
   onDemo?: () => void;
   size?: 'sm' | 'md' | 'lg';
 }) {
+  const t = useTranslations('emptyStates');
   return (
     <EmptyState
       icon={FileText}
-      title="No documents yet"
-      description="Upload invoices, receipts, or bank statements to get started with AI-powered extraction."
+      title={t('noDocuments')}
+      description={t('noDocumentsDesc')}
       action={
         onUpload
-          ? { label: 'Upload Document', onClick: onUpload, variant: 'primary' }
+          ? { label: t('uploadDocument'), onClick: onUpload, variant: 'primary' }
           : onDemo
-            ? { label: 'Try Demo Mode', onClick: onDemo, variant: 'demo' }
+            ? { label: t('tryDemoMode'), onClick: onDemo, variant: 'demo' }
             : undefined
       }
-      secondaryAction={onUpload && onDemo ? { label: 'Try Demo', onClick: onDemo } : undefined}
+      secondaryAction={onUpload && onDemo ? { label: t('tryDemo'), onClick: onDemo } : undefined}
       size={size}
     />
   );
@@ -184,19 +186,20 @@ export function NoInvoicesEmpty({
   onDemo?: () => void;
   size?: 'sm' | 'md' | 'lg';
 }) {
+  const t = useTranslations('emptyStates');
   return (
     <EmptyState
       icon={Receipt}
-      title="No invoices yet"
-      description="Create your first invoice or import from your accounting software."
+      title={t('noInvoices')}
+      description={t('noInvoicesDesc')}
       action={
         onCreate
-          ? { label: 'Create Invoice', onClick: onCreate, variant: 'primary' }
+          ? { label: t('createInvoice'), onClick: onCreate, variant: 'primary' }
           : onDemo
-            ? { label: 'Try Demo Mode', onClick: onDemo, variant: 'demo' }
+            ? { label: t('tryDemoMode'), onClick: onDemo, variant: 'demo' }
             : undefined
       }
-      secondaryAction={onCreate && onDemo ? { label: 'Try Demo', onClick: onDemo } : undefined}
+      secondaryAction={onCreate && onDemo ? { label: t('tryDemo'), onClick: onDemo } : undefined}
       size={size}
     />
   );
@@ -211,19 +214,20 @@ export function NoTransactionsEmpty({
   onDemo?: () => void;
   size?: 'sm' | 'md' | 'lg';
 }) {
+  const t = useTranslations('emptyStates');
   return (
     <EmptyState
       icon={CreditCard}
-      title="No transactions yet"
-      description="Connect your bank account to automatically import transactions."
+      title={t('noTransactions')}
+      description={t('noTransactionsDesc')}
       action={
         onConnect
-          ? { label: 'Connect Bank', onClick: onConnect, variant: 'primary' }
+          ? { label: t('connectBank'), onClick: onConnect, variant: 'primary' }
           : onDemo
-            ? { label: 'Try Demo Mode', onClick: onDemo, variant: 'demo' }
+            ? { label: t('tryDemoMode'), onClick: onDemo, variant: 'demo' }
             : undefined
       }
-      secondaryAction={onConnect && onDemo ? { label: 'Try Demo', onClick: onDemo } : undefined}
+      secondaryAction={onConnect && onDemo ? { label: t('tryDemo'), onClick: onDemo } : undefined}
       size={size}
     />
   );
@@ -238,19 +242,20 @@ export function NoBankConnectionEmpty({
   onDemo?: () => void;
   size?: 'sm' | 'md' | 'lg';
 }) {
+  const t = useTranslations('emptyStates');
   return (
     <EmptyState
       icon={Building2}
-      title="Connect your bank"
-      description="Link your bank accounts to automatically sync transactions and get AI-powered insights."
+      title={t('connectBankTitle')}
+      description={t('connectBankDesc')}
       action={
         onConnect
-          ? { label: 'Connect Bank Account', onClick: onConnect, variant: 'primary' }
+          ? { label: t('connectBankAccount'), onClick: onConnect, variant: 'primary' }
           : onDemo
-            ? { label: 'Try Demo Mode', onClick: onDemo, variant: 'demo' }
+            ? { label: t('tryDemoMode'), onClick: onDemo, variant: 'demo' }
             : undefined
       }
-      secondaryAction={onConnect && onDemo ? { label: 'Try Demo', onClick: onDemo } : undefined}
+      secondaryAction={onConnect && onDemo ? { label: t('tryDemo'), onClick: onDemo } : undefined}
       size={size}
     />
   );

@@ -3,6 +3,8 @@
 import { cn } from '@moneio/ui';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
 
+import { useLocaleFormat } from '@/hooks/use-locale-format';
+
 export interface TrendBadgeProps {
   /** Percentage change */
   percentage: number;
@@ -34,6 +36,7 @@ export function TrendBadge({
   size = 'sm',
   isUpGood = true,
 }: TrendBadgeProps) {
+  const { formatNumber } = useLocaleFormat();
   // Determine if this change is "good" or "bad"
   const isPositive =
     direction === 'stable' ? null : isUpGood ? direction === 'up' : direction === 'down';
@@ -65,8 +68,8 @@ export function TrendBadge({
         {direction === 'stable' && <Minus className={iconSize} />}
         <span className="tabular-nums">
           {direction === 'stable'
-            ? '0%'
-            : `${direction === 'up' ? '+' : '-'}${Math.min(Math.abs(percentage), 999).toFixed(1)}%`}
+            ? `${formatNumber(0)}%`
+            : `${direction === 'up' ? '+' : '-'}${formatNumber(Math.min(Math.abs(percentage), 999), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`}
         </span>
       </div>
       {period && <span className="text-xs text-muted-foreground">{period}</span>}

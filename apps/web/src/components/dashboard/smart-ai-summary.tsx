@@ -17,8 +17,11 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface CashFlowInsight {
   id: string;
@@ -36,12 +39,10 @@ interface SmartSummary {
   cashflowStatus: 'healthy' | 'stable' | 'attention' | 'critical';
   keyMetrics: {
     netCashflow: number;
-    netCashflowFormatted: string;
     burnRate: number;
-    burnRateFormatted: string;
     runway: number;
-    runwayText: string;
     savingsRate: number;
+    currency: string;
   };
   insights: CashFlowInsight[];
   quickTip: string;
@@ -53,7 +54,32 @@ interface SmartAISummaryProps {
   endDate: string;
 }
 
+// Map English recommendations from API to translation keys
+const recommendationKeyMap: Record<string, string> = {
+  'Focus on generating revenue streams': 'focusOnRevenue',
+  'Consider ways to increase margins': 'considerIncreaseMargins',
+  'Review expenses and pricing to improve profitability': 'reviewExpensesAndPricing',
+  'Urgent: Cut expenses or increase revenue immediately': 'urgentCutExpenses',
+  'Build more cash reserves when possible': 'buildMoreReserves',
+  'Prioritize extending your cash runway': 'prioritizeExtendRunway',
+  'Urgent: Take immediate action to extend runway': 'urgentExtendRunway',
+  'Emergency: Secure funding or cut expenses immediately': 'emergencySecureFunding',
+  'Build an emergency fund of 3-6 months expenses': 'buildEmergencyFund',
+  'Prioritize building cash reserves': 'prioritizeBuildingReserves',
+  'Urgent: Build emergency cash buffer': 'urgentBuildBuffer',
+  'Track and categorize expenses for better predictability': 'trackAndCategorize',
+  'Review spending patterns and identify recurring costs': 'reviewSpendingPatterns',
+  'Focus on establishing revenue streams': 'focusOnEstablishingRevenue',
+  'Diversify revenue sources for more stability': 'diversifyRevenueSources',
+  'Build more predictable revenue streams': 'buildPredictableRevenue',
+};
+
 export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISummaryProps) {
+  const t = useTranslations('dashboard');
+  const tRec = useTranslations('dashboard.recommendations');
+  const tCommon = useTranslations('common');
+  const { formatCurrency, formatPercent, formatNumber } = useLocaleFormat();
+
   const [summary, setSummary] = useState<SmartSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,73 +105,73 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
 
       const insights: CashFlowInsight[] = [];
       let cashflowStatus: SmartSummary['cashflowStatus'] = 'stable';
-      let headline = 'Your finances at a glance';
-      let subtext = "Here's what's happening with your money";
-      let quickTip = 'Keep tracking your expenses for better insights.';
+      let headline = t('aiSummary.headline');
+      let subtext = t('aiSummary.subtext');
+      let quickTip = t('aiSummary.quickTipDefault');
 
       // Default metrics
       const keyMetrics = {
         netCashflow: 0,
-        netCashflowFormatted: '$0',
         burnRate: 0,
-        burnRateFormatted: '$0',
         runway: 0,
-        runwayText: '- months',
         savingsRate: 0,
+        currency: 'EUR',
       };
 
       // Process health score (still 12-month based but used for headline only)
       if (healthRes.ok) {
         const health = await healthRes.json();
         const score = health.overallScore || 0;
+        const formattedScore = formatNumber(score);
 
         if (score >= 80) {
           cashflowStatus = 'healthy';
-          headline = 'Excellent financial health!';
-          subtext = `Your health score is ${score}/100 - you're doing great`;
+          headline = t('aiSummary.healthExcellent');
+          subtext = t('aiSummary.healthExcellentDesc', { score: formattedScore });
         } else if (score >= 60) {
           cashflowStatus = 'stable';
-          headline = 'Good financial standing';
-          subtext = `Health score: ${score}/100 - room for improvement`;
+          headline = t('aiSummary.healthGood');
+          subtext = t('aiSummary.healthGoodDesc', { score: formattedScore });
         } else if (score >= 40) {
           cashflowStatus = 'attention';
-          headline = 'Needs attention';
-          subtext = `Health score: ${score}/100 - let's work on this`;
+          headline = t('aiSummary.healthAttention');
+          subtext = t('aiSummary.healthAttentionDesc', { score: formattedScore });
         } else {
           cashflowStatus = 'critical';
-          headline = 'Financial health alert';
-          subtext = `Health score: ${score}/100 - action needed`;
+          headline = t('aiSummary.healthCritical');
+          subtext = t('aiSummary.healthCriticalDesc', { score: formattedScore });
         }
 
         if (health.recommendations?.[0]) {
+          // Translate the recommendation if we have a mapping, otherwise use the original
+          const recommendationText = health.recommendations[0];
+          const translationKey = recommendationKeyMap[recommendationText];
+          const translatedRecommendation = translationKey
+            ? tRec(translationKey as keyof typeof recommendationKeyMap)
+            : recommendationText;
+
           insights.push({
             id: 'recommendation',
             type: score < 60 ? 'warning' : 'tip',
             icon: 'zap',
-            title: 'AI Recommendation',
-            description: health.recommendations[0],
+            title: t('aiSummary.aiRecommendation'),
+            description: translatedRecommendation,
           });
         }
 
         const runwayMetric = health.metrics?.find((m: { name: string }) => m.name === 'runway');
         if (runwayMetric) {
           keyMetrics.runway = parseFloat(runwayMetric.value) || 0;
-          keyMetrics.runwayText = runwayMetric.value;
         }
       }
 
       // Dashboard metrics (date-range aligned) for the primary numbers
       if (metricsRes.ok) {
         const metrics = await metricsRes.json();
-        keyMetrics.netCashflow = metrics.netCashflow.amount || 0;
-        keyMetrics.netCashflowFormatted = metrics.netCashflow.formatted || '$0';
-        keyMetrics.burnRate = metrics.burnRate.amount || 0;
-        keyMetrics.burnRateFormatted = metrics.burnRate.formatted || '$0';
+        keyMetrics.netCashflow = metrics.netCashflow?.amount || 0;
+        keyMetrics.burnRate = metrics.burnRate?.amount || 0;
         keyMetrics.runway = metrics.runway?.monthsRemaining ?? keyMetrics.runway;
-        keyMetrics.runwayText =
-          metrics.runway?.monthsRemaining !== undefined
-            ? `${metrics.runway.monthsRemaining} months`
-            : keyMetrics.runwayText;
+        keyMetrics.currency = metrics.baseCurrency || 'EUR';
 
         const income = metrics.totalIncome?.amount || 0;
         if (income > 0 && metrics.netCashflow?.amount !== undefined) {
@@ -158,25 +184,25 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
             id: 'negative-cashflow',
             type: 'alert',
             icon: 'trend-down',
-            title: 'Cash Flow Warning',
-            description: `You're spending ${formatCurrency(
-              Math.abs(metrics.netCashflow.amount),
-              metrics.baseCurrency
-            )} more than you earn for this period.`,
-            metric: `${formatCurrency(metrics.netCashflow.amount, metrics.baseCurrency)}/period`,
-            action: { label: 'Review expenses', href: '/transactions?type=expense' },
+            title: t('aiSummary.cashFlowWarning'),
+            description: t('aiSummary.cashFlowWarningDesc', {
+              amount: formatCurrency(Math.abs(metrics.netCashflow.amount), metrics.baseCurrency),
+            }),
+            metric: t('aiSummary.perPeriod', {
+              amount: formatCurrency(metrics.netCashflow.amount, metrics.baseCurrency),
+            }),
+            action: { label: t('aiSummary.reviewExpenses'), href: '/transactions?type=expense' },
           });
         } else if (metrics.netCashflow?.amount > 0) {
           insights.push({
             id: 'positive-cashflow',
             type: 'positive',
             icon: 'trend-up',
-            title: 'Positive Cash Flow',
-            description: `You're saving ${formatCurrency(
-              metrics.netCashflow.amount,
-              metrics.baseCurrency
-            )} over this period.`,
-            metric: `+${keyMetrics.savingsRate}% savings rate`,
+            title: t('aiSummary.positiveCashFlow'),
+            description: t('aiSummary.positiveCashFlowDesc', {
+              amount: formatCurrency(metrics.netCashflow.amount, metrics.baseCurrency),
+            }),
+            metric: t('aiSummary.savingsRateMetric', { rate: keyMetrics.savingsRate }),
           });
         }
 
@@ -186,12 +212,13 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
             id: 'runway-warning',
             type: 'alert',
             icon: 'calendar',
-            title: 'Cash Runway Alert',
-            description: `At current spending, cash could run out in ${metrics.runway.monthsRemaining} months.`,
-            action: { label: 'View forecast', href: '/reports?tab=forecast' },
+            title: t('aiSummary.cashRunwayAlert'),
+            description: t('aiSummary.cashRunwayAlertDesc', {
+              months: metrics.runway.monthsRemaining,
+            }),
+            action: { label: t('aiSummary.viewForecast'), href: '/reports?tab=forecast' },
           });
-          quickTip =
-            'Consider reducing non-essential expenses or increasing income to extend your runway.';
+          quickTip = t('aiSummary.quickTipRunway');
         }
       }
 
@@ -209,9 +236,12 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
             id: 'top-expense',
             type: 'tip',
             icon: 'piggy',
-            title: 'Spending Concentration',
-            description: `${topExpenseCategory.categoryName || 'Uncategorized'} accounts for ${topExpenseCategory.percentage}% of expenses`,
-            action: { label: 'View breakdown', href: '/reports?tab=cashflow' },
+            title: t('aiSummary.spendingConcentration'),
+            description: t('aiSummary.spendingConcentrationDesc', {
+              category: topExpenseCategory.categoryName || tCommon('uncategorized'),
+              percentage: topExpenseCategory.percentage,
+            }),
+            action: { label: t('aiSummary.viewBreakdown'), href: '/reports?tab=cashflow' },
           });
         }
       }
@@ -224,12 +254,19 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
             id: 'flagged-subscriptions',
             type: 'warning',
             icon: 'zap',
-            title: 'Potential Savings Found',
-            description: `${subs.summary.flaggedCount} subscriptions flagged for review`,
+            title: t('aiSummary.potentialSavingsFound'),
+            description: t('aiSummary.potentialSavingsDesc', {
+              count: subs.summary.flaggedCount,
+            }),
             metric: subs.summary.potentialSavings
-              ? `Save ${formatCurrency(subs.summary.potentialSavings, subs.summary.currency || 'USD')}/mo`
+              ? t('aiSummary.savingsPerMonth', {
+                  amount: formatCurrency(
+                    subs.summary.potentialSavings,
+                    subs.summary.currency || 'USD'
+                  ),
+                })
               : undefined,
-            action: { label: 'Review', href: '/subscriptions' },
+            action: { label: tCommon('review'), href: '/subscriptions' },
           });
         }
       }
@@ -240,12 +277,11 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
           id: 'keep-going',
           type: 'positive',
           icon: 'trend-up',
-          title: 'Stay on Track',
-          description: 'Continue monitoring your finances to build a complete picture.',
-          action: { label: 'Import transactions', href: '/transactions/import' },
+          title: t('aiSummary.stayOnTrack'),
+          description: t('aiSummary.stayOnTrackDesc'),
+          action: { label: t('aiSummary.importTransactions'), href: '/transactions/import' },
         });
-        quickTip =
-          'Import more transactions to unlock deeper AI insights about your spending patterns.';
+        quickTip = t('aiSummary.quickTipImport');
       }
 
       // Limit to top 4 insights
@@ -270,7 +306,7 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, t, tRec, tCommon, formatCurrency, formatNumber]);
 
   useEffect(() => {
     if (workspaceId) {
@@ -369,37 +405,37 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
       {/* Key Metrics */}
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="rounded-lg bg-background/60 backdrop-blur p-3">
-          <p className="text-xs text-muted-foreground truncate">Net Cash Flow</p>
+          <p className="text-xs text-muted-foreground truncate">{t('aiSummary.netCashFlow')}</p>
           <p
             className={cn(
               'mt-1 text-lg font-bold tabular-nums truncate',
               summary.keyMetrics.netCashflow >= 0 ? 'text-success-600' : 'text-danger-600'
             )}
           >
-            {summary.keyMetrics.netCashflowFormatted}
+            {formatCurrency(summary.keyMetrics.netCashflow, summary.keyMetrics.currency)}
           </p>
         </div>
         <div className="rounded-lg bg-background/60 backdrop-blur p-3">
-          <p className="text-xs text-muted-foreground truncate">Monthly Burn</p>
+          <p className="text-xs text-muted-foreground truncate">{t('aiSummary.monthlyBurn')}</p>
           <p className="mt-1 text-lg font-bold tabular-nums text-foreground truncate">
-            {summary.keyMetrics.burnRateFormatted}
+            {formatCurrency(summary.keyMetrics.burnRate, summary.keyMetrics.currency)}
           </p>
         </div>
         <div className="rounded-lg bg-background/60 backdrop-blur p-3">
-          <p className="text-xs text-muted-foreground truncate">Runway</p>
+          <p className="text-xs text-muted-foreground truncate">{t('aiSummary.runway')}</p>
           <p className="mt-1 text-lg font-bold text-foreground truncate">
-            {summary.keyMetrics.runwayText}
+            {t('aiSummary.monthsCount', { count: formatNumber(summary.keyMetrics.runway) })}
           </p>
         </div>
         <div className="rounded-lg bg-background/60 backdrop-blur p-3">
-          <p className="text-xs text-muted-foreground truncate">Savings Rate</p>
+          <p className="text-xs text-muted-foreground truncate">{t('aiSummary.savingsRate')}</p>
           <p
             className={cn(
               'mt-1 text-lg font-bold tabular-nums truncate',
               summary.keyMetrics.savingsRate >= 0 ? 'text-success-600' : 'text-danger-600'
             )}
           >
-            {summary.keyMetrics.savingsRate}%
+            {formatPercent(summary.keyMetrics.savingsRate)}
           </p>
         </div>
       </div>
@@ -457,19 +493,10 @@ export function SmartAISummary({ workspaceId, startDate, endDate }: SmartAISumma
           href="/reports"
           className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
-          View Reports
+          {t('aiSummary.viewReports')}
           <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
   );
-}
-
-function formatCurrency(amount: number, currency: string = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }

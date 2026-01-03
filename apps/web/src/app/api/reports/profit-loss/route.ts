@@ -18,6 +18,7 @@ import { z } from 'zod';
 
 import { createPrismaReportRepository } from '@/lib/repositories/report-repository';
 import { createServerClient } from '@/lib/supabase';
+import { formatCurrency, transformMoney } from '@/lib/utils/money-transform';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
@@ -37,23 +38,6 @@ const querySchema = z.object({
     .optional(),
   monthlyBreakdown: z.enum(['true', 'false']).optional(),
 });
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-function transformMoney(money: { amount: number; currency: string }) {
-  return {
-    amount: money.amount,
-    currency: money.currency,
-    formatted: formatCurrency(money.amount, money.currency),
-  };
-}
 
 export async function GET(request: Request) {
   try {
@@ -117,8 +101,93 @@ export async function GET(request: Request) {
       where: { workspaceId, isActive: true },
     });
 
-    // If no GL accounts, return empty P&L report
+    // If no GL accounts, generate simplified P&L from transactions
     if (glAccountCount === 0) {
+      // Get transactions with categories for the period
+      const transactions = await prisma.bankTransaction.findMany({
+        where: {
+          workspaceId,
+          postedAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        include: {
+          categorizations: {
+            where: { approved: true },
+            take: 1,
+            include: {
+              category: {
+                select: { id: true, name: true },
+              },
+            },
+          },
+        },
+      });
+
+      // Calculate totals from transactions
+      let totalIncome = 0;
+      let totalExpenses = 0;
+      const incomeByCategory: Record<string, { name: string; amount: number }> = {};
+      const expenseByCategory: Record<string, { name: string; amount: number }> = {};
+
+      for (const tx of transactions) {
+        const amountNum = tx.amount.toNumber();
+        const amount = Math.abs(amountNum);
+        const categorization = tx.categorizations[0];
+        const categoryName = categorization?.category?.name || 'Uncategorized';
+        const categoryId = categorization?.category?.id || 'uncategorized';
+
+        if (amountNum > 0) {
+          // Income
+          totalIncome += amount;
+          if (!incomeByCategory[categoryId]) {
+            incomeByCategory[categoryId] = { name: categoryName, amount: 0 };
+          }
+          incomeByCategory[categoryId].amount += amount;
+        } else {
+          // Expense
+          totalExpenses += amount;
+          if (!expenseByCategory[categoryId]) {
+            expenseByCategory[categoryId] = { name: categoryName, amount: 0 };
+          }
+          expenseByCategory[categoryId].amount += amount;
+        }
+      }
+
+      // Amounts are already in decimal format from Prisma Decimal
+      const incomeDecimal = totalIncome;
+      const expensesDecimal = totalExpenses;
+      const netIncomeDecimal = incomeDecimal - expensesDecimal;
+
+      // Build revenue items from income categories (amounts already in decimal)
+      const revenueItems = Object.entries(incomeByCategory).map(([id, { name, amount }]) => ({
+        accountId: id,
+        accountCode: '',
+        accountName: name,
+        amount: {
+          amount: amount,
+          currency: baseCurrency,
+          formatted: formatCurrency(amount, baseCurrency),
+        },
+        depth: 0,
+        isSubtotal: false,
+      }));
+
+      // Build expense items from expense categories (amounts already in decimal)
+      const expenseItems = Object.entries(expenseByCategory).map(([id, { name, amount }]) => ({
+        accountId: id,
+        accountCode: '',
+        accountName: name,
+        amount: {
+          amount: amount,
+          currency: baseCurrency,
+          formatted: formatCurrency(amount, baseCurrency),
+        },
+        depth: 0,
+        isSubtotal: false,
+      }));
+
       const emptySection = {
         name: '',
         key: '',
@@ -134,36 +203,51 @@ export async function GET(request: Request) {
           period: { start: startDate, end: endDate },
         },
         sections: {
-          revenue: { ...emptySection, name: 'Revenue', key: 'revenue' },
+          revenue: {
+            name: 'Revenue',
+            key: 'revenue',
+            items: revenueItems,
+            subtotal: {
+              amount: incomeDecimal,
+              currency: baseCurrency,
+              formatted: formatCurrency(incomeDecimal, baseCurrency),
+            },
+          },
           costOfGoodsSold: { ...emptySection, name: 'Cost of Goods Sold', key: 'cogs' },
           operatingExpenses: {
-            ...emptySection,
             name: 'Operating Expenses',
             key: 'operatingExpenses',
+            items: expenseItems,
+            subtotal: {
+              amount: expensesDecimal,
+              currency: baseCurrency,
+              formatted: formatCurrency(expensesDecimal, baseCurrency),
+            },
           },
           otherIncome: { ...emptySection, name: 'Other Income', key: 'otherIncome' },
           otherExpenses: { ...emptySection, name: 'Other Expenses', key: 'otherExpenses' },
         },
         summaries: {
           grossProfit: {
-            amount: 0,
+            amount: incomeDecimal,
             currency: baseCurrency,
-            formatted: formatCurrency(0, baseCurrency),
+            formatted: formatCurrency(incomeDecimal, baseCurrency),
           },
           operatingIncome: {
-            amount: 0,
+            amount: netIncomeDecimal,
             currency: baseCurrency,
-            formatted: formatCurrency(0, baseCurrency),
+            formatted: formatCurrency(netIncomeDecimal, baseCurrency),
           },
           netIncome: {
-            amount: 0,
+            amount: netIncomeDecimal,
             currency: baseCurrency,
-            formatted: formatCurrency(0, baseCurrency),
+            formatted: formatCurrency(netIncomeDecimal, baseCurrency),
           },
         },
         monthlyBreakdown: [],
+        _simplified: true,
         _notice:
-          'No GL accounts configured. Set up your Chart of Accounts to generate P&L reports.',
+          'Simplified P&L generated from transactions. Set up Chart of Accounts for detailed reports.',
       });
     }
 

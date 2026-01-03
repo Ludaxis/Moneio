@@ -5,17 +5,29 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
+const datasourceUrl = process.env.DATABASE_URL;
+const usingDataProxy = datasourceUrl?.startsWith('prisma://');
+
 /**
- * Prisma client singleton
- * In development, reuses the same instance across hot reloads
+ * Create a Prisma client configured for serverless/pooler usage.
+ * - Uses pooler-compatible connection limits via the connection string
+ * - Supports Prisma Data Proxy if DATABASE_URL is prisma://
  */
-export const prisma =
-  global.prisma ||
-  new PrismaClient({
+function createPrismaClient() {
+  return new PrismaClient({
+    ...(datasourceUrl ? { datasourceUrl } : {}),
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
+}
 
-if (process.env.NODE_ENV !== 'production') {
+/**
+ * Prisma client singleton
+ * In development, reuses the same instance across hot reloads (except when using Data Proxy)
+ */
+export const prisma =
+  (!usingDataProxy && global.prisma) || createPrismaClient();
+
+if (!usingDataProxy && process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;
 }
 

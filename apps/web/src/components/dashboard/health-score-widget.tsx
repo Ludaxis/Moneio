@@ -2,8 +2,11 @@
 
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { AlertCircle, TrendingUp, TrendingDown, Wallet, BarChart3, Calendar } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface HealthMetric {
   name: string;
@@ -43,12 +46,91 @@ const metricIcons: Record<string, React.ReactNode> = {
   incomeStability: <TrendingDown className="h-4 w-4" />,
 };
 
+// Map API metric names to translation keys
+const metricNameKeyMap: Record<string, string> = {
+  profitability: 'profitability',
+  runway: 'runway',
+  reserves: 'reserves',
+  expensePredictability: 'expensePredictability',
+  incomeStability: 'incomeStability',
+};
+
+// Map English recommendations to translation keys (reuse from smart-ai-summary)
+const recommendationKeyMap: Record<string, string> = {
+  'Focus on generating revenue streams': 'focusOnRevenue',
+  'Consider ways to increase margins': 'considerIncreaseMargins',
+  'Review expenses and pricing to improve profitability': 'reviewExpensesAndPricing',
+  'Urgent: Cut expenses or increase revenue immediately': 'urgentCutExpenses',
+  'Build more cash reserves when possible': 'buildMoreReserves',
+  'Prioritize extending your cash runway': 'prioritizeExtendRunway',
+  'Urgent: Take immediate action to extend runway': 'urgentExtendRunway',
+  'Emergency: Secure funding or cut expenses immediately': 'emergencySecureFunding',
+  'Build an emergency fund of 3-6 months expenses': 'buildEmergencyFund',
+  'Prioritize building cash reserves': 'prioritizeBuildingReserves',
+  'Urgent: Build emergency cash buffer': 'urgentBuildBuffer',
+  'Track and categorize expenses for better predictability': 'trackAndCategorize',
+  'Review spending patterns and identify recurring costs': 'reviewSpendingPatterns',
+  'Focus on establishing revenue streams': 'focusOnEstablishingRevenue',
+  'Diversify revenue sources for more stability': 'diversifyRevenueSources',
+  'Build more predictable revenue streams': 'buildPredictableRevenue',
+};
+
 export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
+  const t = useTranslations('dashboard');
+  const tRatings = useTranslations('dashboard.healthScore.ratings');
+  const tMetrics = useTranslations('dashboard.healthScore.metrics');
+  const tSummaries = useTranslations('dashboard.healthScore.summaries');
+  const tRec = useTranslations('dashboard.recommendations');
+  const { formatNumber } = useLocaleFormat();
   const [data, setData] = useState<HealthScoreData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const containerRef = useFadeIn({ duration: 0.5, y: 20 }) as React.RefObject<HTMLDivElement>;
+
+  // Helper to translate metric name
+  const translateMetricName = (name: string): string => {
+    const key = metricNameKeyMap[name];
+    if (key) {
+      return tMetrics(key);
+    }
+    // Fallback: convert camelCase to Title Case
+    return name.replace(/([A-Z])/g, ' $1').trim();
+  };
+
+  // Helper to translate rating
+  const translateRating = (rating: string): string => {
+    const validRatings = ['excellent', 'good', 'fair', 'poor', 'critical'];
+    if (validRatings.includes(rating)) {
+      return tRatings(rating as 'excellent' | 'good' | 'fair' | 'poor' | 'critical');
+    }
+    return rating;
+  };
+
+  // Helper to translate recommendation
+  const translateRecommendation = (rec: string): string => {
+    const key = recommendationKeyMap[rec];
+    if (key) {
+      return tRec(key);
+    }
+    return rec;
+  };
+
+  // Helper to translate summary
+  const translateSummary = (summary: string, rating: string, metrics: HealthMetric[]): string => {
+    // Find the worst performing metric for the {area} parameter
+    const worstMetric = metrics.reduce((worst, current) =>
+      current.score < worst.score ? current : worst
+    , metrics[0]);
+
+    const area = worstMetric ? translateMetricName(worstMetric.name).toLowerCase() : '';
+
+    const validRatings = ['excellent', 'good', 'fair', 'poor', 'critical'];
+    if (validRatings.includes(rating)) {
+      return tSummaries(rating as 'excellent' | 'good' | 'fair' | 'poor' | 'critical', { area });
+    }
+    return summary;
+  };
 
   const fetchHealthScore = useCallback(async () => {
     try {
@@ -91,7 +173,7 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
   if (error) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold text-foreground">Financial Health</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('financialHealth')}</h2>
         <div className="mt-4 flex items-center gap-2 text-sm text-danger-600">
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
@@ -116,7 +198,7 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
 
   return (
     <div ref={containerRef} className="rounded-lg border border-border bg-card p-6">
-      <h2 className="text-lg font-semibold text-foreground">Financial Health</h2>
+      <h2 className="text-lg font-semibold text-foreground">{t('financialHealth')}</h2>
 
       {/* Score Circle */}
       <div className="mt-4 flex flex-col items-center">
@@ -139,12 +221,12 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-foreground">{data.overallScore}</span>
+            <span className="text-3xl font-bold text-foreground">{formatNumber(data.overallScore)}</span>
             <span className="text-sm font-medium text-muted-foreground">{data.grade}</span>
           </div>
         </div>
         <p className={`mt-2 text-sm font-medium ${ratingColors[data.rating] || 'text-foreground'}`}>
-          {data.rating.charAt(0).toUpperCase() + data.rating.slice(1)}
+          {translateRating(data.rating)}
         </p>
       </div>
 
@@ -158,10 +240,10 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-foreground truncate">
-                  {metric.name.replace(/([A-Z])/g, ' $1').trim()}
+                  {translateMetricName(metric.name)}
                 </span>
                 <span className={`text-sm font-medium ${ratingColors[metric.rating]}`}>
-                  {metric.score}
+                  {formatNumber(metric.score)}
                 </span>
               </div>
               <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -186,13 +268,17 @@ export function HealthScoreWidget({ workspaceId }: HealthScoreWidgetProps) {
       </div>
 
       {/* Summary */}
-      <p className="mt-4 text-sm text-muted-foreground">{data.summary}</p>
+      <p className="mt-4 text-sm text-muted-foreground">
+        {translateSummary(data.summary, data.rating, data.metrics || [])}
+      </p>
 
       {/* Top Recommendation */}
       {data.recommendations && data.recommendations.length > 0 && (
         <div className="mt-4 rounded-lg bg-muted/50 p-3">
-          <p className="text-xs font-medium text-foreground">Top Recommendation</p>
-          <p className="mt-1 text-sm text-muted-foreground">{data.recommendations[0]}</p>
+          <p className="text-xs font-medium text-foreground">{t('topRecommendation')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {translateRecommendation(data.recommendations[0])}
+          </p>
         </div>
       )}
     </div>

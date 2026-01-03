@@ -231,10 +231,11 @@ export class ProfitLossService {
     const operatingIncome = grossProfit - opex;
     const netIncome = operatingIncome + otherInc - otherExp;
 
+    // Don't use createMoney - amounts are already in minor units (cents)
     const summaries: ProfitLossStatement['summaries'] = {
-      grossProfit: createMoney(grossProfit, baseCurrency),
-      operatingIncome: createMoney(operatingIncome, baseCurrency),
-      netIncome: createMoney(netIncome, baseCurrency),
+      grossProfit: { amount: grossProfit, currency: baseCurrency, decimalPlaces: 2 },
+      operatingIncome: { amount: operatingIncome, currency: baseCurrency, decimalPlaces: 2 },
+      netIncome: { amount: netIncome, currency: baseCurrency, decimalPlaces: 2 },
     };
 
     if (hasComparative) {
@@ -244,15 +245,10 @@ export class ProfitLossService {
       const prevOtherInc = sections.otherIncome.previousSubtotal?.amount || 0;
       const prevOtherExp = sections.otherExpenses.previousSubtotal?.amount || 0;
 
-      summaries.previousGrossProfit = createMoney(prevRevenue - prevCogs, baseCurrency);
-      summaries.previousOperatingIncome = createMoney(
-        prevRevenue - prevCogs - prevOpex,
-        baseCurrency
-      );
-      summaries.previousNetIncome = createMoney(
-        prevRevenue - prevCogs - prevOpex + prevOtherInc - prevOtherExp,
-        baseCurrency
-      );
+      // Don't use createMoney - amounts are already in minor units
+      summaries.previousGrossProfit = { amount: prevRevenue - prevCogs, currency: baseCurrency, decimalPlaces: 2 };
+      summaries.previousOperatingIncome = { amount: prevRevenue - prevCogs - prevOpex, currency: baseCurrency, decimalPlaces: 2 };
+      summaries.previousNetIncome = { amount: prevRevenue - prevCogs - prevOpex + prevOtherInc - prevOtherExp, currency: baseCurrency, decimalPlaces: 2 };
     }
 
     return summaries;

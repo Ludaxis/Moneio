@@ -136,15 +136,18 @@ export class BalanceSheetService {
     const totalAssets = this.sumSection(assetsSection, baseCurrency);
     const totalLiabilities = this.sumSection(liabilitiesSection, baseCurrency);
     const totalEquity = this.sumSection(equitySection, baseCurrency);
-    const totalLiabilitiesAndEquity = createMoney(
-      totalLiabilities.amount + totalEquity.amount,
-      baseCurrency
-    );
-    const difference = createMoney(
-      totalAssets.amount - totalLiabilitiesAndEquity.amount,
-      baseCurrency
-    );
-    const isBalanced = Math.abs(difference.amount) < 0.01;
+    // Don't use createMoney here - amounts are already in minor units (cents)
+    const totalLiabilitiesAndEquity: Money = {
+      amount: totalLiabilities.amount + totalEquity.amount,
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
+    const difference: Money = {
+      amount: totalAssets.amount - totalLiabilitiesAndEquity.amount,
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
+    const isBalanced = Math.abs(difference.amount) < 1; // 1 cent tolerance
 
     // Calculate ratios
     const ratios = this.calculateRatios(assetsSection, liabilitiesSection, baseCurrency);
@@ -212,10 +215,12 @@ export class BalanceSheetService {
       );
     }
 
-    const total = createMoney(
-      subsections.reduce((sum, sub) => sum + sub.subtotal.amount, 0),
-      baseCurrency
-    );
+    // Don't use createMoney - subtotal.amount is already in minor units
+    const total: Money = {
+      amount: subsections.reduce((sum, sub) => sum + sub.subtotal.amount, 0),
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     return {
       name: 'Assets',
@@ -277,10 +282,12 @@ export class BalanceSheetService {
       );
     }
 
-    const total = createMoney(
-      subsections.reduce((sum, sub) => sum + sub.subtotal.amount, 0),
-      baseCurrency
-    );
+    // Don't use createMoney - subtotal.amount is already in minor units
+    const total: Money = {
+      amount: subsections.reduce((sum, sub) => sum + sub.subtotal.amount, 0),
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     return {
       name: 'Liabilities',
@@ -332,10 +339,12 @@ export class BalanceSheetService {
       );
     }
 
-    const total = createMoney(
-      subsections.reduce((sum, sub) => sum + sub.subtotal.amount, 0),
-      baseCurrency
-    );
+    // Don't use createMoney - subtotal.amount is already in minor units
+    const total: Money = {
+      amount: subsections.reduce((sum, sub) => sum + sub.subtotal.amount, 0),
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     return {
       name: 'Equity',
@@ -483,7 +492,12 @@ export class BalanceSheetService {
     }
 
     // Working Capital = Current Assets - Current Liabilities
-    ratios.workingCapital = createMoney(currentAssetAmount - currentLiabilityAmount, baseCurrency);
+    // Don't use createMoney - amounts are already in minor units
+    ratios.workingCapital = {
+      amount: currentAssetAmount - currentLiabilityAmount,
+      currency: baseCurrency,
+      decimalPlaces: 2,
+    };
 
     return ratios;
   }

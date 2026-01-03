@@ -26,6 +26,7 @@ const createSchema = z.object({
   name: z.string().min(1).max(255),
   parentId: z.string().uuid().nullable().optional(),
   taxCode: z.string().max(20).optional(),
+  glAccountId: z.string().uuid().nullable().optional(),
 });
 
 /**
@@ -83,6 +84,9 @@ export async function GET(request: Request) {
           parent: {
             select: { id: true, name: true },
           },
+          glAccount: {
+            select: { id: true, accountCode: true, accountName: true, accountType: true },
+          },
           _count: {
             select: { children: true, rules: true, categorizations: true },
           },
@@ -98,6 +102,15 @@ export async function GET(request: Request) {
       parentId: cat.parentId,
       parent: cat.parent ? { id: cat.parent.id, name: cat.parent.name } : null,
       taxCode: cat.taxCode,
+      glAccountId: cat.glAccountId,
+      glAccount: cat.glAccount
+        ? {
+            id: cat.glAccount.id,
+            accountCode: cat.glAccount.accountCode,
+            accountName: cat.glAccount.accountName,
+            accountType: cat.glAccount.accountType,
+          }
+        : null,
       isSystem: cat.isSystem,
       childCount: cat._count.children,
       ruleCount: cat._count.rules,
@@ -143,7 +156,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { workspaceId, name, parentId, taxCode } = parsed.data;
+    const { workspaceId, name, parentId, taxCode, glAccountId } = parsed.data;
 
     // Check permission
     const canCreate = await hasPermission(user.id, workspaceId, 'category:create');
@@ -169,6 +182,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Category name already exists' }, { status: 409 });
     }
 
+    // Validate GL account exists (if specified)
+    if (glAccountId) {
+      const glAccount = await prisma.gLAccount.findFirst({
+        where: { id: glAccountId, workspaceId },
+      });
+      if (!glAccount) {
+        return NextResponse.json({ error: 'GL account not found' }, { status: 400 });
+      }
+    }
+
     // Create category
     const category = await prisma.category.create({
       data: {
@@ -176,6 +199,7 @@ export async function POST(request: Request) {
         name,
         parentId: parentId || null,
         taxCode: taxCode || null,
+        glAccountId: glAccountId || null,
       },
     });
 
@@ -187,7 +211,7 @@ export async function POST(request: Request) {
         action: 'category.create',
         entityType: 'category',
         entityId: category.id,
-        newValue: { name, parentId, taxCode },
+        newValue: { name, parentId, taxCode, glAccountId },
       },
     });
 
@@ -197,6 +221,7 @@ export async function POST(request: Request) {
         name: category.name,
         parentId: category.parentId,
         taxCode: category.taxCode,
+        glAccountId: category.glAccountId,
         isSystem: category.isSystem,
         createdAt: category.createdAt.toISOString(),
       },

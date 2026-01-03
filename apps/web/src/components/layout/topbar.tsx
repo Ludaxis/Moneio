@@ -1,14 +1,16 @@
 'use client';
 
 import { cn } from '@moneio/ui';
-import { Bell, Search, User, LogOut, Menu } from 'lucide-react';
+import { Search, User, LogOut, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import { LocaleSwitcher } from '@/components/locale-switcher';
 import { ThemeToggleButton } from '@/components/theme';
 import { WorkspaceSwitcher } from '@/components/workspace';
+import { extractLocaleFromPath } from '@/lib/i18n';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 
 interface TopbarProps {
@@ -21,12 +23,11 @@ interface TopbarProps {
 export function Topbar({ isMobile = false, onMenuClick }: TopbarProps) {
   const t = useTranslations('common');
   const tAuth = useTranslations('auth');
+  const tAccessibility = useTranslations('accessibility');
   const pathname = usePathname();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  // Extract locale from pathname
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   const handleSignOut = async () => {
     const supabase = createBrowserClient();
@@ -48,7 +49,7 @@ export function Topbar({ isMobile = false, onMenuClick }: TopbarProps) {
           <button
             onClick={onMenuClick}
             className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground touch-target"
-            aria-label="Open menu"
+            aria-label={tAccessibility('openMenu')}
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -81,17 +82,11 @@ export function Topbar({ isMobile = false, onMenuClick }: TopbarProps) {
         {/* Workspace switcher - hidden on mobile (too cramped) */}
         {!isMobile && <WorkspaceSwitcher />}
 
+        {/* Language switcher */}
+        <LocaleSwitcher compact={isMobile} />
+
         {/* Theme toggle */}
         <ThemeToggleButton />
-
-        {/* Notifications */}
-        <button
-          className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground touch-target"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute end-1 top-1 h-2 w-2 rounded-full bg-destructive" />
-        </button>
 
         {/* User menu - simplified on mobile */}
         {!isMobile && (
@@ -99,7 +94,7 @@ export function Topbar({ isMobile = false, onMenuClick }: TopbarProps) {
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground touch-target"
-              aria-label="User menu"
+              aria-label={tAccessibility('userMenu')}
             >
               <User className="h-5 w-5" />
             </button>
@@ -114,7 +109,7 @@ export function Topbar({ isMobile = false, onMenuClick }: TopbarProps) {
                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-accent"
                   >
                     <User className="h-4 w-4" />
-                    Profile
+                    {tAccessibility('profile')}
                   </Link>
                   <button
                     onClick={handleSignOut}

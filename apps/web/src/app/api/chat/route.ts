@@ -1,5 +1,5 @@
 /**
- * Financial Chat API
+ * Financial Chat API (serverless-friendly)
  *
  * POST /api/chat - Process a natural language financial question
  *
@@ -8,6 +8,9 @@
  * - "What's my cash runway?"
  * - "Show my recurring expenses"
  * - "Am I profitable?"
+ *
+ * Note: Uses manual auth due to complex data provider pattern.
+ * Observability is added via traceApiRoute.
  */
 
 import { FinancialChatService, type FinancialDataProvider } from '@moneio/ai';
@@ -23,11 +26,15 @@ import {
   getMoneyLeaksSummary,
   type MonthlySummary,
 } from '@moneio/domain';
-import { NextResponse } from 'next/server';
+import { traceApiRoute } from '@moneio/observability/integrations/nextjs';
+import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 
+import { initWebObservability } from '@/lib/observability';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
+
+initWebObservability();
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +48,7 @@ const requestSchema = z.object({
  * POST /api/chat
  * Process a financial question and return an AI-generated response
  */
-export async function POST(request: Request) {
+async function chatHandler(request: NextRequest) {
   try {
     const supabase = createServerClient();
     const {
@@ -96,6 +103,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export const POST = traceApiRoute('chat.message', chatHandler);
 
 /**
  * Create a data provider that queries the database

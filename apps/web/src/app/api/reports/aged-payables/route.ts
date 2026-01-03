@@ -18,6 +18,7 @@ import { z } from 'zod';
 
 import { createPrismaReportRepository } from '@/lib/repositories/report-repository';
 import { createServerClient } from '@/lib/supabase';
+import { transformMoney } from '@/lib/utils/money-transform';
 import { hasPermission } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
@@ -26,23 +27,6 @@ const querySchema = z.object({
   workspaceId: z.string().uuid(),
   asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
-
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-function transformMoney(money: { amount: number; currency: string }) {
-  return {
-    amount: money.amount,
-    currency: money.currency,
-    formatted: formatCurrency(money.amount, money.currency),
-  };
-}
 
 export async function GET(request: Request) {
   try {

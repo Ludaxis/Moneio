@@ -58,7 +58,18 @@
     "members": "الأعضاء",
     "name": "اسم مساحة العمل",
     "currency": "العملة الأساسية",
-    "invite": "دعوة عضو"
+    "invite": "دعوة عضو",
+    "team": "الفريق",
+    "manageAccess": "إدارة الوصول",
+    "inviteMember": "إضافة عضو فريق",
+    "memberEmail": "بريد العضو",
+    "role": "الدور",
+    "owner": "مالك",
+    "admin": "مشرف",
+    "member": "عضو",
+    "addMember": "إضافة",
+    "noMembers": "لا توجد أعضاء آخرون بعد.",
+    "onlyAdminsOwners": "فقط المالكون والمشرفون يمكنهم إدارة أعضاء الفريق."
   },
   "documents": {
     "title": "المستندات",
@@ -151,5 +162,26 @@
     "example1": "ما هي أكبر مصروفاتي الشهر الماضي؟",
     "example2": "أظهر الفواتير غير المدفوعة",
     "example3": "احسب التزام ضريبة القيمة المضافة"
+  },
+  "landing": {
+    "subtitle": "مساعد محاسبي مدعوم بالذكاء الاصطناعي للشركات الصغيرة",
+    "features": {
+      "invoiceExtractionTitle": "استخراج الفواتير",
+      "invoiceExtractionBody": "حمّل الفواتير والإيصالات وسيستخرج الذكاء الاصطناعي البيانات تلقائيًا.",
+      "smartCategorizationTitle": "تصنيف ذكي",
+      "smartCategorizationBody": "يتم تصنيف المعاملات تلقائيًا وتتحسن مع تصحيحاتك.",
+      "financialInsightsTitle": "رؤى مالية",
+      "financialInsightsBody": "اطرح أسئلة حول أموالك بلغة بسيطة واحصل على إجابات فورية."
+    }
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "loggedInAs": "تسجيل الدخول كـ",
+    "fullName": "الاسم الكامل",
+    "avatarUrl": "رابط الصورة الرمزية",
+    "avatarHint": "ألصق رابط صورة مباشر (PNG/JPG/SVG).",
+    "memberSince": "عضو منذ {date}",
+    "saveProfile": "حفظ الملف الشخصي",
+    "saved": "تم تحديث الملف الشخصي"
   }
 }

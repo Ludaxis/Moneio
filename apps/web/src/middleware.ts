@@ -6,6 +6,8 @@ import { locales, defaultLocale } from './lib/i18n';
 
 // Pages that don't require authentication
 const publicPages = ['/login', '/signup', '/forgot-password', '/'];
+const localePattern = `(${locales.join('|')})`;
+const localeRegex = new RegExp(`^/${localePattern}`);
 
 // Create intl middleware
 const intlMiddleware = createIntlMiddleware({
@@ -21,6 +23,23 @@ const isSupabaseConfigured = () => {
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Skip static assets/icons entirely - they should never go through middleware
+  if (
+    pathname.includes('/_next/') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/icon') ||
+    pathname.startsWith('/manifest')
+  ) {
+    return NextResponse.next();
+  }
+
+  // Rewrite localized asset/public requests back to root (e.g., /fa/favicon.ico -> /favicon.ico)
+  const assetMatch = pathname.match(/^\/(en|et|fa|ar)\/(.*\.[^/]+)$/);
+  if (assetMatch) {
+    const rest = assetMatch[2];
+    return NextResponse.rewrite(new URL(`/${rest}`, request.url));
+  }
 
   // Skip auth routes and API routes
   if (pathname.startsWith('/auth/') || pathname.startsWith('/api/')) {
@@ -81,14 +100,14 @@ export default async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Check if this is a public page
-  const pathnameWithoutLocale = pathname.replace(/^\/(en|et|fa|ar)/, '') || '/';
+  const pathnameWithoutLocale = pathname.replace(localeRegex, '') || '/';
   const isPublicPage = publicPages.some((page) =>
     page === '/' ? pathnameWithoutLocale === '/' : pathnameWithoutLocale.startsWith(page)
   );
 
   // Redirect to login if not authenticated and not on a public page
   if (!user && !isPublicPage) {
-    const locale = pathname.match(/^\/(en|et|fa|ar)/)?.[1] || defaultLocale;
+    const locale = pathname.match(localeRegex)?.[1] || defaultLocale;
     const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);
@@ -96,7 +115,7 @@ export default async function middleware(request: NextRequest) {
 
   // Redirect to dashboard if authenticated and on login page
   if (user && pathnameWithoutLocale === '/login') {
-    const locale = pathname.match(/^\/(en|et|fa|ar)/)?.[1] || defaultLocale;
+    const locale = pathname.match(localeRegex)?.[1] || defaultLocale;
     return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
@@ -112,5 +131,12 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(en|et|fa|ar)/:path*', '/((?!_next|api|auth|.*\\..*).*)'],
+  matcher: [
+    // Match root
+    '/',
+    // Match localized paths (en, et, fa, ar) but exclude _next, api, auth, and static files
+    '/(en|et|fa|ar)/((?!_next|api|auth|.*\\..*).*)',
+    // Match non-localized paths excluding _next, api, auth, and static files
+    '/((?!_next|api|auth|.*\\..*).*)',
+  ],
 };

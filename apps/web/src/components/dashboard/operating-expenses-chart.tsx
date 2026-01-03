@@ -3,9 +3,14 @@
 import { useFadeIn } from '@moneio/ui/hooks/use-gsap';
 import { chartPalette, axisStyle, gridStyle, barChartDefaults } from '@moneio/ui/lib/chart-theme';
 import { ChartTooltip, chartTooltipContentStyle } from '@moneio/ui/patterns';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+import { useIsRTL } from '@/hooks/use-direction';
+import { useLocaleFormat } from '@/hooks/use-locale-format';
+import { useTranslateCategory } from '@/hooks/use-translate-category';
 
 interface MonthlyExpense {
   month: string;
@@ -26,6 +31,10 @@ export function OperatingExpensesChart({
   startDate: propStartDate,
   endDate: propEndDate,
 }: OperatingExpensesChartProps) {
+  const t = useTranslations('dashboard');
+  const { formatCurrency: formatCurrencyLocale, formatShortMonth } = useLocaleFormat();
+  const translateCategory = useTranslateCategory();
+  const isRTL = useIsRTL();
   const [data, setData] = useState<MonthlyExpense[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,9 +71,13 @@ export function OperatingExpensesChart({
       // Transform monthly data to include category breakdown
       const monthlyData = (result.monthlyData || []).map(
         (month: { month: string; monthLabel: string; expenses: number }) => {
+          // Format month label using locale
+          const monthDate = new Date(month.month + '-01');
+          const localizedMonthLabel = formatShortMonth(monthDate);
+
           const monthData: MonthlyExpense = {
             month: month.month,
-            monthLabel: month.monthLabel,
+            monthLabel: localizedMonthLabel,
           };
 
           // Distribute expenses across categories (simplified - in production, get actual breakdown)
@@ -95,11 +108,17 @@ export function OperatingExpensesChart({
     }
   }, [workspaceId, fetchData]);
 
-  const formatCurrency = (value: number) => {
+  const formatCompact = (value: number) => {
+    // For axis labels, use compact format
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
-    return value.toString();
+    return formatCurrencyLocale(value, currency);
   };
+
+  // Reverse data for RTL so newest months appear on the left
+  const chartData = useMemo(() => {
+    return isRTL ? [...data].reverse() : data;
+  }, [data, isRTL]);
 
   if (loading) {
     return (
@@ -115,29 +134,36 @@ export function OperatingExpensesChart({
 
   return (
     <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <h3 className="font-semibold text-foreground">Operating Expenses</h3>
+      <h3 className="font-semibold text-foreground">{t('operatingExpenses')}</h3>
 
       {data.length === 0 ? (
         <div className="mt-4 h-64 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">No expense data available.</p>
+          <p className="text-sm text-muted-foreground">{t('noExpenseData')}</p>
         </div>
       ) : (
         <>
           <div className="mt-4 h-64 min-h-[256px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart
-                data={data}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                data={chartData}
+                margin={{ top: 10, right: isRTL ? 10 : 10, left: isRTL ? 10 : 10, bottom: 0 }}
                 barGap={barChartDefaults.barGap}
               >
                 <CartesianGrid {...gridStyle} vertical={false} />
-                <XAxis dataKey="monthLabel" tick={axisStyle} tickLine={false} axisLine={false} />
+                <XAxis
+                  dataKey="monthLabel"
+                  tick={axisStyle}
+                  tickLine={false}
+                  axisLine={false}
+                  reversed={isRTL}
+                />
                 <YAxis
                   tick={axisStyle}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={formatCurrency}
-                  width={60}
+                  tickFormatter={formatCompact}
+                  width={80}
+                  orientation={isRTL ? 'right' : 'left'}
                 />
                 <Tooltip
                   content={<ChartTooltip currency={currency} formatLabel={(label) => label} />}
@@ -147,7 +173,7 @@ export function OperatingExpensesChart({
                   <Bar
                     key={category}
                     dataKey={category}
-                    name={category}
+                    name={translateCategory(category)}
                     stackId="expenses"
                     fill={chartPalette[index % chartPalette.length]}
                     radius={
@@ -167,7 +193,7 @@ export function OperatingExpensesChart({
                   className="h-3 w-3 rounded-full"
                   style={{ backgroundColor: chartPalette[index % chartPalette.length] }}
                 />
-                <span className="text-muted-foreground">{category}</span>
+                <span className="text-muted-foreground">{translateCategory(category)}</span>
               </div>
             ))}
           </div>

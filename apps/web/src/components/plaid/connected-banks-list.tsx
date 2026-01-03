@@ -248,14 +248,14 @@ export function ConnectedBanksList({
                   <p className="text-sm font-medium text-foreground">
                     {account.name}
                     {account.mask && (
-                      <span className="ml-2 text-muted-foreground">••••{account.mask}</span>
+                      <span className="ms-2 text-muted-foreground">••••{account.mask}</span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {account.type} {account.subtype && `· ${account.subtype}`}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <p className="text-sm font-medium tabular-nums text-foreground">
                     {formatCurrency(account.currentBalance, account.currency)}
                   </p>

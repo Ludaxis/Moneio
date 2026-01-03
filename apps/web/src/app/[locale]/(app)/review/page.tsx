@@ -11,6 +11,7 @@ import {
   FileText,
   PartyPopper,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 
 import { SuggestionList } from '@/components/suggestions';
@@ -54,6 +55,7 @@ interface SuggestionsResponse {
 type TabType = 'all' | 'categories' | 'matches';
 
 export default function ReviewPage() {
+  const t = useTranslations('review');
   const { workspace, loading: workspaceLoading } = useWorkspace();
   const workspaceId = workspace?.id;
 
@@ -275,7 +277,7 @@ export default function ReviewPage() {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Select or create a workspace to review suggestions</p>
+        <p className="text-muted-foreground">{t('selectWorkspace')}</p>
       </div>
     );
   }
@@ -289,10 +291,10 @@ export default function ReviewPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
             <Sparkles className="h-6 w-6 text-primary" />
-            AI Review
+            {t('title')}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Review and approve AI suggestions for transactions
+            {t('description')}
           </p>
         </div>
         {highConfidenceCount > 0 && (
@@ -303,13 +305,13 @@ export default function ReviewPage() {
           >
             {bulkApproving ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Approving...
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                {t('approving')}
               </>
             ) : (
               <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Approve High Confidence ({highConfidenceCount})
+                <CheckCircle2 className="me-2 h-4 w-4" />
+                {t('approveHighConfidence', { count: highConfidenceCount })}
               </>
             )}
           </Button>
@@ -322,28 +324,28 @@ export default function ReviewPage() {
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Sparkles className="h-4 w-4" />
-              Total Pending
+              {t('totalPending')}
             </div>
             <p className="mt-1 text-2xl font-bold text-foreground">{counts.total}</p>
           </div>
           <div className="rounded-lg border border-success-200 bg-success-50 p-4 dark:border-success-800 dark:bg-success-900/20">
             <div className="flex items-center gap-2 text-sm text-success-700 dark:text-success-400">
               <CheckCircle2 className="h-4 w-4" />
-              High Confidence
+              {t('highConfidence')}
             </div>
             <p className="mt-1 text-2xl font-bold text-success-600">{counts.highConfidence}</p>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Tag className="h-4 w-4" />
-              Categories
+              {t('categories')}
             </div>
             <p className="mt-1 text-2xl font-bold text-foreground">{counts.categorization}</p>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <FileText className="h-4 w-4" />
-              Matches
+              {t('matches')}
             </div>
             <p className="mt-1 text-2xl font-bold text-foreground">{counts.match}</p>
           </div>
@@ -361,7 +363,7 @@ export default function ReviewPage() {
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
-          All ({counts?.total ?? 0})
+          {t('all')} ({counts?.total ?? 0})
         </button>
         <button
           onClick={() => setActiveTab('categories')}
@@ -372,7 +374,7 @@ export default function ReviewPage() {
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
-          Categories ({counts?.categorization ?? 0})
+          {t('categories')} ({counts?.categorization ?? 0})
         </button>
         <button
           onClick={() => setActiveTab('matches')}
@@ -383,7 +385,7 @@ export default function ReviewPage() {
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
-          Matches ({counts?.match ?? 0})
+          {t('matches')} ({counts?.match ?? 0})
         </button>
       </div>
 
@@ -398,9 +400,9 @@ export default function ReviewPage() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
               <PartyPopper className="h-8 w-8 text-success-600" />
             </div>
-            <h3 className="mt-4 text-xl font-semibold text-foreground">All caught up!</h3>
+            <h3 className="mt-4 text-xl font-semibold text-foreground">{t('allCaughtUp')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              No pending AI suggestions to review.
+              {t('noPendingSuggestions')}
             </p>
           </div>
         ) : (

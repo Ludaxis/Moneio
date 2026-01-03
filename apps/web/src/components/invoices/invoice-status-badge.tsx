@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@moneio/ui/primitives';
+import { useTranslations } from 'next-intl';
 
 type InvoiceStatus = 'pending' | 'approved' | 'paid' | 'void';
 
@@ -8,17 +9,15 @@ interface InvoiceStatusBadgeProps {
   status: InvoiceStatus;
 }
 
-const statusConfig: Record<
-  InvoiceStatus,
-  { variant: 'warning' | 'success' | 'default' | 'danger'; label: string }
-> = {
-  pending: { variant: 'warning', label: 'Pending' },
-  approved: { variant: 'success', label: 'Approved' },
-  paid: { variant: 'default', label: 'Paid' },
-  void: { variant: 'danger', label: 'Void' },
+const statusVariants: Record<InvoiceStatus, 'warning' | 'success' | 'default' | 'danger'> = {
+  pending: 'warning',
+  approved: 'success',
+  paid: 'default',
+  void: 'danger',
 };
 
 export function InvoiceStatusBadge({ status }: InvoiceStatusBadgeProps) {
-  const config = statusConfig[status] || statusConfig.pending;
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  const t = useTranslations('invoices');
+  const variant = statusVariants[status] || statusVariants.pending;
+  return <Badge variant={variant}>{t(status)}</Badge>;
 }

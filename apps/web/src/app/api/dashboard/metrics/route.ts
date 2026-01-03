@@ -21,6 +21,7 @@ import {
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { formatJalaliMonthLabel } from '@/lib/jalali';
 import { createPrismaReportingRepository } from '@/lib/repositories/reporting-repository';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
@@ -125,10 +126,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
     }
 
-    // Get workspace for base currency
+    // Get workspace for base currency and calendar system
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { baseCurrency: true },
+      select: { baseCurrency: true, calendarSystem: true },
     });
 
     if (!workspace) {
@@ -159,7 +160,8 @@ export async function GET(request: Request) {
       workspaceId,
       startDate,
       endDate,
-      workspace.baseCurrency as CurrencyCode
+      workspace.baseCurrency as CurrencyCode,
+      workspace.calendarSystem || 'gregorian'
     );
 
     // Calculate runway using monthly data
@@ -249,20 +251,24 @@ async function getMonthlyChartData(
   workspaceId: string,
   startDate: string,
   endDate: string,
-  baseCurrency: CurrencyCode
+  baseCurrency: CurrencyCode,
+  calendarSystem: string
 ) {
   const cashflow = await service.getCashflowReport(workspaceId, startDate, endDate, baseCurrency);
 
   return cashflow.byMonth.map((month) => ({
     month: month.month,
-    monthLabel: formatMonthLabel(month.month),
+    monthLabel: formatMonthLabel(month.month, calendarSystem),
     income: month.income.amount / 100,
     expenses: month.expenses.amount / 100,
     netCashflow: month.netCashflow.amount / 100,
   }));
 }
 
-function formatMonthLabel(yearMonth: string): string {
+function formatMonthLabel(yearMonth: string, calendarSystem: string): string {
+  if (calendarSystem === 'jalali') {
+    return formatJalaliMonthLabel(yearMonth);
+  }
   const [year, month] = yearMonth.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
   return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });

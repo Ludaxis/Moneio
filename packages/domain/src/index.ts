@@ -9,3 +9,4 @@ export * from './subscriptions/index';
 export * from './insights/index';
 export * from './csv/index';
 export * from './reports/index';
+export * from './gl/index';

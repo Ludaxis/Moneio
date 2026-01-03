@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
+import { extractLocaleFromPath } from '@/lib/i18n';
+
 interface NavItem {
   href: string;
   icon: React.ElementType;
@@ -29,9 +31,7 @@ export function MobileNav({ onFabClick }: MobileNavProps) {
   const t = useTranslations('navigation');
   const pathname = usePathname();
 
-  // Extract locale from pathname
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   return (
     <nav

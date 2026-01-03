@@ -17,9 +17,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@11labs/react": "^0.2.0",
     "@elevenlabs/react": "^0.12.3",
     "@moneio/ai": "workspace:*",
+    "@moneio/app-services": "workspace:*",
     "@moneio/core-ledger": "workspace:*",
     "@moneio/db": "workspace:*",
     "@moneio/domain": "workspace:*",

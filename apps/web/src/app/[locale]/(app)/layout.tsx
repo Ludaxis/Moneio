@@ -1,3 +1,4 @@
+import { CalendarProviderWrapper } from '@/components/calendar-provider-wrapper';
 import { AppShell } from '@/components/layout';
 import { WorkspaceProvider } from '@/lib/workspace';
 
@@ -8,7 +9,9 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <WorkspaceProvider>
-      <AppShell>{children}</AppShell>
+      <CalendarProviderWrapper>
+        <AppShell>{children}</AppShell>
+      </CalendarProviderWrapper>
     </WorkspaceProvider>
   );
 }

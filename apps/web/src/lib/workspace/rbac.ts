@@ -49,6 +49,7 @@ const rolePermissions: Record<WorkspaceRole, string[]> = {
     'workspace:read',
     'workspace:update',
     'workspace:invite',
+    'workspace:manage_members',
     'document:read',
     'document:create',
     'document:update',

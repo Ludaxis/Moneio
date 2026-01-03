@@ -6,6 +6,7 @@
  * - Processing times
  * - Error rates per queue
  * - Queue depths
+ * - Dead Letter Queue (DLQ) metrics
  *
  * Alerts can be sent to:
  * - Slack webhook
@@ -13,7 +14,7 @@
  * - Custom webhook
  */
 
-import type { Worker, Job } from 'bullmq';
+import type { Worker, Job, Queue } from 'bullmq';
 
 import { logger } from './logger';
 
@@ -273,4 +274,101 @@ export function isHealthy(): { healthy: boolean; reason?: string } {
     }
   }
   return { healthy: true };
+}
+
+// ============================================================
+// Dead Letter Queue (DLQ) Monitoring
+// ============================================================
+
+interface DlqMetrics {
+  depth: number;
+  lastCheckedAt: Date;
+  oldestJobAge?: number; // in hours
+  alertSent: boolean;
+}
+
+const dlqMetrics: DlqMetrics = {
+  depth: 0,
+  lastCheckedAt: new Date(),
+  alertSent: false,
+};
+
+const DLQ_DEPTH_THRESHOLD = parseInt(process.env.DLQ_DEPTH_THRESHOLD || '10');
+const DLQ_AGE_THRESHOLD_HOURS = parseInt(process.env.DLQ_AGE_THRESHOLD_HOURS || '24');
+
+/**
+ * Check DLQ depth and age, send alerts if thresholds exceeded
+ */
+export async function checkDlqHealth(dlqQueue: Queue): Promise<DlqMetrics> {
+  try {
+    const waiting = await dlqQueue.getWaitingCount();
+    const delayed = await dlqQueue.getDelayedCount();
+    dlqMetrics.depth = waiting + delayed;
+    dlqMetrics.lastCheckedAt = new Date();
+
+    // Get oldest job to calculate age
+    const waitingJobs = await dlqQueue.getJobs(['waiting'], 0, 1);
+    if (waitingJobs.length > 0 && waitingJobs[0].timestamp) {
+      const ageMs = Date.now() - waitingJobs[0].timestamp;
+      dlqMetrics.oldestJobAge = Math.round(ageMs / (1000 * 60 * 60)); // hours
+    }
+
+    // Alert if depth exceeds threshold
+    if (dlqMetrics.depth >= DLQ_DEPTH_THRESHOLD && !dlqMetrics.alertSent) {
+      await sendAlert(
+        `Dead Letter Queue has ${dlqMetrics.depth} failed jobs waiting for review`,
+        'warning',
+        {
+          dlqDepth: dlqMetrics.depth,
+          oldestJobAgeHours: dlqMetrics.oldestJobAge,
+        }
+      );
+      dlqMetrics.alertSent = true;
+    }
+
+    // Alert if oldest job is too old
+    if (dlqMetrics.oldestJobAge && dlqMetrics.oldestJobAge >= DLQ_AGE_THRESHOLD_HOURS) {
+      await sendAlert(
+        `Dead Letter Queue has jobs older than ${DLQ_AGE_THRESHOLD_HOURS} hours (oldest: ${dlqMetrics.oldestJobAge}h)`,
+        'warning',
+        {
+          dlqDepth: dlqMetrics.depth,
+          oldestJobAgeHours: dlqMetrics.oldestJobAge,
+        }
+      );
+    }
+
+    // Reset alert flag if depth drops below threshold
+    if (dlqMetrics.depth < DLQ_DEPTH_THRESHOLD) {
+      dlqMetrics.alertSent = false;
+    }
+
+    return dlqMetrics;
+  } catch (error) {
+    logger.error({ error }, 'Failed to check DLQ health');
+    return dlqMetrics;
+  }
+}
+
+/**
+ * Get current DLQ metrics
+ */
+export function getDlqMetrics(): DlqMetrics {
+  return { ...dlqMetrics };
+}
+
+/**
+ * Track when a job is moved to DLQ
+ */
+export function trackDlqJob(originalQueue: string, jobId: string, error: string): void {
+  dlqMetrics.depth++;
+  logger.warn(
+    {
+      originalQueue,
+      jobId,
+      error,
+      dlqDepth: dlqMetrics.depth,
+    },
+    'Job moved to DLQ'
+  );
 }

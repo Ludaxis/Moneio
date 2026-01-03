@@ -20,6 +20,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useCallback } from 'react';
 
+import { extractLocaleFromPath } from '@/lib/i18n';
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 
 interface NavItem {
@@ -51,9 +52,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Extract locale from pathname
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   // Get workspace ID from URL
   const workspaceId = searchParams.get('workspace');

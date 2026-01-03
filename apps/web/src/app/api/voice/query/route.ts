@@ -1,51 +1,57 @@
+/**
+ * Fast Voice Query API (serverless-friendly)
+ *
+ * POST /api/voice/query - Quick financial queries for voice interface
+ *
+ * Returns pre-formatted data without LLM delay.
+ * Designed for ElevenLabs client tools which have short timeouts.
+ */
+
+import { withApi } from '@moneio/app-services';
 import { prisma } from '@moneio/db';
-import { NextResponse } from 'next/server';
+import { traceApiRoute } from '@moneio/observability/integrations/nextjs';
+import type { NextRequest } from 'next/server';
+import { z } from 'zod';
+
+import { initWebObservability } from '@/lib/observability';
+
+initWebObservability();
+
+export const dynamic = 'force-dynamic';
+
+// Body schema for voice query
+const voiceQueryBodySchema = z.object({
+  question: z.string().max(500).optional(),
+});
+
+function formatCurrency(amount: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'EUR',
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
 
 /**
- * Fast voice query endpoint - returns pre-formatted data without LLM delay
- * Designed for ElevenLabs client tools which have short timeouts
+ * POST /api/voice/query
+ * Fast financial query endpoint for voice interface
  */
-export async function POST(request: Request) {
-  try {
-    const { workspaceId, question } = await request.json();
-
-    if (!workspaceId) {
-      return NextResponse.json({ error: 'workspaceId required' }, { status: 400 });
-    }
-
-    const q = question?.toLowerCase() || '';
+const queryHandler = withApi(
+  async ({ workspaceId, body }) => {
+    const question = body.question || '';
+    const q = question.toLowerCase();
 
     // Get date ranges
     const now = new Date();
 
-    // Parse specific month/year from question (e.g., "November 2025", "nov 2025", "december")
+    // Parse specific month/year from question
     const monthNames = [
-      'january',
-      'february',
-      'march',
-      'april',
-      'may',
-      'june',
-      'july',
-      'august',
-      'september',
-      'october',
-      'november',
-      'december',
+      'january', 'february', 'march', 'april', 'may', 'june',
+      'july', 'august', 'september', 'october', 'november', 'december',
     ];
     const shortMonths = [
-      'jan',
-      'feb',
-      'mar',
-      'apr',
-      'may',
-      'jun',
-      'jul',
-      'aug',
-      'sep',
-      'oct',
-      'nov',
-      'dec',
+      'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+      'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
     ];
 
     let queryMonth = now.getMonth();
@@ -61,28 +67,30 @@ export async function POST(request: Request) {
       }
     }
 
-    // Check for year in question (e.g., "2025", "2024")
+    // Check for year in question
     const yearMatch = q.match(/\b(202[0-9])\b/);
     if (yearMatch) {
       queryYear = parseInt(yearMatch[1]);
       specificPeriod = true;
     }
 
-    // Handle "last month", "this month", "this year"
+    // Handle "last month", "this month"
     if (q.includes('last month')) {
       queryMonth = now.getMonth() - 1;
       queryYear = queryMonth < 0 ? now.getFullYear() - 1 : now.getFullYear();
       queryMonth = queryMonth < 0 ? 11 : queryMonth;
       specificPeriod = true;
-    } else if (q.includes('this year')) {
-      // Will be handled separately for full year queries
     }
 
     const startOfMonth = specificPeriod
       ? new Date(queryYear, queryMonth, 1)
       : new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = specificPeriod ? new Date(queryYear, queryMonth + 1, 0, 23, 59, 59) : now;
-    const periodLabel = specificPeriod ? `${monthNames[queryMonth]} ${queryYear}` : 'this month';
+    const endOfMonth = specificPeriod
+      ? new Date(queryYear, queryMonth + 1, 0, 23, 59, 59)
+      : now;
+    const periodLabel = specificPeriod
+      ? `${monthNames[queryMonth]} ${queryYear}`
+      : 'this month';
 
     // Detect query type and respond quickly
     if (q.includes('cashflow') || q.includes('cash flow')) {
@@ -105,9 +113,9 @@ export async function POST(request: Request) {
       const cashflow = income - expenses;
       const currency = transactions[0]?.currency || 'EUR';
 
-      return NextResponse.json({
+      return {
         answer: `Your cash flow for ${periodLabel} is ${formatCurrency(cashflow, currency)}. Income: ${formatCurrency(income, currency)}, Expenses: ${formatCurrency(expenses, currency)}.`,
-      });
+      };
     }
 
     if (q.includes('runway')) {
@@ -126,7 +134,6 @@ export async function POST(request: Request) {
       );
       const monthlyBurn = expenses / 3;
 
-      // Get current balance (sum of all transactions)
       const allTransactions = await prisma.bankTransaction.findMany({
         where: { workspaceId },
         select: { amount: true, currency: true },
@@ -135,24 +142,15 @@ export async function POST(request: Request) {
       const runwayMonths = monthlyBurn > 0 ? Math.round(balance / monthlyBurn) : 0;
       const currency = transactions[0]?.currency || 'EUR';
 
-      return NextResponse.json({
+      return {
         answer: `Your estimated runway is ${runwayMonths} months based on ${formatCurrency(monthlyBurn, currency)} monthly burn rate and ${formatCurrency(balance, currency)} current balance.`,
-      });
+      };
     }
 
     if (q.includes('spending') || q.includes('spent') || q.includes('expenses')) {
-      // Check for specific merchant
       const merchants = [
-        'aws',
-        'amazon',
-        'google',
-        'microsoft',
-        'figma',
-        'netflix',
-        'spotify',
-        'openai',
-        'stripe',
-        'slack',
+        'aws', 'amazon', 'google', 'microsoft', 'figma',
+        'netflix', 'spotify', 'openai', 'stripe', 'slack',
       ];
       const mentionedMerchant = merchants.find((m) => q.includes(m));
 
@@ -177,12 +175,11 @@ export async function POST(request: Request) {
         );
         const currency = transactions[0]?.currency || 'EUR';
 
-        return NextResponse.json({
+        return {
           answer: `You've spent ${formatCurrency(total, currency)} on ${mentionedMerchant.toUpperCase()} across ${transactions.length} transactions.`,
-        });
+        };
       }
 
-      // General spending for the period
       const transactions = await prisma.bankTransaction.findMany({
         where: {
           workspaceId,
@@ -195,9 +192,9 @@ export async function POST(request: Request) {
       const total = Math.abs(transactions.reduce((sum, t) => sum + Number(t.amount), 0));
       const currency = transactions[0]?.currency || 'EUR';
 
-      return NextResponse.json({
+      return {
         answer: `Your total spending for ${periodLabel} is ${formatCurrency(total, currency)} across ${transactions.length} transactions.`,
-      });
+      };
     }
 
     if (q.includes('income') || q.includes('earned') || q.includes('revenue')) {
@@ -213,29 +210,22 @@ export async function POST(request: Request) {
       const total = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
       const currency = transactions[0]?.currency || 'EUR';
 
-      return NextResponse.json({
+      return {
         answer: `Your total income for ${periodLabel} is ${formatCurrency(total, currency)} from ${transactions.length} transactions.`,
-      });
+      };
     }
 
     if (q.includes('subscription') || q.includes('recurring')) {
-      // Find recurring transactions (same merchant, similar amounts)
       const transactions = await prisma.bankTransaction.findMany({
         where: {
           workspaceId,
           amount: { lt: 0 },
         },
-        select: {
-          description: true,
-          merchantName: true,
-          amount: true,
-          currency: true,
-        },
+        select: { description: true, merchantName: true, amount: true, currency: true },
         orderBy: { postedAt: 'desc' },
         take: 500,
       });
 
-      // Group by merchant and count
       const merchantCounts = new Map<string, { count: number; amount: number }>();
       for (const t of transactions) {
         const merchant = t.merchantName || t.description || 'Unknown';
@@ -247,7 +237,6 @@ export async function POST(request: Request) {
         });
       }
 
-      // Find recurring (3+ occurrences)
       const recurring = Array.from(merchantCounts.entries())
         .filter(([, data]) => data.count >= 3)
         .sort((a, b) => b[1].amount - a[1].amount)
@@ -257,26 +246,21 @@ export async function POST(request: Request) {
       const totalMonthly = recurring.reduce((sum, [, data]) => sum + data.amount, 0);
 
       if (recurring.length === 0) {
-        return NextResponse.json({
+        return {
           answer: "I couldn't find any clear recurring subscriptions in your transactions.",
-        });
+        };
       }
 
       const list = recurring
         .map(([name, data]) => `${name}: ${formatCurrency(data.amount, currency)}`)
         .join(', ');
 
-      return NextResponse.json({
+      return {
         answer: `Found ${recurring.length} likely subscriptions totaling ~${formatCurrency(totalMonthly, currency)}/month: ${list}`,
-      });
+      };
     }
 
-    if (
-      q.includes('invoice') ||
-      q.includes('pending') ||
-      q.includes('owed') ||
-      q.includes('owes')
-    ) {
+    if (q.includes('invoice') || q.includes('pending') || q.includes('owed') || q.includes('owes')) {
       const invoices = await prisma.invoice.findMany({
         where: {
           workspaceId,
@@ -287,45 +271,33 @@ export async function POST(request: Request) {
           total: true,
           currency: true,
           dueDate: true,
-          merchant: {
-            select: { name: true },
-          },
+          merchant: { select: { name: true } },
         },
         orderBy: { dueDate: 'asc' },
         take: 10,
       });
 
       if (invoices.length === 0) {
-        return NextResponse.json({
-          answer: 'You have no pending invoices.',
-        });
+        return { answer: 'You have no pending invoices.' };
       }
 
       const totalAmount = invoices.reduce((sum, i) => sum + Number(i.total), 0);
       const currency = invoices[0]?.currency || 'EUR';
       const firstName = invoices[0].merchant?.name || invoices[0].invoiceNumber || 'Invoice';
 
-      return NextResponse.json({
+      return {
         answer: `You have ${invoices.length} pending invoices totaling ${formatCurrency(totalAmount, currency)}. Top one: ${firstName} for ${formatCurrency(Number(invoices[0].total), currency)}.`,
-      });
+      };
     }
 
     if (
-      q.includes('biggest') ||
-      q.includes('largest') ||
-      q.includes('top') ||
-      q.includes('most expensive') ||
-      q.includes('highest') ||
-      q.includes('expensive')
+      q.includes('biggest') || q.includes('largest') || q.includes('top') ||
+      q.includes('most expensive') || q.includes('highest') || q.includes('expensive')
     ) {
-      // Determine how many results to return
       const wantsSingle =
-        q.includes('the most') ||
-        q.includes('the biggest') ||
-        q.includes('the largest') ||
-        q.includes('the highest') ||
-        q.includes('what is') ||
-        q.includes('what was');
+        q.includes('the most') || q.includes('the biggest') ||
+        q.includes('the largest') || q.includes('the highest') ||
+        q.includes('what is') || q.includes('what was');
       const limit = wantsSingle ? 1 : 5;
 
       const transactions = await prisma.bankTransaction.findMany({
@@ -334,21 +306,13 @@ export async function POST(request: Request) {
           postedAt: { gte: startOfMonth, lte: endOfMonth },
           amount: { lt: 0 },
         },
-        select: {
-          description: true,
-          merchantName: true,
-          amount: true,
-          currency: true,
-          postedAt: true,
-        },
+        select: { description: true, merchantName: true, amount: true, currency: true, postedAt: true },
         orderBy: { amount: 'asc' },
         take: limit,
       });
 
       if (transactions.length === 0) {
-        return NextResponse.json({
-          answer: `No expenses found for ${periodLabel}.`,
-        });
+        return { answer: `No expenses found for ${periodLabel}.` };
       }
 
       const currency = transactions[0]?.currency || 'EUR';
@@ -356,21 +320,16 @@ export async function POST(request: Request) {
       if (wantsSingle && transactions.length > 0) {
         const t = transactions[0];
         const date = t.postedAt.toISOString().split('T')[0];
-        return NextResponse.json({
+        return {
           answer: `Your most expensive expense in ${periodLabel} was ${t.merchantName || t.description} for ${formatCurrency(Math.abs(Number(t.amount)), currency)} on ${date}.`,
-        });
+        };
       }
 
       const list = transactions
-        .map(
-          (t) =>
-            `${t.merchantName || t.description}: ${formatCurrency(Math.abs(Number(t.amount)), currency)}`
-        )
+        .map((t) => `${t.merchantName || t.description}: ${formatCurrency(Math.abs(Number(t.amount)), currency)}`)
         .join(', ');
 
-      return NextResponse.json({
-        answer: `Your biggest expenses for ${periodLabel}: ${list}`,
-      });
+      return { answer: `Your biggest expenses for ${periodLabel}: ${list}` };
     }
 
     // Default: return summary for the period
@@ -390,21 +349,17 @@ export async function POST(request: Request) {
     );
     const currency = transactions[0]?.currency || 'EUR';
 
-    return NextResponse.json({
+    return {
       answer: `${periodLabel}: ${transactions.length} transactions, ${formatCurrency(income, currency)} income, ${formatCurrency(expenses, currency)} expenses. Ask about cashflow, spending, subscriptions, invoices, or runway.`,
-    });
-  } catch (error) {
-    console.error('[Voice Query] Error:', error);
-    return NextResponse.json({
-      answer: 'Sorry, I had trouble accessing your financial data. Please try again.',
-    });
+    };
+  },
+  {
+    bodySchema: voiceQueryBodySchema,
+    permission: 'transaction:read',
+    rateLimit: { type: 'workspace', limiter: 'ai' },
   }
-}
+);
 
-function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'EUR',
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
+export const POST = traceApiRoute('voice.query', (request: NextRequest) =>
+  queryHandler(request)
+);

@@ -1,3 +1,5 @@
+import { defaultLocale, getDirection, locales, type Locale } from '@moneio/i18n';
+import { cn } from '@moneio/ui';
 import type { Metadata } from 'next';
 import {
   Inter,
@@ -6,6 +8,7 @@ import {
   Plus_Jakarta_Sans,
   Vazirmatn,
 } from 'next/font/google';
+import { cookies, headers } from 'next/headers';
 
 import { ThemeProvider } from '@/components/theme';
 
@@ -51,11 +54,44 @@ export const metadata: Metadata = {
   description: 'AI-powered accounting assistant for small businesses',
 };
 
+function resolveLocale(): Locale {
+  const cookieLocale = cookies().get('NEXT_LOCALE')?.value;
+  if (cookieLocale && locales.includes(cookieLocale as Locale)) {
+    return cookieLocale as Locale;
+  }
+
+  const acceptLanguage = headers().get('accept-language');
+  if (acceptLanguage) {
+    const preferred = acceptLanguage.split(',').map((l) => l.split(';')[0]?.trim());
+    const exact = preferred.find((code) => locales.includes(code as Locale));
+    if (exact) return exact as Locale;
+
+    const base = preferred
+      .map((code) => code?.split('-')?.[0])
+      .find((code) => locales.includes(code as Locale));
+    if (base) return base as Locale;
+  }
+
+  return defaultLocale;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = resolveLocale();
+  const direction = getDirection(locale);
+  const fontClass =
+    locale === 'fa' ? 'font-persian' : locale === 'ar' ? 'font-arabic' : 'font-sans';
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={direction} className={fontClass} suppressHydrationWarning>
       <body
-        className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable} ${notoSansArabic.variable} ${vazirmatn.variable} min-h-screen bg-background font-body antialiased`}
+        className={cn(
+          plusJakartaSans.variable,
+          inter.variable,
+          jetbrainsMono.variable,
+          notoSansArabic.variable,
+          vazirmatn.variable,
+          'min-h-screen bg-background font-body antialiased'
+        )}
       >
         <ThemeProvider>{children}</ThemeProvider>
       </body>

@@ -19,6 +19,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 
 import { DocumentViewer, ExtractionReviewPanel } from '@/components/documents';
+import { extractLocaleFromPath } from '@/lib/i18n';
 
 type DocumentStatus =
   | 'uploaded'
@@ -146,8 +147,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   };
 
   // Extract locale from pathname
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   const fetchDocument = async (isRefresh = false) => {
     if (!workspaceId) return;

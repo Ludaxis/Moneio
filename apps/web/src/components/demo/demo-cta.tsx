@@ -5,6 +5,7 @@ import { Play, Sparkles } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 
 import { useDemoMode } from '@/hooks/use-demo-mode';
+import { extractLocaleFromPath } from '@/lib/i18n';
 
 interface DemoCTAProps {
   /** Visual variant */
@@ -34,9 +35,7 @@ export function DemoCTA({
   const pathname = usePathname();
   const { enableDemoMode } = useDemoMode();
 
-  // Extract locale from pathname
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   const handleClick = () => {
     enableDemoMode();
@@ -94,8 +93,7 @@ export function DemoHeroCTA({ className }: { className?: string }) {
   const pathname = usePathname();
   const { enableDemoMode } = useDemoMode();
 
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   const handleClick = () => {
     enableDemoMode();

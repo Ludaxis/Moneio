@@ -9,6 +9,7 @@ import { prisma } from '@moneio/db';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { postTransactionToGL } from '@/lib/services/gl-posting';
 import { createServerClient } from '@/lib/supabase';
 import { hasPermission } from '@/lib/workspace';
 
@@ -130,6 +131,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       },
     });
 
+    // Post to General Ledger (if GL mappings exist)
+    // This is async but we don't wait for it to complete
+    let glEntryId: string | null = null;
+    try {
+      const glResult = await postTransactionToGL(transactionId, categoryId, workspaceId, user.id);
+      glEntryId = glResult?.journalEntryId ?? null;
+    } catch (error) {
+      // Log but don't fail - GL posting is optional based on GL mappings
+      console.error('Failed to post transaction to GL:', error);
+    }
+
     return NextResponse.json({
       id: categorization.id,
       transactionId,
@@ -137,6 +149,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       categoryName: category.name,
       approved: true,
       approvedAt: categorization.approvedAt?.toISOString(),
+      glEntryId,
     });
   } catch (error) {
     console.error('Failed to categorize transaction:', error);

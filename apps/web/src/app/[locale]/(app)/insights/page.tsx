@@ -16,9 +16,10 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 import { useWorkspace } from '@/lib/workspace';
 
 interface Insight {
@@ -108,28 +109,29 @@ const severityConfig: Record<
   },
 };
 
-const typeLabels: Record<string, string> = {
-  anomaly_spending: 'Spending Anomaly',
-  anomaly_income: 'Income Anomaly',
-  subscription_change: 'Subscription Change',
-  new_recurring: 'New Recurring',
-  budget_warning: 'Budget Warning',
-  cash_flow_warning: 'Cash Flow',
-  invoice_overdue: 'Overdue Invoice',
-  payment_received: 'Payment Received',
-  tax_deadline: 'Tax Deadline',
-  savings_opportunity: 'Savings Opportunity',
-  benchmark_comparison: 'Benchmark',
-  goal_progress: 'Goal Progress',
-};
+// Type keys for translation
+const typeKeys = [
+  'anomaly_spending',
+  'anomaly_income',
+  'subscription_change',
+  'new_recurring',
+  'budget_warning',
+  'cash_flow_warning',
+  'invoice_overdue',
+  'payment_received',
+  'tax_deadline',
+  'savings_opportunity',
+  'benchmark_comparison',
+  'goal_progress',
+];
 
 export default function InsightsPage() {
-  const pathname = usePathname();
+  const t = useTranslations('insights');
+  const tTypes = useTranslations('insights.types');
+  const tStatuses = useTranslations('insights.forecastStatuses');
   const { workspace, loading: workspaceLoading } = useWorkspace();
   const workspaceId = workspace?.id;
-
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const { intlLocale } = useLocaleFormat();
 
   const [insights, setInsights] = useState<Insight[]>([]);
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
@@ -259,14 +261,14 @@ export default function InsightsPage() {
 
   const formatCurrency = (amount: string | number, currency: string) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat(intlLocale, {
       style: 'currency',
       currency,
     }).format(num);
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(locale, {
+    return new Date(dateStr).toLocaleDateString(intlLocale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -282,10 +284,28 @@ export default function InsightsPage() {
     const minutes = Math.floor(diff / (1000 * 60));
 
     if (days > 7) return formatDate(dateStr);
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return 'Just now';
+    if (days > 0) return t('daysAgo', { days });
+    if (hours > 0) return t('hoursAgo', { hours });
+    if (minutes > 0) return t('minutesAgo', { minutes });
+    return t('justNow');
+  };
+
+  // Helper to translate type labels
+  const getTypeLabel = (type: string) => {
+    try {
+      return tTypes(type);
+    } catch {
+      return type;
+    }
+  };
+
+  // Helper to translate forecast status
+  const getForecastStatus = (status: string) => {
+    try {
+      return tStatuses(status);
+    } catch {
+      return status;
+    }
   };
 
   if (workspaceLoading) {
@@ -296,11 +316,16 @@ export default function InsightsPage() {
     );
   }
 
+  // Helper to format numbers with locale
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat(intlLocale).format(num);
+  };
+
   if (!workspaceId) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Select or create a workspace to view insights</p>
+        <p className="text-muted-foreground">{t('selectWorkspace')}</p>
       </div>
     );
   }
@@ -310,9 +335,9 @@ export default function InsightsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">AI Insights</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Proactive insights and recommendations for your finances
+            {t('description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -322,7 +347,7 @@ export default function InsightsPage() {
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <Check className="h-4 w-4" />
-              Mark all as read
+              {t('markAllAsRead')}
             </button>
           )}
           <button
@@ -334,7 +359,7 @@ export default function InsightsPage() {
             className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
-            Refresh
+            {t('refresh')}
           </button>
         </div>
       </div>
@@ -345,36 +370,36 @@ export default function InsightsPage() {
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Lightbulb className="h-4 w-4" />
-              <span className="text-sm">Total Insights</span>
+              <span className="text-sm">{t('totalInsights')}</span>
             </div>
-            <p className="mt-2 text-2xl font-bold text-foreground">{summary.total}</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">{formatNumber(summary.total)}</p>
           </div>
 
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
             <div className="flex items-center gap-2 text-primary">
               <Bell className="h-4 w-4" />
-              <span className="text-sm">Unread</span>
+              <span className="text-sm">{t('unread')}</span>
             </div>
-            <p className="mt-2 text-2xl font-bold text-primary">{summary.unread}</p>
+            <p className="mt-2 text-2xl font-bold text-primary">{formatNumber(summary.unread)}</p>
           </div>
 
           <div className="rounded-lg border border-danger-200 bg-danger-50 p-4">
             <div className="flex items-center gap-2 text-danger-700">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">Alerts</span>
+              <span className="text-sm">{t('alerts')}</span>
             </div>
             <p className="mt-2 text-2xl font-bold text-danger-700">
-              {summary.bySeverity?.alert || 0}
+              {formatNumber(summary.bySeverity?.alert || 0)}
             </p>
           </div>
 
           <div className="rounded-lg border border-warning-200 bg-warning-50 p-4">
             <div className="flex items-center gap-2 text-warning-700">
               <AlertTriangle className="h-4 w-4" />
-              <span className="text-sm">Warnings</span>
+              <span className="text-sm">{t('warnings')}</span>
             </div>
             <p className="mt-2 text-2xl font-bold text-warning-700">
-              {summary.bySeverity?.warning || 0}
+              {formatNumber(summary.bySeverity?.warning || 0)}
             </p>
           </div>
         </div>
@@ -386,7 +411,7 @@ export default function InsightsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Weekly Digest</h2>
+              <h2 className="text-lg font-semibold text-foreground">{t('weeklyDigest')}</h2>
             </div>
             <button
               onClick={() => setShowDigest(false)}
@@ -403,7 +428,7 @@ export default function InsightsPage() {
           ) : digest ? (
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div>
-                <p className="text-sm text-muted-foreground">Net Cashflow</p>
+                <p className="text-sm text-muted-foreground">{t('netCashflow')}</p>
                 <p
                   className={cn(
                     'text-xl font-bold',
@@ -416,15 +441,15 @@ export default function InsightsPage() {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {parseFloat(digest.summary.comparedToLastWeek.netChange) >= 0 ? '+' : ''}
-                  {digest.summary.comparedToLastWeek.netChange}% vs last week
+                  {formatNumber(parseFloat(digest.summary.comparedToLastWeek.netChange))}% {t('vsLastWeek')}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm text-muted-foreground">Forecast Status</p>
+                <p className="text-sm text-muted-foreground">{t('forecastStatus')}</p>
                 <p
                   className={cn(
-                    'text-lg font-semibold capitalize',
+                    'text-lg font-semibold',
                     digest.forecast.cashflowStatus === 'healthy'
                       ? 'text-success-700'
                       : digest.forecast.cashflowStatus === 'warning'
@@ -432,17 +457,17 @@ export default function InsightsPage() {
                         : 'text-danger-700'
                   )}
                 >
-                  {digest.forecast.cashflowStatus}
+                  {getForecastStatus(digest.forecast.cashflowStatus)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Next week: {formatCurrency(digest.forecast.nextWeekProjection, digest.currency)}
+                  {t('nextWeek')} {formatCurrency(digest.forecast.nextWeekProjection, digest.currency)}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm text-muted-foreground">Activity</p>
+                <p className="text-sm text-muted-foreground">{t('activity')}</p>
                 <p className="text-lg font-semibold text-foreground">
-                  {digest.summary.transactionCount} transactions
+                  {formatNumber(digest.summary.transactionCount)} {t('transactions')}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatDate(digest.period.start)} - {formatDate(digest.period.end)}
@@ -451,7 +476,7 @@ export default function InsightsPage() {
 
               {digest.highlights.length > 0 && (
                 <div className="md:col-span-3">
-                  <p className="text-sm font-medium text-muted-foreground">Highlights</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('highlights')}</p>
                   <ul className="mt-2 space-y-1">
                     {digest.highlights.slice(0, 3).map((h, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-sm">
@@ -465,7 +490,7 @@ export default function InsightsPage() {
             </div>
           ) : (
             <p className="mt-4 text-sm text-muted-foreground">
-              Not enough data to generate a weekly digest yet.
+              {t('noDigestData')}
             </p>
           )}
         </div>
@@ -474,13 +499,13 @@ export default function InsightsPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search insights..."
+            placeholder={t('searchInsights')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-border bg-background py-2 ps-9 pe-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -488,44 +513,44 @@ export default function InsightsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-            className="appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-8 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="appearance-none rounded-lg border border-border bg-background py-2 ps-3 pe-8 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            <option value="all">All insights</option>
-            <option value="unread">Unread only</option>
-            <option value="dismissed">Dismissed</option>
+            <option value="all">{t('allInsights')}</option>
+            <option value="unread">{t('unreadOnly')}</option>
+            <option value="dismissed">{t('dismissed')}</option>
           </select>
-          <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <ChevronDown className="absolute end-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         </div>
 
         <div className="relative">
           <select
             value={filterSeverity || ''}
             onChange={(e) => setFilterSeverity(e.target.value || null)}
-            className="appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-8 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="appearance-none rounded-lg border border-border bg-background py-2 ps-3 pe-8 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            <option value="">All severities</option>
-            <option value="alert">Alerts</option>
-            <option value="warning">Warnings</option>
-            <option value="info">Info</option>
-            <option value="positive">Positive</option>
+            <option value="">{t('allSeverities')}</option>
+            <option value="alert">{t('alerts')}</option>
+            <option value="warning">{t('warnings')}</option>
+            <option value="info">{t('info')}</option>
+            <option value="positive">{t('positive')}</option>
           </select>
-          <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <ChevronDown className="absolute end-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         </div>
 
         <div className="relative">
           <select
             value={filterType || ''}
             onChange={(e) => setFilterType(e.target.value || null)}
-            className="appearance-none rounded-lg border border-border bg-background py-2 pl-3 pr-8 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="appearance-none rounded-lg border border-border bg-background py-2 ps-3 pe-8 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
-            <option value="">All types</option>
-            {Object.entries(typeLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
+            <option value="">{t('allTypes')}</option>
+            {typeKeys.map((key) => (
+              <option key={key} value={key}>
+                {getTypeLabel(key)}
               </option>
             ))}
           </select>
-          <ChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <ChevronDown className="absolute end-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         </div>
 
         {(searchQuery || filterSeverity || filterType || filterStatus !== 'all') && (
@@ -539,7 +564,7 @@ export default function InsightsPage() {
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
-            Clear filters
+            {t('clearFilters')}
           </button>
         )}
       </div>
@@ -558,7 +583,7 @@ export default function InsightsPage() {
             className="flex items-center gap-2 text-primary hover:underline"
           >
             <RefreshCw className="h-4 w-4" />
-            Try again
+            {t('tryAgain')}
           </button>
         </div>
       ) : filteredInsights.length === 0 ? (
@@ -567,12 +592,12 @@ export default function InsightsPage() {
             <Check className="h-8 w-8 text-success-600" />
           </div>
           <p className="font-medium text-foreground">
-            {insights.length === 0 ? 'No insights yet' : 'No insights match your filters'}
+            {insights.length === 0 ? t('noInsightsYet') : t('noInsightsMatch')}
           </p>
           <p className="text-sm text-muted-foreground">
             {insights.length === 0
-              ? "We'll notify you when we detect something important"
-              : 'Try adjusting your filters'}
+              ? t('willNotify')
+              : t('tryAdjustingFilters')}
           </p>
         </div>
       ) : (
@@ -608,7 +633,7 @@ export default function InsightsPage() {
                           <button
                             onClick={() => handleMarkAsRead(insight.id)}
                             className="p-1.5 rounded hover:bg-muted"
-                            title="Mark as read"
+                            title={t('markAsRead')}
                           >
                             <Eye className="h-4 w-4 text-muted-foreground" />
                           </button>
@@ -616,7 +641,7 @@ export default function InsightsPage() {
                         <button
                           onClick={() => handleDismiss(insight.id)}
                           className="p-1.5 rounded hover:bg-muted"
-                          title="Dismiss"
+                          title={t('dismiss')}
                         >
                           <X className="h-4 w-4 text-muted-foreground" />
                         </button>
@@ -625,7 +650,7 @@ export default function InsightsPage() {
 
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <span className={cn('rounded-full px-2 py-0.5', config.badge)}>
-                        {typeLabels[insight.type] || insight.type}
+                        {getTypeLabel(insight.type)}
                       </span>
                       <span>•</span>
                       <span>{formatRelativeTime(insight.createdAt)}</span>
@@ -633,7 +658,7 @@ export default function InsightsPage() {
                         <>
                           <span>•</span>
                           <a href={insight.actionUrl} className="text-primary hover:underline">
-                            {insight.actionLabel || 'View details'}
+                            {insight.actionLabel || t('viewDetails')}
                           </a>
                         </>
                       )}
@@ -648,7 +673,7 @@ export default function InsightsPage() {
           {pagination && pagination.hasMore && (
             <div className="flex justify-center pt-4">
               <button className="flex items-center gap-2 text-sm text-primary hover:underline">
-                Load more insights
+                {t('loadMore')}
               </button>
             </div>
           )}

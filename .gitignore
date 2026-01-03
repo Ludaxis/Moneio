@@ -35,3 +35,5 @@ pnpm-debug.log*
 # Database
 *.sqlite
 *.db
+.vercel
+.env*.local

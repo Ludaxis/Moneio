@@ -955,7 +955,7 @@ async function predictCategoriesWithAi(
     const llmClient = createLlmClient();
     const batchCategorizer = new AiBatchCategorizer({
       llmClient,
-      batchSize: 20, // 20 transactions per LLM call
+      batchSize: 50, // 50 transactions per LLM call (faster processing)
       concurrency: 5, // 5 parallel LLM calls
       minAiConfidence: 50,
     });

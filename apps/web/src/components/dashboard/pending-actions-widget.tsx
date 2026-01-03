@@ -11,8 +11,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useLocaleFormat } from '@/hooks/use-locale-format';
 
 interface PendingItem {
   id: string;
@@ -49,6 +52,12 @@ const typeColors = {
 };
 
 export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps) {
+  const t = useTranslations('dashboard');
+  const tInvoices = useTranslations('invoices');
+  const tDocuments = useTranslations('documents');
+  const tTransactions = useTranslations('transactions');
+  const { formatCurrency, formatShortDate } = useLocaleFormat();
+
   const [items, setItems] = useState<PendingItem[]>([]);
   const [counts, setCounts] = useState<PendingCounts>({
     invoices: 0,
@@ -93,8 +102,8 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               pendingItems.push({
                 id: inv.id,
                 type: 'invoice',
-                title: inv.vendorName || 'Unknown Vendor',
-                subtitle: `Invoice #${inv.invoiceNumber || 'N/A'}`,
+                title: inv.vendorName || tInvoices('unknownVendor'),
+                subtitle: `${tInvoices('invoiceNumber')}${inv.invoiceNumber || 'N/A'}`,
                 amount: inv.totalAmount,
                 currency: inv.currency || 'USD',
                 date: inv.dueDate || '',
@@ -114,8 +123,8 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               pendingItems.push({
                 id: doc.id,
                 type: 'document',
-                title: doc.fileName || 'Untitled Document',
-                subtitle: doc.documentType || 'Pending Review',
+                title: doc.fileName || tDocuments('title'),
+                subtitle: doc.documentType || t('pendingReview'),
                 date: doc.createdAt || '',
               });
             }
@@ -139,8 +148,8 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               pendingItems.push({
                 id: tx.id,
                 type: 'transaction',
-                title: tx.description || tx.merchantName || 'Unknown',
-                subtitle: 'Needs categorization',
+                title: tx.description || tx.merchantName || tTransactions('noDescription'),
+                subtitle: tTransactions('needsCategorization'),
                 amount: tx.amount ? Math.abs(tx.amount) : undefined,
                 currency: tx.currency || 'USD',
                 date: tx.postedAt || '',
@@ -176,20 +185,6 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
     }
   }, [workspaceId, fetchPendingItems]);
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
 
   if (loading) {
     return (
@@ -217,7 +212,7 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
     <div ref={containerRef} className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-foreground">Pending Actions</h3>
+          <h3 className="font-semibold text-foreground">{t('pendingActions')}</h3>
           {counts.total > 0 && (
             <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary-100 px-2 text-xs font-medium text-primary-700 dark:bg-primary-900 dark:text-primary-300">
               {counts.total}
@@ -235,7 +230,7 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {counts.invoices}
               </p>
-              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 truncate">Invoices</p>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 truncate">{tInvoices('title')}</p>
             </div>
           )}
           {counts.documents > 0 && (
@@ -244,7 +239,7 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
                 {counts.documents}
               </p>
               <p className="text-xs text-purple-600/70 dark:text-purple-400/70 truncate">
-                Documents
+                {tDocuments('title')}
               </p>
             </div>
           )}
@@ -253,7 +248,7 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
               <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
                 {counts.uncategorized}
               </p>
-              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 truncate">Uncat.</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 truncate">{tTransactions('uncategorized')}</p>
             </div>
           )}
         </div>
@@ -263,8 +258,8 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
       {items.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center py-8 text-center">
           <CheckCircle2 className="h-12 w-12 text-success-500" />
-          <p className="mt-2 font-medium text-foreground">All caught up!</p>
-          <p className="text-sm text-muted-foreground">No pending actions at this time.</p>
+          <p className="mt-2 font-medium text-foreground">{t('allCaughtUp')}</p>
+          <p className="text-sm text-muted-foreground">{t('noPendingActions')}</p>
         </div>
       ) : (
         <div className="mt-4 space-y-2">
@@ -294,7 +289,7 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
                 </div>
-                <div className="text-right flex-shrink-0">
+                <div className="text-end flex-shrink-0">
                   {item.amount !== undefined && (
                     <p className="text-sm font-semibold tabular-nums text-foreground">
                       {formatCurrency(item.amount, item.currency || 'USD')}
@@ -304,7 +299,7 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
                     <p
                       className={`text-xs ${item.urgent ? 'text-danger-500' : 'text-muted-foreground'}`}
                     >
-                      {formatDate(item.date)}
+                      {formatShortDate(item.date)}
                     </p>
                   )}
                 </div>
@@ -322,7 +317,7 @@ export function PendingActionsWidget({ workspaceId }: PendingActionsWidgetProps)
             href="/transactions?filter=pending"
             className="flex w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
-            View all {counts.total} pending items
+            {t('viewAllPending', { count: counts.total })}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

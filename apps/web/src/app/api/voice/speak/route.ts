@@ -1,15 +1,20 @@
 /**
- * Text-to-Speech API using ElevenLabs
+ * Text-to-Speech API using ElevenLabs (serverless-friendly)
  *
  * POST /api/voice/speak - Convert text to speech
  *
- * Uses ElevenLabs for high-quality voice synthesis
+ * Uses ElevenLabs for high-quality voice synthesis.
+ * Note: Returns audio data, not JSON, so uses manual auth.
  */
 
-import { NextResponse } from 'next/server';
+import { traceApiRoute } from '@moneio/observability/integrations/nextjs';
+import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 
+import { initWebObservability } from '@/lib/observability';
 import { createServerClient } from '@/lib/supabase';
+
+initWebObservability();
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +30,7 @@ const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
  * POST /api/voice/speak
  * Convert text to speech using ElevenLabs
  */
-export async function POST(request: Request) {
+async function speakHandler(request: NextRequest) {
   try {
     // Check auth
     const supabase = createServerClient();
@@ -97,3 +102,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export const POST = traceApiRoute('voice.speak', speakHandler);

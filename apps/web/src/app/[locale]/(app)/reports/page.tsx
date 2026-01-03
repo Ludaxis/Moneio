@@ -21,6 +21,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   BarChart,
@@ -37,6 +38,9 @@ import {
   AreaChart,
 } from 'recharts';
 
+import { useLocaleFormat } from '@/hooks/use-locale-format';
+import { useTranslateCategory } from '@/hooks/use-translate-category';
+import { extractLocaleFromPath } from '@/lib/i18n';
 import { useWorkspace } from '@/lib/workspace';
 
 type ReportTab =
@@ -309,11 +313,16 @@ const gradeColors: Record<string, { bg: string; text: string }> = {
 
 export default function ReportsPage() {
   const pathname = usePathname();
+  const t = useTranslations('reports');
+  const tHealthRatings = useTranslations('dashboard.healthScore.ratings');
+  const tHealthSummaries = useTranslations('dashboard.healthScore.summaries');
+  const tHealthMetrics = useTranslations('dashboard.healthScore.metrics');
   const { workspace, loading: workspaceLoading } = useWorkspace();
   const workspaceId = workspace?.id;
+  const translateCategory = useTranslateCategory();
+  const { formatNumber, intlLocale } = useLocaleFormat();
 
-  const localeMatch = pathname.match(/^\/(en|et|fa|ar)/);
-  const locale = localeMatch?.[1] ?? 'en';
+  const locale = extractLocaleFromPath(pathname);
 
   // Date range state
   const [startDate, setStartDate] = useState(() => {
@@ -546,7 +555,7 @@ export default function ReportsPage() {
   }, [workspaceId, fetchHealthScore, fetchActiveReport]);
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat(intlLocale, {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
@@ -556,10 +565,50 @@ export default function ReportsPage() {
 
   const formatMonth = (monthStr: string) => {
     const [year, month] = monthStr.split('-');
-    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(locale, {
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString(intlLocale, {
       month: 'short',
       year: '2-digit',
     });
+  };
+
+  // Helper to translate health score summary
+  const translateHealthSummary = (summary: string, rating: string): string => {
+    // Known valid area keys that have translations
+    const validAreaKeys = ['profitability', 'runway', 'cashflow', 'savings', 'liquidity', 'stability', 'growth', 'efficiency'];
+
+    // Extract the area from the summary - look for "on <area>" or "Focus on <area>"
+    const areaMatch = summary.match(/(?:focus |work |improve )?on\s+(\w+)/i);
+    let areaKey = areaMatch?.[1]?.toLowerCase() || '';
+
+    // Only use the area key if it's a known valid key
+    if (!validAreaKeys.includes(areaKey)) {
+      areaKey = '';
+    }
+
+    // Translate the area name if we have a valid key
+    let translatedArea = areaKey;
+    if (areaKey) {
+      try {
+        const translated = tHealthMetrics(areaKey);
+        // Check if translation succeeded (not just returned the key)
+        if (translated && translated !== areaKey) {
+          translatedArea = translated;
+        }
+      } catch {
+        // Keep original if no translation
+      }
+    }
+
+    try {
+      const ratingKey = rating.toLowerCase();
+      if (translatedArea) {
+        return tHealthSummaries(ratingKey, { area: translatedArea });
+      }
+      // If no valid area, just return the rating translation without area parameter
+      return tHealthSummaries(ratingKey, { area: '' });
+    } catch {
+      return summary;
+    }
   };
 
   // Chart data
@@ -579,11 +628,11 @@ export default function ReportsPage() {
       .filter((c) => c.type === 'expense' && c.amount > 0)
       .slice(0, 8)
       .map((c) => ({
-        name: c.categoryName || 'Uncategorized',
+        name: translateCategory(c.categoryName) || t('uncategorized'),
         value: Math.abs(c.amount),
         percentage: c.percentage,
       }));
-  }, [cashflowReport]);
+  }, [cashflowReport, translateCategory, t]);
 
   if (workspaceLoading) {
     return (
@@ -597,7 +646,7 @@ export default function ReportsPage() {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Select or create a workspace to view reports</p>
+        <p className="text-muted-foreground">{t('selectWorkspace')}</p>
       </div>
     );
   }
@@ -607,9 +656,9 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Financial Reports</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Comprehensive financial analysis and insights
+            {t('description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -622,7 +671,7 @@ export default function ReportsPage() {
             className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
-            Refresh
+            {t('refresh')}
           </button>
         </div>
       </div>
@@ -634,7 +683,7 @@ export default function ReportsPage() {
           <div className="rounded-lg border border-border bg-gradient-to-br from-primary/5 to-primary/10 p-6 md:col-span-2">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Heart className="h-5 w-5" />
-              <span className="text-sm font-medium">Financial Health Score</span>
+              <span className="text-sm font-medium">{t('financialHealthScore')}</span>
             </div>
             <div className="mt-4 flex items-center gap-4">
               <div
@@ -647,9 +696,19 @@ export default function ReportsPage() {
                 {healthScore.grade}
               </div>
               <div className="flex-1">
-                <p className="text-3xl font-bold text-foreground">{healthScore.overallScore}/100</p>
-                <p className="text-sm text-muted-foreground capitalize">{healthScore.rating}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{healthScore.summary}</p>
+                <p className="text-3xl font-bold text-foreground">{formatNumber(healthScore.overallScore)}/{formatNumber(100)}</p>
+                <p className="text-sm text-muted-foreground capitalize">
+                  {(() => {
+                    try {
+                      return tHealthRatings(healthScore.rating.toLowerCase());
+                    } catch {
+                      return healthScore.rating;
+                    }
+                  })()}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {translateHealthSummary(healthScore.summary, healthScore.rating)}
+                </p>
               </div>
             </div>
           </div>
@@ -658,7 +717,7 @@ export default function ReportsPage() {
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-sm">Avg Monthly Income</span>
+              <span className="text-sm">{t('avgMonthlyIncome')}</span>
             </div>
             <p className="mt-2 text-xl font-bold text-success-600">
               {formatCurrency(healthScore.data.avgMonthlyIncome, healthScore.currency)}
@@ -668,7 +727,7 @@ export default function ReportsPage() {
           <div className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <TrendingDown className="h-4 w-4" />
-              <span className="text-sm">Avg Monthly Expenses</span>
+              <span className="text-sm">{t('avgMonthlyExpenses')}</span>
             </div>
             <p className="mt-2 text-xl font-bold text-danger-600">
               {formatCurrency(healthScore.data.avgMonthlyExpenses, healthScore.currency)}
@@ -681,7 +740,7 @@ export default function ReportsPage() {
       <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Report Period</span>
+          <span className="text-sm font-medium text-foreground">{t('period')}</span>
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -690,7 +749,7 @@ export default function ReportsPage() {
             onChange={(e) => setStartDate(e.target.value)}
             className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
-          <span className="text-muted-foreground">to</span>
+          <span className="text-muted-foreground">{t('to')}</span>
           <input
             type="date"
             value={endDate}
@@ -708,7 +767,7 @@ export default function ReportsPage() {
             }}
             className="rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-accent"
           >
-            This Month
+            {t('thisMonth')}
           </button>
           <button
             onClick={() => {
@@ -719,7 +778,7 @@ export default function ReportsPage() {
             }}
             className="rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-accent"
           >
-            YTD
+            {t('ytd')}
           </button>
           <button
             onClick={() => {
@@ -730,7 +789,7 @@ export default function ReportsPage() {
             }}
             className="rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-accent"
           >
-            Last 12 Months
+            {t('last12Months')}
           </button>
         </div>
       </div>
@@ -749,7 +808,7 @@ export default function ReportsPage() {
           >
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Cash Flow
+              {t('cashflow')}
             </div>
           </button>
           <button
@@ -763,7 +822,7 @@ export default function ReportsPage() {
           >
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Profit &amp; Loss
+              {t('profitLoss')}
             </div>
           </button>
           <button
@@ -777,7 +836,7 @@ export default function ReportsPage() {
           >
             <div className="flex items-center gap-2">
               <Scale className="h-4 w-4" />
-              Balance Sheet
+              {t('balanceSheet')}
             </div>
           </button>
           <button
@@ -791,7 +850,7 @@ export default function ReportsPage() {
           >
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              Forecast
+              {t('forecast')}
             </div>
           </button>
           <button
@@ -805,7 +864,7 @@ export default function ReportsPage() {
           >
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              Aged AR
+              {t('agedAR')}
             </div>
           </button>
           <button
@@ -819,7 +878,7 @@ export default function ReportsPage() {
           >
             <div className="flex items-center gap-2">
               <Receipt className="h-4 w-4" />
-              VAT
+              {t('vat')}
             </div>
           </button>
           <button
@@ -833,7 +892,7 @@ export default function ReportsPage() {
           >
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              General Ledger
+              {t('generalLedger')}
             </div>
           </button>
         </div>
@@ -853,7 +912,7 @@ export default function ReportsPage() {
             className="flex items-center gap-2 text-primary hover:underline"
           >
             <RefreshCw className="h-4 w-4" />
-            Try again
+            {t('tryAgain')}
           </button>
         </div>
       ) : activeTab === 'cashflow' && cashflowReport ? (
@@ -861,24 +920,26 @@ export default function ReportsPage() {
           report={cashflowReport}
           chartData={cashflowChartData}
           pieData={categoryPieData}
+          translateCategory={translateCategory}
+          intlLocale={intlLocale}
         />
       ) : activeTab === 'profit-loss' && profitLossReport ? (
-        <ProfitLossReportView report={profitLossReport} />
+        <ProfitLossReportView report={profitLossReport} intlLocale={intlLocale} />
       ) : activeTab === 'balance-sheet' && balanceSheetReport ? (
-        <BalanceSheetReportView report={balanceSheetReport} />
+        <BalanceSheetReportView report={balanceSheetReport} intlLocale={intlLocale} />
       ) : activeTab === 'forecast' && forecastReport ? (
-        <ForecastReportView report={forecastReport} formatCurrency={formatCurrency} />
+        <ForecastReportView report={forecastReport} formatCurrency={formatCurrency} intlLocale={intlLocale} />
       ) : activeTab === 'aged-ar' && agedReceivablesReport ? (
-        <AgedReceivablesReportView report={agedReceivablesReport} />
+        <AgedReceivablesReportView report={agedReceivablesReport} intlLocale={intlLocale} />
       ) : activeTab === 'vat' && vatReport ? (
-        <VatReportView report={vatReport} />
+        <VatReportView report={vatReport} intlLocale={intlLocale} />
       ) : activeTab === 'general-ledger' && generalLedgerReport ? (
-        <GeneralLedgerReportView report={generalLedgerReport} />
+        <GeneralLedgerReportView report={generalLedgerReport} intlLocale={intlLocale} />
       ) : (
         <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-lg border border-border bg-card">
           <BarChart3 className="h-12 w-12 text-muted-foreground" />
-          <p className="font-medium text-foreground">No data available</p>
-          <p className="text-sm text-muted-foreground">Import transactions to generate reports</p>
+          <p className="font-medium text-foreground">{t('noDataAvailable')}</p>
+          <p className="text-sm text-muted-foreground">{t('importTransactions')}</p>
         </div>
       )}
     </div>
@@ -890,11 +951,29 @@ function CashflowReportView({
   report,
   chartData,
   pieData,
+  translateCategory,
+  intlLocale,
 }: {
   report: CashflowReport;
   chartData: Array<Record<string, string | number>>;
   pieData: Array<{ name: string; value: number; percentage: number }>;
+  translateCategory: (name: string | null | undefined) => string;
+  intlLocale: string;
 }) {
+  const t = useTranslations('reports');
+
+  // Local formatting functions using intlLocale
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const formatNumber = (num: number) => new Intl.NumberFormat(intlLocale).format(num);
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -902,17 +981,21 @@ function CashflowReportView({
         <div className="rounded-lg border border-success-200 bg-success-50 p-4">
           <div className="flex items-center gap-2 text-success-700">
             <ArrowUpRight className="h-4 w-4" />
-            <span className="text-sm">Total Income</span>
+            <span className="text-sm">{t('totalIncome')}</span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-success-700">{report.income.formatted}</p>
+          <p className="mt-2 text-2xl font-bold text-success-700">
+            {formatCurrencyLocal(report.income.amount, report.income.currency)}
+          </p>
         </div>
 
         <div className="rounded-lg border border-danger-200 bg-danger-50 p-4">
           <div className="flex items-center gap-2 text-danger-700">
             <ArrowDownRight className="h-4 w-4" />
-            <span className="text-sm">Total Expenses</span>
+            <span className="text-sm">{t('totalExpenses')}</span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-danger-700">{report.expenses.formatted}</p>
+          <p className="mt-2 text-2xl font-bold text-danger-700">
+            {formatCurrencyLocal(Math.abs(report.expenses.amount), report.expenses.currency)}
+          </p>
         </div>
 
         <div
@@ -930,7 +1013,7 @@ function CashflowReportView({
             )}
           >
             <DollarSign className="h-4 w-4" />
-            <span className="text-sm">Net Cash Flow</span>
+            <span className="text-sm">{t('netCashFlow')}</span>
           </div>
           <p
             className={cn(
@@ -938,7 +1021,7 @@ function CashflowReportView({
               report.netCashflow.amount >= 0 ? 'text-success-700' : 'text-danger-700'
             )}
           >
-            {report.netCashflow.formatted}
+            {formatCurrencyLocal(report.netCashflow.amount, report.netCashflow.currency)}
           </p>
         </div>
       </div>
@@ -948,13 +1031,32 @@ function CashflowReportView({
         {/* Monthly Trend Chart */}
         {chartData.length > 0 && (
           <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="mb-4 font-medium text-foreground">Monthly Cash Flow</h3>
+            <h3 className="mb-4 font-medium text-foreground">{t('monthlyCashFlow')}</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%" minWidth={200}>
                 <BarChart data={chartData}>
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => formatNumber(value)}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="rounded-lg border border-border bg-card p-2 shadow-lg">
+                            <p className="font-medium text-foreground mb-1">{label}</p>
+                            {payload.map((entry, index) => (
+                              <p key={index} style={{ color: entry.color }} className="text-sm">
+                                {entry.dataKey === 'Income' ? t('income') : t('expenses')}: {formatCurrencyLocal(entry.value as number, report.income.currency)}
+                              </p>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -966,7 +1068,7 @@ function CashflowReportView({
         {/* Category Breakdown Pie Chart */}
         {pieData.length > 0 && (
           <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="mb-4 font-medium text-foreground">Expense Breakdown</h3>
+            <h3 className="mb-4 font-medium text-foreground">{t('expenseBreakdown')}</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%" minWidth={200}>
                 <RechartsPieChart>
@@ -977,14 +1079,27 @@ function CashflowReportView({
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={({ name, payload }) => `${name} (${payload?.percentage ?? 0}%)`}
-                    labelLine={false}
                   >
                     {pieData.map((_, index) => (
                       <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload as { name: string; value: number; percentage: number };
+                        return (
+                          <div className="rounded-lg border border-border bg-card p-2 shadow-lg">
+                            <p className="font-medium text-foreground">{data.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatCurrencyLocal(data.value, report.income.currency)} ({formatNumber(data.percentage)}%)
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                 </RechartsPieChart>
               </ResponsiveContainer>
             </div>
@@ -995,7 +1110,7 @@ function CashflowReportView({
       {/* Category Details */}
       <div className="rounded-lg border border-border bg-card">
         <div className="border-b border-border p-4">
-          <h3 className="font-medium text-foreground">Category Details</h3>
+          <h3 className="font-medium text-foreground">{t('categoryDetails')}</h3>
         </div>
         <div className="divide-y divide-border">
           {report.byCategory.map((cat) => (
@@ -1015,23 +1130,23 @@ function CashflowReportView({
                 </div>
                 <div>
                   <p className="font-medium text-foreground">
-                    {cat.categoryName || 'Uncategorized'}
+                    {translateCategory(cat.categoryName) || t('uncategorized')}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {cat.transactionCount} transactions
+                    {formatNumber(cat.transactionCount)} {t('transactions')}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-end">
                 <p
                   className={cn(
                     'font-medium',
                     cat.type === 'income' ? 'text-success-600' : 'text-danger-600'
                   )}
                 >
-                  {cat.formatted}
+                  {formatCurrencyLocal(Math.abs(cat.amount), report.income.currency)}
                 </p>
-                <p className="text-xs text-muted-foreground">{cat.percentage}%</p>
+                <p className="text-xs text-muted-foreground">{formatNumber(cat.percentage)}%</p>
               </div>
             </div>
           ))}
@@ -1042,37 +1157,79 @@ function CashflowReportView({
 }
 
 // Profit & Loss Report View
-function ProfitLossReportView({ report }: { report: ProfitLossReport }) {
+function ProfitLossReportView({ report, intlLocale }: { report: ProfitLossReport; intlLocale: string }) {
+  const t = useTranslations('reports');
+
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // Helper to format MoneyValue with fallback to pre-formatted string
+  const formatMoneyValue = (value: MoneyValue) => {
+    // If amount is defined and not zero, use locale-aware formatting
+    if (typeof value.amount === 'number' && value.amount !== 0) {
+      return formatCurrencyLocal(value.amount, value.currency);
+    }
+    // Check if formatted has a non-zero value (fallback for when amount is 0 but formatted is correct)
+    if (value.formatted && !value.formatted.match(/^[€$£¥₹₱₩]?\s*0([.,]0+)?$/)) {
+      return value.formatted;
+    }
+    // Default to locale-aware zero
+    return formatCurrencyLocal(0, value.currency);
+  };
+
+  // Helper to get the actual amount (for color logic)
+  const getAmount = (value: MoneyValue): number => {
+    if (typeof value.amount === 'number' && value.amount !== 0) {
+      return value.amount;
+    }
+    // Try to parse from formatted string
+    const match = value.formatted?.match(/[-−]?[\d.,]+/);
+    if (match) {
+      const parsed = parseFloat(match[0].replace(/,/g, ''));
+      if (value.formatted?.includes('-') || value.formatted?.includes('−')) {
+        return -parsed;
+      }
+      return parsed;
+    }
+    return 0;
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Gross Profit</p>
+          <p className="text-sm text-muted-foreground">{t('grossProfit')}</p>
           <p
             className={cn(
               'mt-1 text-2xl font-bold',
-              report.summaries.grossProfit.amount >= 0 ? 'text-success-600' : 'text-danger-600'
+              getAmount(report.summaries.grossProfit) >= 0 ? 'text-success-600' : 'text-danger-600'
             )}
           >
-            {report.summaries.grossProfit.formatted}
+            {formatMoneyValue(report.summaries.grossProfit)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Operating Income</p>
+          <p className="text-sm text-muted-foreground">{t('operatingIncome')}</p>
           <p
             className={cn(
               'mt-1 text-2xl font-bold',
-              report.summaries.operatingIncome.amount >= 0 ? 'text-success-600' : 'text-danger-600'
+              getAmount(report.summaries.operatingIncome) >= 0 ? 'text-success-600' : 'text-danger-600'
             )}
           >
-            {report.summaries.operatingIncome.formatted}
+            {formatMoneyValue(report.summaries.operatingIncome)}
           </p>
         </div>
         <div
           className={cn(
             'rounded-lg border p-4',
-            report.summaries.netIncome.amount >= 0
+            getAmount(report.summaries.netIncome) >= 0
               ? 'border-success-200 bg-success-50'
               : 'border-danger-200 bg-danger-50'
           )}
@@ -1080,44 +1237,69 @@ function ProfitLossReportView({ report }: { report: ProfitLossReport }) {
           <p
             className={cn(
               'text-sm',
-              report.summaries.netIncome.amount >= 0 ? 'text-success-700' : 'text-danger-700'
+              getAmount(report.summaries.netIncome) >= 0 ? 'text-success-700' : 'text-danger-700'
             )}
           >
-            Net Income
+            {t('netIncome')}
           </p>
           <p
             className={cn(
               'mt-1 text-2xl font-bold',
-              report.summaries.netIncome.amount >= 0 ? 'text-success-700' : 'text-danger-700'
+              getAmount(report.summaries.netIncome) >= 0 ? 'text-success-700' : 'text-danger-700'
             )}
           >
-            {report.summaries.netIncome.formatted}
+            {formatMoneyValue(report.summaries.netIncome)}
           </p>
         </div>
       </div>
 
       {/* Sections */}
       <div className="space-y-4">
-        <PLSection section={report.sections.revenue} isPositive />
-        <PLSection section={report.sections.costOfGoodsSold} />
-        <PLSection section={report.sections.operatingExpenses} />
+        <PLSection section={report.sections.revenue} sectionKey="revenue" isPositive intlLocale={intlLocale} />
+        <PLSection section={report.sections.costOfGoodsSold} sectionKey="costOfGoodsSold" intlLocale={intlLocale} />
+        <PLSection section={report.sections.operatingExpenses} sectionKey="operatingExpenses" intlLocale={intlLocale} />
         {report.sections.otherIncome.items.length > 0 && (
-          <PLSection section={report.sections.otherIncome} isPositive />
+          <PLSection section={report.sections.otherIncome} sectionKey="otherIncome" isPositive intlLocale={intlLocale} />
         )}
         {report.sections.otherExpenses.items.length > 0 && (
-          <PLSection section={report.sections.otherExpenses} />
+          <PLSection section={report.sections.otherExpenses} sectionKey="otherExpenses" intlLocale={intlLocale} />
         )}
       </div>
     </div>
   );
 }
 
-function PLSection({ section, isPositive }: { section: ReportSection; isPositive?: boolean }) {
+function PLSection({
+  section,
+  sectionKey,
+  isPositive,
+  intlLocale,
+}: {
+  section: ReportSection;
+  sectionKey: string;
+  isPositive?: boolean;
+  intlLocale: string;
+}) {
+  const t = useTranslations('reports.plSections');
+  const translateCategory = useTranslateCategory();
   const [expanded, setExpanded] = useState(true);
 
   if (section.items.length === 0 && section.subtotal.amount === 0) {
     return null;
   }
+
+  // Format currency with locale
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // Get translated section name
+  const sectionName = t(sectionKey);
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -1125,10 +1307,10 @@ function PLSection({ section, isPositive }: { section: ReportSection; isPositive
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center justify-between p-4"
       >
-        <span className="font-medium text-foreground">{section.name}</span>
+        <span className="font-medium text-foreground">{sectionName}</span>
         <div className="flex items-center gap-4">
           <span className={cn('font-medium', isPositive ? 'text-success-600' : 'text-danger-600')}>
-            {section.subtotal.formatted}
+            {formatCurrencyLocal(section.subtotal.amount, section.subtotal.currency)}
           </span>
           <ChevronDown className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')} />
         </div>
@@ -1143,14 +1325,14 @@ function PLSection({ section, isPositive }: { section: ReportSection; isPositive
                 item.isSubtotal && 'bg-muted/50 font-medium'
               )}
             >
-              <span className="text-muted-foreground">{item.accountName}</span>
+              <span className="text-muted-foreground">{translateCategory(item.accountName)}</span>
               <span
                 className={cn(
                   isPositive ? 'text-success-600' : 'text-danger-600',
                   item.isSubtotal && 'font-medium'
                 )}
               >
-                {item.amount.formatted}
+                {formatCurrencyLocal(item.amount.amount, item.amount.currency)}
               </span>
             </div>
           ))}
@@ -1161,38 +1343,68 @@ function PLSection({ section, isPositive }: { section: ReportSection; isPositive
 }
 
 // Balance Sheet Report View
-function BalanceSheetReportView({ report }: { report: BalanceSheetReport }) {
+function BalanceSheetReportView({ report, intlLocale }: { report: BalanceSheetReport; intlLocale: string }) {
+  const t = useTranslations('reports');
+  const tCommon = useTranslations('common');
+
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const formatNumber = (num: number, decimals = 2) => {
+    return new Intl.NumberFormat(intlLocale, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(num);
+  };
+
+  // Helper to format MoneyValue with fallback to pre-formatted string
+  const formatMoneyValue = (value: MoneyValue) => {
+    if (typeof value.amount === 'number' && value.amount !== 0) {
+      return formatCurrencyLocal(value.amount, value.currency);
+    }
+    if (value.formatted && !value.formatted.match(/^[€$£¥₹₱₩]?\s*0([.,]0+)?$/)) {
+      return value.formatted;
+    }
+    return formatCurrencyLocal(0, value.currency);
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Total Assets</p>
+          <p className="text-sm text-muted-foreground">{t('totalAssets')}</p>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {report.summaries.totalAssets.formatted}
+            {formatMoneyValue(report.summaries.totalAssets)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Total Liabilities</p>
+          <p className="text-sm text-muted-foreground">{t('totalLiabilities')}</p>
           <p className="mt-1 text-xl font-bold text-danger-600">
-            {report.summaries.totalLiabilities.formatted}
+            {formatMoneyValue(report.summaries.totalLiabilities)}
           </p>
         </div>
         <div className="rounded-lg border border-success-200 bg-success-50 p-4">
-          <p className="text-sm text-success-700">Total Equity</p>
+          <p className="text-sm text-success-700">{t('totalEquity')}</p>
           <p className="mt-1 text-xl font-bold text-success-700">
-            {report.summaries.totalEquity.formatted}
+            {formatMoneyValue(report.summaries.totalEquity)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Balanced</p>
+          <p className="text-sm text-muted-foreground">{t('balanced')}</p>
           <p
             className={cn(
               'mt-1 text-xl font-bold',
               report.summaries.isBalanced ? 'text-success-600' : 'text-danger-600'
             )}
           >
-            {report.summaries.isBalanced ? '✓ Yes' : '✗ No'}
+            {report.summaries.isBalanced ? `✓ ${tCommon('yes')}` : `✗ ${tCommon('no')}`}
           </p>
         </div>
       </div>
@@ -1201,26 +1413,26 @@ function BalanceSheetReportView({ report }: { report: BalanceSheetReport }) {
       {report.ratios && (
         <div className="grid gap-4 md:grid-cols-4">
           <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Current Ratio</p>
+            <p className="text-xs text-muted-foreground">{t('currentRatio')}</p>
             <p className="mt-1 text-lg font-semibold text-foreground">
-              {report.ratios.currentRatio.toFixed(2)}
+              {formatNumber(report.ratios.currentRatio ?? 0)}
             </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Quick Ratio</p>
+            <p className="text-xs text-muted-foreground">{t('quickRatio')}</p>
             <p className="mt-1 text-lg font-semibold text-foreground">
-              {report.ratios.quickRatio.toFixed(2)}
+              {formatNumber(report.ratios.quickRatio ?? 0)}
             </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">Debt to Equity</p>
+            <p className="text-xs text-muted-foreground">{t('debtToEquity')}</p>
             <p className="mt-1 text-lg font-semibold text-foreground">
-              {report.ratios.debtToEquity.toFixed(2)}
+              {formatNumber(report.ratios.debtToEquity ?? 0)}
             </p>
           </div>
           {report.ratios.workingCapital && (
             <div className="rounded-lg border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">Working Capital</p>
+              <p className="text-xs text-muted-foreground">{t('workingCapital')}</p>
               <p className="mt-1 text-lg font-semibold text-foreground">
                 {report.ratios.workingCapital.formatted}
               </p>
@@ -1231,10 +1443,10 @@ function BalanceSheetReportView({ report }: { report: BalanceSheetReport }) {
 
       {/* Sections */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <BSSection section={report.sections.assets} />
+        <BSSection section={report.sections.assets} sectionKey="assets" intlLocale={intlLocale} />
         <div className="space-y-6">
-          <BSSection section={report.sections.liabilities} isLiability />
-          <BSSection section={report.sections.equity} isEquity />
+          <BSSection section={report.sections.liabilities} sectionKey="liabilities" isLiability intlLocale={intlLocale} />
+          <BSSection section={report.sections.equity} sectionKey="equity" isEquity intlLocale={intlLocale} />
         </div>
       </div>
     </div>
@@ -1243,49 +1455,86 @@ function BalanceSheetReportView({ report }: { report: BalanceSheetReport }) {
 
 function BSSection({
   section,
+  sectionKey,
   isLiability,
   isEquity,
+  intlLocale,
 }: {
   section: BalanceSection;
+  sectionKey: string;
   isLiability?: boolean;
   isEquity?: boolean;
+  intlLocale: string;
 }) {
+  const t = useTranslations('reports.bsSections');
+
+  // Map section keys to translation keys
+  const subsectionKeyMap: Record<string, string> = {
+    currentAssets: 'currentAssets',
+    fixedAssets: 'fixedAssets',
+    currentLiabilities: 'currentLiabilities',
+    longTermLiabilities: 'longTermLiabilities',
+    retainedEarnings: 'retainedEarnings',
+  };
+
+  // Format currency with locale
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // Get translated section name
+  const sectionName = t(sectionKey);
+
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border p-4">
-        <span className="font-medium text-foreground">{section.name}</span>
+        <span className="font-medium text-foreground">{sectionName}</span>
         <span
           className={cn(
             'font-bold',
             isEquity ? 'text-success-600' : isLiability ? 'text-danger-600' : 'text-foreground'
           )}
         >
-          {section.total.formatted}
+          {formatCurrencyLocal(section.total.amount, section.total.currency)}
         </span>
       </div>
       <div className="divide-y divide-border">
-        {section.subsections.map((sub) => (
-          <div key={sub.key} className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">{sub.name}</span>
-              <span className="text-sm font-medium text-foreground">{sub.subtotal.formatted}</span>
+        {section.subsections.map((sub) => {
+          // Try to get translated subsection name
+          const subSectionName = subsectionKeyMap[sub.key] ? t(subsectionKeyMap[sub.key]) : sub.name;
+
+          return (
+            <div key={sub.key} className="p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">{subSectionName}</span>
+                <span className="text-sm font-medium text-foreground">
+                  {formatCurrencyLocal(sub.subtotal.amount, sub.subtotal.currency)}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {sub.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      'flex items-center justify-between text-sm',
+                      item.isSubtotal && 'font-medium'
+                    )}
+                  >
+                    <span className="text-muted-foreground">{item.accountName}</span>
+                    <span className="text-foreground">
+                      {formatCurrencyLocal(item.balance.amount, item.balance.currency)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="space-y-1">
-              {sub.items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={cn(
-                    'flex items-center justify-between text-sm',
-                    item.isSubtotal && 'font-medium'
-                  )}
-                >
-                  <span className="text-muted-foreground">{item.accountName}</span>
-                  <span className="text-foreground">{item.balance.formatted}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -1295,10 +1544,22 @@ function BSSection({
 function ForecastReportView({
   report,
   formatCurrency,
+  intlLocale,
 }: {
   report: ForecastReport;
   formatCurrency: (amount: number, currency: string) => string;
+  intlLocale: string;
 }) {
+  const t = useTranslations('reports');
+
+  const formatNumber = (num: number) => new Intl.NumberFormat(intlLocale).format(num);
+
+  const trendLabels: Record<string, string> = {
+    improving: t('improving'),
+    declining: t('declining'),
+    stable: t('stable'),
+  };
+
   const chartData = report.months.map((m) => ({
     month: m.label,
     Income: m.projectedIncome,
@@ -1312,13 +1573,13 @@ function ForecastReportView({
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Current Balance</p>
+          <p className="text-sm text-muted-foreground">{t('currentBalance')}</p>
           <p className="mt-1 text-xl font-bold text-foreground">
             {formatCurrency(report.currentBalance, report.currency)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Projected End Balance</p>
+          <p className="text-sm text-muted-foreground">{t('projectedEndBalance')}</p>
           <p
             className={cn(
               'mt-1 text-xl font-bold',
@@ -1329,11 +1590,11 @@ function ForecastReportView({
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Confidence</p>
-          <p className="mt-1 text-xl font-bold text-foreground">{report.overallConfidence}%</p>
+          <p className="text-sm text-muted-foreground">{t('confidence')}</p>
+          <p className="mt-1 text-xl font-bold text-foreground">{formatNumber(report.overallConfidence)}%</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Trend</p>
+          <p className="text-sm text-muted-foreground">{t('trend')}</p>
           <div className="mt-1 flex items-center gap-2">
             {report.summary.trend === 'improving' ? (
               <TrendingUp className="h-5 w-5 text-success-600" />
@@ -1342,7 +1603,7 @@ function ForecastReportView({
             ) : null}
             <span
               className={cn(
-                'text-lg font-semibold capitalize',
+                'text-lg font-semibold',
                 report.summary.trend === 'improving'
                   ? 'text-success-600'
                   : report.summary.trend === 'declining'
@@ -1350,7 +1611,7 @@ function ForecastReportView({
                     : 'text-foreground'
               )}
             >
-              {report.summary.trend}
+              {trendLabels[report.summary.trend] || report.summary.trend}
             </span>
           </div>
         </div>
@@ -1361,25 +1622,44 @@ function ForecastReportView({
         <div className="rounded-lg border border-warning-200 bg-warning-50 p-4">
           <div className="flex items-center gap-2 text-warning-700">
             <AlertCircle className="h-5 w-5" />
-            <p className="font-medium">Cash Flow Warning</p>
+            <p className="font-medium">{t('cashFlowWarning')}</p>
           </div>
           <p className="mt-1 text-sm text-warning-600">
-            Based on current trends, your balance could go negative in{' '}
-            {report.summary.monthsUntilNegative} month
-            {report.summary.monthsUntilNegative > 1 ? 's' : ''}.
+            {t('balanceNegativeIn', { months: report.summary.monthsUntilNegative })}
           </p>
         </div>
       )}
 
       {/* Forecast Chart */}
       <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="mb-4 font-medium text-foreground">6-Month Forecast</h3>
+        <h3 className="mb-4 font-medium text-foreground">{t('sixMonthForecast')}</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%" minWidth={200}>
             <AreaChart data={chartData}>
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
+              <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => formatNumber(value)} />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    const labelMap: Record<string, string> = {
+                      'Balance': t('balance'),
+                      'Income': t('income'),
+                      'Expenses': t('expenses'),
+                    };
+                    return (
+                      <div className="rounded-lg border border-border bg-card p-2 shadow-lg">
+                        <p className="font-medium text-foreground mb-1">{label}</p>
+                        {payload.map((entry, index) => (
+                          <p key={index} style={{ color: entry.color }} className="text-sm">
+                            {labelMap[entry.dataKey as string] || entry.dataKey}: {formatCurrency(entry.value as number, report.currency)}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Area
                 type="monotone"
                 dataKey="Balance"
@@ -1403,19 +1683,19 @@ function ForecastReportView({
       {/* Monthly Breakdown */}
       <div className="rounded-lg border border-border bg-card">
         <div className="border-b border-border p-4">
-          <h3 className="font-medium text-foreground">Monthly Projections</h3>
+          <h3 className="font-medium text-foreground">{t('monthlyProjections')}</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-muted/50">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Month</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Income</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Expenses</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Net</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">Balance</th>
-                <th className="px-4 py-2 text-right font-medium text-muted-foreground">
-                  Confidence
+                <th className="px-4 py-2 text-start font-medium text-muted-foreground">{t('month')}</th>
+                <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('income')}</th>
+                <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('expenses')}</th>
+                <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('net')}</th>
+                <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('balance')}</th>
+                <th className="px-4 py-2 text-end font-medium text-muted-foreground">
+                  {t('confidence')}
                 </th>
               </tr>
             </thead>
@@ -1425,20 +1705,20 @@ function ForecastReportView({
                   <td className="px-4 py-2 text-foreground">
                     {m.label}
                     {m.isActual && (
-                      <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                        Actual
+                      <span className="ms-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                        {t('actual')}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-right text-success-600">
+                  <td className="px-4 py-2 text-end text-success-600">
                     {formatCurrency(m.projectedIncome, report.currency)}
                   </td>
-                  <td className="px-4 py-2 text-right text-danger-600">
+                  <td className="px-4 py-2 text-end text-danger-600">
                     {formatCurrency(Math.abs(m.projectedExpenses), report.currency)}
                   </td>
                   <td
                     className={cn(
-                      'px-4 py-2 text-right',
+                      'px-4 py-2 text-end',
                       m.netCashflow >= 0 ? 'text-success-600' : 'text-danger-600'
                     )}
                   >
@@ -1446,13 +1726,13 @@ function ForecastReportView({
                   </td>
                   <td
                     className={cn(
-                      'px-4 py-2 text-right font-medium',
+                      'px-4 py-2 text-end font-medium',
                       m.projectedBalance >= 0 ? 'text-foreground' : 'text-danger-600'
                     )}
                   >
                     {formatCurrency(m.projectedBalance, report.currency)}
                   </td>
-                  <td className="px-4 py-2 text-right text-muted-foreground">{m.confidence}%</td>
+                  <td className="px-4 py-2 text-end text-muted-foreground">{m.confidence}%</td>
                 </tr>
               ))}
             </tbody>
@@ -1463,7 +1743,7 @@ function ForecastReportView({
       {/* Insights */}
       {report.summary.insights.length > 0 && (
         <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="mb-3 font-medium text-foreground">AI Insights</h3>
+          <h3 className="mb-3 font-medium text-foreground">{t('aiInsights')}</h3>
           <ul className="space-y-2">
             {report.summary.insights.map((insight, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -1480,7 +1760,7 @@ function ForecastReportView({
         {report.recurring.income.length > 0 && (
           <div className="rounded-lg border border-border bg-card">
             <div className="border-b border-border p-4">
-              <h3 className="font-medium text-foreground">Recurring Income</h3>
+              <h3 className="font-medium text-foreground">{t('recurringIncome')}</h3>
             </div>
             <div className="divide-y divide-border">
               {report.recurring.income.map((item, idx) => (
@@ -1490,7 +1770,7 @@ function ForecastReportView({
                     <p className="text-xs text-muted-foreground capitalize">{item.frequency}</p>
                   </div>
                   <p className="font-medium text-success-600">
-                    {formatCurrency(item.monthlyAmount, report.currency)}/mo
+                    {formatCurrency(item.monthlyAmount, report.currency)}{t('perMo')}
                   </p>
                 </div>
               ))}
@@ -1501,7 +1781,7 @@ function ForecastReportView({
         {report.recurring.expenses.length > 0 && (
           <div className="rounded-lg border border-border bg-card">
             <div className="border-b border-border p-4">
-              <h3 className="font-medium text-foreground">Recurring Expenses</h3>
+              <h3 className="font-medium text-foreground">{t('recurringExpenses')}</h3>
             </div>
             <div className="divide-y divide-border">
               {report.recurring.expenses.map((item, idx) => (
@@ -1511,7 +1791,7 @@ function ForecastReportView({
                     <p className="text-xs text-muted-foreground capitalize">{item.frequency}</p>
                   </div>
                   <p className="font-medium text-danger-600">
-                    {formatCurrency(item.monthlyAmount, report.currency)}/mo
+                    {formatCurrency(item.monthlyAmount, report.currency)}{t('perMo')}
                   </p>
                 </div>
               ))}
@@ -1524,15 +1804,33 @@ function ForecastReportView({
 }
 
 // Aged Receivables Report View
-function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }) {
+function AgedReceivablesReportView({ report, intlLocale }: { report: AgedReceivablesReport; intlLocale: string }) {
+  const t = useTranslations('reports');
+
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const formatNumber = (num: number, decimals = 1) => {
+    return new Intl.NumberFormat(intlLocale, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(num);
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Total Outstanding</p>
+          <p className="text-sm text-muted-foreground">{t('totalOutstanding')}</p>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {report.totalOutstanding.formatted}
+            {formatCurrencyLocal(report.totalOutstanding.amount, report.totalOutstanding.currency)}
           </p>
         </div>
         <div
@@ -1549,7 +1847,7 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
               report.totalOverdue.amount > 0 ? 'text-danger-700' : 'text-muted-foreground'
             )}
           >
-            Total Overdue
+            {t('totalOverdue')}
           </p>
           <p
             className={cn(
@@ -1557,19 +1855,19 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
               report.totalOverdue.amount > 0 ? 'text-danger-700' : 'text-foreground'
             )}
           >
-            {report.totalOverdue.formatted}
+            {formatCurrencyLocal(report.totalOverdue.amount, report.totalOverdue.currency)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Overdue %</p>
+          <p className="text-sm text-muted-foreground">{t('overduePercent')}</p>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {report.overduePercentage.toFixed(1)}%
+            {formatNumber(report.overduePercentage)}%
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Avg Days Outstanding</p>
+          <p className="text-sm text-muted-foreground">{t('avgDaysOutstanding')}</p>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {Math.round(report.averageDaysOutstanding)} days
+            {formatNumber(Math.round(report.averageDaysOutstanding), 0)} {t('days')}
           </p>
         </div>
       </div>
@@ -1577,7 +1875,7 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
       {/* Bucket Summary */}
       <div className="rounded-lg border border-border bg-card">
         <div className="border-b border-border p-4">
-          <h3 className="font-medium text-foreground">Aging Buckets</h3>
+          <h3 className="font-medium text-foreground">{t('agingBuckets')}</h3>
         </div>
         <div className="grid grid-cols-2 divide-x divide-y divide-border md:grid-cols-5 md:divide-y-0">
           {(report.buckets || []).map((bucket) => {
@@ -1607,7 +1905,7 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
       {report.byCounterparty.length > 0 && (
         <div className="rounded-lg border border-border bg-card">
           <div className="border-b border-border p-4">
-            <h3 className="font-medium text-foreground">By Customer</h3>
+            <h3 className="font-medium text-foreground">{t('byCustomer')}</h3>
           </div>
           <div className="divide-y divide-border">
             {report.byCounterparty.map((cp) => (
@@ -1627,11 +1925,11 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
                       <div className="flex items-center gap-2">
                         <span>{item.documentNumber}</span>
                         <span className="text-xs">
-                          Due: {new Date(item.dueDate).toLocaleDateString()}
+                          {t('due')}: {new Date(item.dueDate).toLocaleDateString()}
                         </span>
                         {item.daysOverdue > 0 && (
                           <span className="rounded bg-danger-100 px-1.5 py-0.5 text-xs text-danger-700">
-                            {item.daysOverdue} days overdue
+                            {t('daysOverdue', { count: item.daysOverdue })}
                           </span>
                         )}
                       </div>
@@ -1650,8 +1948,8 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
       {report.byCounterparty.length === 0 && (
         <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-lg border border-border bg-card">
           <Clock className="h-12 w-12 text-muted-foreground" />
-          <p className="font-medium text-foreground">No Outstanding Receivables</p>
-          <p className="text-sm text-muted-foreground">All invoices have been paid</p>
+          <p className="font-medium text-foreground">{t('noOutstandingReceivables')}</p>
+          <p className="text-sm text-muted-foreground">{t('allInvoicesPaid')}</p>
         </div>
       )}
     </div>
@@ -1659,20 +1957,33 @@ function AgedReceivablesReportView({ report }: { report: AgedReceivablesReport }
 }
 
 // VAT Report View
-function VatReportView({ report }: { report: VatReport }) {
+function VatReportView({ report, intlLocale }: { report: VatReport; intlLocale: string }) {
+  const t = useTranslations('reports');
+
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-success-200 bg-success-50 p-4">
-          <p className="text-sm text-success-700">VAT Collected (Output)</p>
+          <p className="text-sm text-success-700">{t('vatCollected')}</p>
           <p className="mt-1 text-2xl font-bold text-success-700">
-            {report.vatCollected.formatted}
+            {formatCurrencyLocal(report.vatCollected.amount, report.vatCollected.currency)}
           </p>
         </div>
         <div className="rounded-lg border border-danger-200 bg-danger-50 p-4">
-          <p className="text-sm text-danger-700">VAT Paid (Input)</p>
-          <p className="mt-1 text-2xl font-bold text-danger-700">{report.vatPaid.formatted}</p>
+          <p className="text-sm text-danger-700">{t('vatPaid')}</p>
+          <p className="mt-1 text-2xl font-bold text-danger-700">
+            {formatCurrencyLocal(report.vatPaid.amount, report.vatPaid.currency)}
+          </p>
         </div>
         <div
           className={cn(
@@ -1685,7 +1996,7 @@ function VatReportView({ report }: { report: VatReport }) {
           <p
             className={cn('text-sm', report.netVat.isRefund ? 'text-success-700' : 'text-primary')}
           >
-            {report.netVat.isRefund ? 'VAT Refund Due' : 'VAT Payable'}
+            {report.netVat.isRefund ? t('vatRefundDue') : t('vatPayable')}
           </p>
           <p
             className={cn(
@@ -1693,7 +2004,7 @@ function VatReportView({ report }: { report: VatReport }) {
               report.netVat.isRefund ? 'text-success-700' : 'text-primary'
             )}
           >
-            {report.netVat.formatted}
+            {formatCurrencyLocal(report.netVat.amount, report.netVat.currency)}
           </p>
         </div>
       </div>
@@ -1702,18 +2013,18 @@ function VatReportView({ report }: { report: VatReport }) {
       {report.byRate.length > 0 && (
         <div className="rounded-lg border border-border bg-card">
           <div className="border-b border-border p-4">
-            <h3 className="font-medium text-foreground">VAT by Rate</h3>
+            <h3 className="font-medium text-foreground">{t('vatByRate')}</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-muted/50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Rate</th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">
-                    Collected
+                  <th className="px-4 py-2 text-start font-medium text-muted-foreground">{t('rate')}</th>
+                  <th className="px-4 py-2 text-end font-medium text-muted-foreground">
+                    {t('collected')}
                   </th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">Paid</th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">Net</th>
+                  <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('paid')}</th>
+                  <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('net')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -1722,15 +2033,15 @@ function VatReportView({ report }: { report: VatReport }) {
                   return (
                     <tr key={rate.rate}>
                       <td className="px-4 py-2 text-foreground">{rate.rateLabel}</td>
-                      <td className="px-4 py-2 text-right text-success-600">
+                      <td className="px-4 py-2 text-end text-success-600">
                         {rate.collected.formatted}
                       </td>
-                      <td className="px-4 py-2 text-right text-danger-600">
+                      <td className="px-4 py-2 text-end text-danger-600">
                         {rate.paid.formatted}
                       </td>
                       <td
                         className={cn(
-                          'px-4 py-2 text-right font-medium',
+                          'px-4 py-2 text-end font-medium',
                           net >= 0 ? 'text-foreground' : 'text-success-600'
                         )}
                       >
@@ -1752,20 +2063,20 @@ function VatReportView({ report }: { report: VatReport }) {
       {report.entries.length > 0 && (
         <div className="rounded-lg border border-border bg-card">
           <div className="border-b border-border p-4">
-            <h3 className="font-medium text-foreground">VAT Transactions</h3>
+            <h3 className="font-medium text-foreground">{t('vatTransactions')}</h3>
           </div>
           <div className="max-h-96 overflow-y-auto">
             <table className="w-full text-sm">
               <thead className="sticky top-0 border-b border-border bg-muted/50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Date</th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Invoice</th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                    Merchant
+                  <th className="px-4 py-2 text-start font-medium text-muted-foreground">{t('date')}</th>
+                  <th className="px-4 py-2 text-start font-medium text-muted-foreground">{t('invoice')}</th>
+                  <th className="px-4 py-2 text-start font-medium text-muted-foreground">
+                    {t('merchant')}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Type</th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">Rate</th>
-                  <th className="px-4 py-2 text-right font-medium text-muted-foreground">VAT</th>
+                  <th className="px-4 py-2 text-start font-medium text-muted-foreground">{t('type')}</th>
+                  <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('rate')}</th>
+                  <th className="px-4 py-2 text-end font-medium text-muted-foreground">{t('vat')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -1785,15 +2096,15 @@ function VatReportView({ report }: { report: VatReport }) {
                             : 'bg-danger-100 text-danger-700'
                         )}
                       >
-                        {entry.type === 'output' ? 'Output' : 'Input'}
+                        {entry.type === 'output' ? t('output') : t('input')}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right text-muted-foreground">
+                    <td className="px-4 py-2 text-end text-muted-foreground">
                       {entry.vatRateLabel}
                     </td>
                     <td
                       className={cn(
-                        'px-4 py-2 text-right font-medium',
+                        'px-4 py-2 text-end font-medium',
                         entry.type === 'output' ? 'text-success-600' : 'text-danger-600'
                       )}
                     >
@@ -1810,9 +2121,9 @@ function VatReportView({ report }: { report: VatReport }) {
       {report.entries.length === 0 && (
         <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-lg border border-border bg-card">
           <Receipt className="h-12 w-12 text-muted-foreground" />
-          <p className="font-medium text-foreground">No VAT Transactions</p>
+          <p className="font-medium text-foreground">{t('noVatTransactions')}</p>
           <p className="text-sm text-muted-foreground">
-            No invoices with VAT found for this period
+            {t('noVatInvoices')}
           </p>
         </div>
       )}
@@ -1821,8 +2132,38 @@ function VatReportView({ report }: { report: VatReport }) {
 }
 
 // General Ledger Report View
-function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
+function GeneralLedgerReportView({ report, intlLocale }: { report: GeneralLedgerReport; intlLocale: string }) {
+  const t = useTranslations('reports');
+  const tCommon = useTranslations('common');
+  const translateCategory = useTranslateCategory();
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
+
+  const formatCurrencyLocal = (amount: number, currency: string) => {
+    return new Intl.NumberFormat(intlLocale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // Helper to format MoneyValue with fallback to pre-formatted string
+  const formatMoneyValue = (value: MoneyValue) => {
+    if (typeof value.amount === 'number' && value.amount !== 0) {
+      return formatCurrencyLocal(value.amount, value.currency);
+    }
+    if (value.formatted && !value.formatted.match(/^[€$£¥₹₱₩]?\s*0([.,]0+)?$/)) {
+      return value.formatted;
+    }
+    return formatCurrencyLocal(0, value.currency);
+  };
+
+  const formatNumber = (num: number) => new Intl.NumberFormat(intlLocale).format(num);
+
+  // Format date with locale
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(intlLocale);
+  };
 
   const toggleAccount = (accountId: string) => {
     setExpandedAccounts((prev) => {
@@ -1836,12 +2177,26 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
     });
   };
 
-  const accountTypeColors: Record<string, { bg: string; text: string }> = {
-    ASSET: { bg: 'bg-blue-100', text: 'text-blue-700' },
-    LIABILITY: { bg: 'bg-danger-100', text: 'text-danger-700' },
-    EQUITY: { bg: 'bg-success-100', text: 'text-success-700' },
-    INCOME: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
-    EXPENSE: { bg: 'bg-orange-100', text: 'text-orange-700' },
+  // Account type translations and colors
+  const accountTypeMap: Record<string, { key: string; bg: string; text: string }> = {
+    ASSET: { key: 'asset', bg: 'bg-blue-100', text: 'text-blue-700' },
+    LIABILITY: { key: 'liability', bg: 'bg-danger-100', text: 'text-danger-700' },
+    EQUITY: { key: 'equity', bg: 'bg-success-100', text: 'text-success-700' },
+    INCOME: { key: 'income', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+    EXPENSE: { key: 'expense', bg: 'bg-orange-100', text: 'text-orange-700' },
+  };
+
+  // Translate account type
+  const translateAccountType = (type: string) => {
+    const typeInfo = accountTypeMap[type];
+    if (typeInfo) {
+      try {
+        return tCommon(typeInfo.key);
+      } catch {
+        return type;
+      }
+    }
+    return type;
   };
 
   return (
@@ -1849,24 +2204,24 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Total Debits</p>
+          <p className="text-sm text-muted-foreground">{t('totalDebits')}</p>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {report.summary.totalDebits.formatted}
+            {formatMoneyValue(report.summary.totalDebits)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Total Credits</p>
+          <p className="text-sm text-muted-foreground">{t('totalCredits')}</p>
           <p className="mt-1 text-xl font-bold text-foreground">
-            {report.summary.totalCredits.formatted}
+            {formatMoneyValue(report.summary.totalCredits)}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Accounts</p>
-          <p className="mt-1 text-xl font-bold text-foreground">{report.summary.accountCount}</p>
+          <p className="text-sm text-muted-foreground">{t('accounts')}</p>
+          <p className="mt-1 text-xl font-bold text-foreground">{formatNumber(report.summary.accountCount)}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Journal Entries</p>
-          <p className="mt-1 text-xl font-bold text-foreground">{report.summary.entryCount}</p>
+          <p className="text-sm text-muted-foreground">{t('journalEntries')}</p>
+          <p className="mt-1 text-xl font-bold text-foreground">{formatNumber(report.summary.entryCount)}</p>
         </div>
       </div>
 
@@ -1875,7 +2230,7 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
         <div className="space-y-4">
           {report.accounts.map((account) => {
             const isExpanded = expandedAccounts.has(account.accountId);
-            const typeColor = accountTypeColors[account.accountType] || {
+            const typeColor = accountTypeMap[account.accountType] || {
               bg: 'bg-muted',
               text: 'text-foreground',
             };
@@ -1894,27 +2249,27 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                     <span className="font-mono text-sm text-muted-foreground">
                       {account.accountCode}
                     </span>
-                    <span className="font-medium text-foreground">{account.accountName}</span>
+                    <span className="font-medium text-foreground">{translateCategory(account.accountName)}</span>
                     <span
                       className={cn('rounded px-2 py-0.5 text-xs', typeColor.bg, typeColor.text)}
                     >
-                      {account.accountType}
+                      {translateAccountType(account.accountType)}
                     </span>
                   </div>
                   <div className="flex items-center gap-6 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Opening: </span>
+                      <span className="text-muted-foreground">{t('opening')}: </span>
                       <span className="font-medium text-foreground">
-                        {account.openingBalance.formatted}
+                        {formatMoneyValue(account.openingBalance)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Closing: </span>
+                      <span className="text-muted-foreground">{t('closing')}: </span>
                       <span className="font-medium text-foreground">
-                        {account.closingBalance.formatted}
+                        {formatMoneyValue(account.closingBalance)}
                       </span>
                     </div>
-                    <span className="text-muted-foreground">{account.entries.length} entries</span>
+                    <span className="text-muted-foreground">{account.entries.length} {t('entries')}</span>
                   </div>
                 </button>
 
@@ -1925,23 +2280,23 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                       <table className="w-full text-sm">
                         <thead className="bg-muted/50">
                           <tr>
-                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                              Date
+                            <th className="px-4 py-2 text-start font-medium text-muted-foreground">
+                              {t('date')}
                             </th>
-                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                              Entry #
+                            <th className="px-4 py-2 text-start font-medium text-muted-foreground">
+                              {t('entryNumber')}
                             </th>
-                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                              Description
+                            <th className="px-4 py-2 text-start font-medium text-muted-foreground">
+                              {t('transactions')}
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-muted-foreground">
-                              Debit
+                            <th className="px-4 py-2 text-end font-medium text-muted-foreground">
+                              {t('debit')}
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-muted-foreground">
-                              Credit
+                            <th className="px-4 py-2 text-end font-medium text-muted-foreground">
+                              {t('credit')}
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-muted-foreground">
-                              Balance
+                            <th className="px-4 py-2 text-end font-medium text-muted-foreground">
+                              {t('balance')}
                             </th>
                           </tr>
                         </thead>
@@ -1949,10 +2304,10 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                           {/* Opening Balance Row */}
                           <tr className="bg-muted/30">
                             <td className="px-4 py-2 text-muted-foreground" colSpan={5}>
-                              Opening Balance
+                              {t('openingBalance')}
                             </td>
-                            <td className="px-4 py-2 text-right font-medium text-foreground">
-                              {account.openingBalance.formatted}
+                            <td className="px-4 py-2 text-end font-medium text-foreground">
+                              {formatMoneyValue(account.openingBalance)}
                             </td>
                           </tr>
 
@@ -1960,7 +2315,7 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                           {account.entries.map((entry) => (
                             <tr key={entry.entryId} className="hover:bg-muted/20">
                               <td className="px-4 py-2 text-muted-foreground">
-                                {new Date(entry.entryDate).toLocaleDateString()}
+                                {formatDate(entry.entryDate)}
                               </td>
                               <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
                                 {entry.entryNumber}
@@ -1968,22 +2323,22 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                               <td className="max-w-xs truncate px-4 py-2 text-foreground">
                                 {entry.description}
                               </td>
-                              <td className="px-4 py-2 text-right">
+                              <td className="px-4 py-2 text-end">
                                 {entry.debit.amount > 0 ? (
-                                  <span className="text-foreground">{entry.debit.formatted}</span>
+                                  <span className="text-foreground">{formatMoneyValue(entry.debit)}</span>
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
                                 )}
                               </td>
-                              <td className="px-4 py-2 text-right">
+                              <td className="px-4 py-2 text-end">
                                 {entry.credit.amount > 0 ? (
-                                  <span className="text-foreground">{entry.credit.formatted}</span>
+                                  <span className="text-foreground">{formatMoneyValue(entry.credit)}</span>
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
                                 )}
                               </td>
-                              <td className="px-4 py-2 text-right font-medium text-foreground">
-                                {entry.runningBalance.formatted}
+                              <td className="px-4 py-2 text-end font-medium text-foreground">
+                                {formatMoneyValue(entry.runningBalance)}
                               </td>
                             </tr>
                           ))}
@@ -1991,16 +2346,16 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                           {/* Closing Balance Row */}
                           <tr className="bg-muted/30">
                             <td className="px-4 py-2 font-medium text-foreground" colSpan={3}>
-                              Closing Balance
+                              {t('closingBalance')}
                             </td>
-                            <td className="px-4 py-2 text-right font-medium text-foreground">
-                              {account.totalDebits.formatted}
+                            <td className="px-4 py-2 text-end font-medium text-foreground">
+                              {formatMoneyValue(account.totalDebits)}
                             </td>
-                            <td className="px-4 py-2 text-right font-medium text-foreground">
-                              {account.totalCredits.formatted}
+                            <td className="px-4 py-2 text-end font-medium text-foreground">
+                              {formatMoneyValue(account.totalCredits)}
                             </td>
-                            <td className="px-4 py-2 text-right font-bold text-foreground">
-                              {account.closingBalance.formatted}
+                            <td className="px-4 py-2 text-end font-bold text-foreground">
+                              {formatMoneyValue(account.closingBalance)}
                             </td>
                           </tr>
                         </tbody>
@@ -2012,7 +2367,7 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
                 {/* No entries message */}
                 {isExpanded && account.entries.length === 0 && (
                   <div className="border-t border-border p-4 text-center text-sm text-muted-foreground">
-                    No journal entries for this period
+                    {t('noJournalEntries')}
                   </div>
                 )}
               </div>
@@ -2022,9 +2377,9 @@ function GeneralLedgerReportView({ report }: { report: GeneralLedgerReport }) {
       ) : (
         <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-lg border border-border bg-card">
           <BookOpen className="h-12 w-12 text-muted-foreground" />
-          <p className="font-medium text-foreground">No GL Accounts</p>
+          <p className="font-medium text-foreground">{t('noGLAccounts')}</p>
           <p className="text-sm text-muted-foreground">
-            Set up your Chart of Accounts to view the General Ledger
+            {t('setupChartOfAccounts')}
           </p>
         </div>
       )}
