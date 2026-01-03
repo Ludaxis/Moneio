@@ -17,15 +17,18 @@ import { TransactionRepository } from './repository';
 
 // React's cache() is only available in RSC context
 // Provide a passthrough fallback for non-RSC environments (tests, etc.)
-let cache: <T extends (...args: unknown[]) => unknown>(fn: T) => T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cache: <T extends (...args: any[]) => any>(fn: T) => T;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   cache = require('react').cache;
 } catch {
-  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cache = <T extends (...args: any[]) => any>(fn: T): T => fn;
 }
 if (typeof cache !== 'function') {
-  cache = <T extends (...args: unknown[]) => unknown>(fn: T): T => fn;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cache = <T extends (...args: any[]) => any>(fn: T): T => fn;
 }
 
 const repository = new TransactionRepository();
